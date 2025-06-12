@@ -20,11 +20,7 @@ class CheckInstallation
             $install = Installation::first();
         } catch (\Illuminate\Database\QueryException $e) {
             // Table doesn’t exist (or other DB error) ⇒ send to installer
-            if (! $request->is('install*')) {
-                return redirect()->route('install.welcome');
-            }
-            // allow the install routes through
-            return $next($request);
+            return redirect()->route('install.welcome');
         }
 
 
