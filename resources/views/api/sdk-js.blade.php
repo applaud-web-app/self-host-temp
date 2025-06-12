@@ -1,115 +1,147 @@
 // push-notify.js (stateless, no CSRF/session)
-;(async function(){
+;(async () => {
   'use strict';
 
-  // 1) tiny helper to load a script by URL
-  async function load(src) {
-    return new Promise((resolve, reject) => {
-      const s = document.createElement('script');
-      s.src = src;
-      s.onload = resolve;
-      s.onerror = () => reject(new Error(`Failed to load ${src}`));
-      document.head.appendChild(s);
-    });
-  }
+  // CONFIG
+  const SW_PATH       = '/apluselfhost-messaging-sw.js';
+  const SUB_URL       = '/api/push/subscribe';
+  const UNSUB_URL     = '/api/push/unsubscribe';
+  const TOKEN_LS_KEY  = 'push_token';
 
-  // 2) load Firebase compat libraries
-  await load('https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js');
-  await load('https://www.gstatic.com/firebasejs/9.22.0/firebase-messaging-compat.js');
+  // 1) dynamic script loader
+  const load = src => new Promise((res, rej) => {
+    const s = document.createElement('script');
+    s.src = src;
+    s.onload = () => res();
+    s.onerror = () => rej(new Error(`Failed to load ${src}`));
+    document.head.appendChild(s);
+  });
 
-  // 3) injected values
-  const firebaseConfig = @json($cfg);
-  const vapidKey       = "{{ $vapid }}";
-  const SW_PATH        = "/apluselfhost-messaging-sw.js";  // your actual SW filename
-  const SUBSCRIBE_URL  = "/api/push/subscribe";
+  // 2) load Firebase compat libraries in parallel
+  await Promise.all([
+    load('https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js'),
+    load('https://www.gstatic.com/firebasejs/9.22.0/firebase-messaging-compat.js'),
+  ]);
 
-  // 4) init Firebase & Messaging
-  firebase.initializeApp(firebaseConfig);
+  // 3) init Firebase
+  firebase.initializeApp(@json($cfg));
   const messaging = firebase.messaging();
 
-  // 5) register *your* SW
-  let swRegistration = null;
+  // 4) register your SW once
+  let swReg = null;
   if ('serviceWorker' in navigator) {
     try {
-      swRegistration = await navigator.serviceWorker.register(SW_PATH);
+      swReg = await navigator.serviceWorker.register(SW_PATH);
       console.log('[Push] SW registered at', SW_PATH);
-      // no more useServiceWorker in v9, we'll pass the registration to getToken
     } catch (err) {
       console.error('[Push] SW registration failed', err);
     }
-  } else {
-    console.warn('[Push] Service workers not supported.');
   }
 
-  // 6) subscribe helper: request permission, get token, POST to your API
+  // 5) helper for POSTing JSON and error checking
+  const apiPost = async (url, payload) => {
+    const res = await fetch(url, {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify(payload),
+    });
+    if (!res.ok) throw new Error(`API ${url} returned ${res.status}`);
+    return res.json();
+  };
+
+  // 6) subscribe (or update) function
   async function subscribe() {
+    // ask for notification permission
     const perm = await Notification.requestPermission();
     if (perm !== 'granted') {
-      throw new Error(`Notification permission ${perm}`);
+      console.warn('[Push] Notification permission not granted');
+      return null;
     }
 
-    // pass your SW registration so Firebase won't try the default SW
-    const tokenOpts = { vapidKey };
-    if (swRegistration) tokenOpts.serviceWorkerRegistration = swRegistration;
+    // prepare getToken options
+    const opts = { vapidKey: "{{ $vapid }}" };
+    if (swReg) opts.serviceWorkerRegistration = swReg;
 
-    const token = await messaging.getToken(tokenOpts);
-    if (!token) {
-      throw new Error('No FCM token retrieved');
+    // 6a) fetch a new FCM token
+    const newToken = await messaging.getToken(opts);
+    if (!newToken) throw new Error('No FCM token retrieved');
+
+    // 6b) old token for update
+    const oldToken = localStorage.getItem(TOKEN_LS_KEY) || null;
+
+    // 6c) pull raw PushSubscription for endpoint + keys
+    let endpoint = '', auth = '', p256dh = '';
+    if (swReg) {
+      const pushSub = await swReg.pushManager.getSubscription();
+      if (pushSub) {
+        const subJson = pushSub.toJSON();
+        endpoint = subJson.endpoint;
+        auth     = (subJson.keys && subJson.keys.auth)   || '';
+        p256dh   = (subJson.keys && subJson.keys.p256dh) || '';
+      }
     }
 
-    await fetch(SUBSCRIBE_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        token,
-        domain: location.hostname
-      })
+    // 6d) POST to your backend
+    await apiPost(SUB_URL, {
+      token:     newToken,
+      old_token: oldToken,
+      domain:    location.hostname,
+      endpoint,
+      auth,
+      p256dh
     });
 
-    console.log('[Push] Subscribed:', token);
-    return token;
+    // 6e) store locally so next time we update instead of insert
+    localStorage.setItem(TOKEN_LS_KEY, newToken);
+    console.log('[Push] Subscribed/Updated token', newToken);
+    return newToken;
   }
 
-  // 7) initial subscribe
+  // 7) initial subscribe on page load
   subscribe().catch(e => console.error('[Push] subscribe error', e));
 
-  // 8) auto-refresh token when it changes (compat only)
+  // 8) handle token refresh (v9 compat)
   if (typeof messaging.onTokenRefresh === 'function') {
-    messaging.onTokenRefresh(async function() {
+    messaging.onTokenRefresh(async () => {
       try {
         await messaging.deleteToken();
-        const newToken = await subscribe();
-        console.log('[Push] Token refreshed:', newToken);
+        await subscribe();
+        console.log('[Push] Token refreshed and updated');
       } catch (err) {
-        console.error('[Push] token refresh error', err);
+        console.error('[Push] Token refresh error', err);
       }
     });
   }
 
-  // 9) handle foreground messages
-  messaging.onMessage(function(payload) {
+  // 9) unsubscribe helper
+  window.pushNotifyUnsubscribe = async () => {
+    const token = localStorage.getItem(TOKEN_LS_KEY);
+    if (!token) throw new Error('No token present to unsubscribe');
+
+    // remove from FCM & local storage
+    await messaging.deleteToken();
+    localStorage.removeItem(TOKEN_LS_KEY);
+
+    // notify backend and return the new count
+    const { unsub_count } = await apiPost(UNSUB_URL, { token });
+    console.log('[Push] Unsubscribed, count:', unsub_count);
+    return unsub_count;
+  };
+
+  // 10) handle in-page notifications
+  messaging.onMessage(payload => {
     const n = payload.notification || {};
-    if (swRegistration && typeof swRegistration.showNotification === 'function') {
-      swRegistration.showNotification(n.title || '', {
-        body:  n.body,
-        icon:  n.icon,
-        image: n.image,
-        data:  payload.data
-      });
-    } else {
-      new Notification(n.title || '', {
-        body:  n.body,
-        icon:  n.icon,
-        image: n.image,
-        data:  payload.data
-      });
-    }
+    const show = swReg?.showNotification?.bind(swReg)
+               || ((t, o) => new Notification(t, o));
+    show(n.title || '', {
+      body:  n.body,
+      icon:  n.icon,
+      image: n.image,
+      data:  payload.data
+    });
   });
 
-  // 10) expose a manual refresh helper
-  window.pushNotifyRefreshToken = async function() {
-    await messaging.deleteToken();
-    return subscribe();
-  };
+  // 11) expose manual refresh if needed
+  window.pushNotifyRefreshToken = subscribe;
 
 })();
