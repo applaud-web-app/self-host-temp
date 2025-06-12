@@ -16,7 +16,7 @@ class CheckInstallation
             return redirect()->route('install.welcome');
         }
 
-        $install = Installation::instance();
+        $install = Installation::first();
 
         // If not yet installed, send everything (except /install/*) to the installer:
         if (! $install->is_installed && ! $request->is('install*')) {
