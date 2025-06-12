@@ -29,12 +29,12 @@ class PushApiController extends Controller
       try {
           // 1) Validate incoming payload
           $data = $request->validate([
-              'token'    => 'required|string',
-              'domain'   => 'required|string|exists:domains,name',
-              'old_token' => 'nullable|string',
-              'endpoint' => 'required|url',
-              'auth'     => 'required|string',
-              'p256dh'   => 'required|string',
+            'token'    => 'required|string',
+            'domain'   => 'required|string|exists:domains,name',
+            'old_token' => 'nullable|string',
+            'endpoint' => 'required|url',
+            'auth'     => 'required|string',
+            'p256dh'   => 'required|string',
           ]);
 
           // 2) Enrich with IP & UA

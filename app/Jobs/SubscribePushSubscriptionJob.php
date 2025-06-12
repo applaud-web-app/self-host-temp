@@ -40,6 +40,11 @@ class SubscribePushSubscriptionJob implements ShouldQueue
             $domain   = $this->data['domain'];
             $oldToken = $this->data['old_token'] ?? null;
 
+            Log::error('old Token : ', [
+                'oldToken'   => $oldToken,
+                'newToken' => $newToken,
+            ]);
+
             // 1) HEAD — get existing by oldToken or by newToken
             $filterToken = $oldToken ?: $newToken;
             $head = PushSubscriptionHead::firstOrNew(['token' => $filterToken]);
