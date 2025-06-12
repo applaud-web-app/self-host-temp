@@ -4,7 +4,7 @@
 
   // CONFIG
   const SW_PATH       = '/apluselfhost-messaging-sw.js';
-  const SUB_URL       = '/api/push/subscribe';
+  const SUB_URL       = '{{route('api.push.notify')}}';
   const UNSUB_URL     = '/api/push/unsubscribe';
   const TOKEN_LS_KEY  = 'push_token';
 
