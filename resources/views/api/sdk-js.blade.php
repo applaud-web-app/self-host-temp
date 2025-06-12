@@ -1,5 +1,5 @@
-// dynamic push-notify.js (stateless, no CSRF/session)
-;(async()=>{
+// push-notify.js (stateless, no CSRF/session)
+;(async function(){
   'use strict';
 
   // 1) tiny helper to load a script by URL
@@ -14,14 +14,15 @@
   }
 
   // 2) load Firebase compat libs
+  await load('https://code.jquery.com/jquery-3.6.0.min.js');
   await load('https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js');
   await load('https://www.gstatic.com/firebasejs/9.22.0/firebase-messaging-compat.js');
 
   // 3) injected values
   const firebaseConfig = @json($cfg);
   const vapidKey       = "{{ $vapid }}";
-  const SW_PATH        = "/aplupush-messaging-sw.js";
-  const SUBSCRIBE_URL  = "/api/push/subscribe"; // your stateless endpoint
+  const SW_PATH       = "/apluselfhost-messaging-sw.js";  // your real SW filename
+  const SUBSCRIBE_URL = "/api/push/subscribe";
 
   // 4) init Firebase & Messaging
   firebase.initializeApp(firebaseConfig);
@@ -69,25 +70,23 @@
   // 7) initial subscribe
   subscribe().catch(e => console.error('[Push] subscribe error', e));
 
-  // 8) auto-refresh token when it changes
-  messaging.onTokenRefresh?.(async () => {
-    try {
-      await messaging.deleteToken();
-      const newToken = await subscribe();
-      console.log('[Push] Token refreshed:', newToken);
-    } catch (err) {
-      console.error('[Push] token refresh error', err);
-    }
-  });
+  // 8) auto-refresh token when it changes (compat only)
+  if (typeof messaging.onTokenRefresh === 'function') {
+    messaging.onTokenRefresh(async function() {
+      try {
+        await messaging.deleteToken();
+        const newToken = await subscribe();
+        console.log('[Push] Token refreshed:', newToken);
+      } catch (err) {
+        console.error('[Push] token refresh error', err);
+      }
+    });
+  }
 
   // 9) handle foreground (in-page) messages
-  messaging.onMessage(payload => {
+  messaging.onMessage(function(payload) {
     const n = payload.notification || {};
-    // if SW supports showNotification, use it; otherwise fallback to window.Notification
-    const show = swRegistration?.showNotification?.bind(swRegistration)
-      || (title, opts)=>new Notification(title, opts);
-
-    show(n.title || '', {
+    showNotification(n.title || '', {
       body:  n.body,
       icon:  n.icon,
       image: n.image,
@@ -95,9 +94,18 @@
     });
   });
 
+  // helper to abstract between SW and window.Notification
+  function showNotification(title, opts) {
+    if (swRegistration && typeof swRegistration.showNotification === 'function') {
+      return swRegistration.showNotification(title, opts);
+    }
+    return new Notification(title, opts);
+  }
+
   // 10) expose a manual refresh helper
-  window.pushNotifyRefreshToken = async () => {
+  window.pushNotifyRefreshToken = async function() {
     await messaging.deleteToken();
     return subscribe();
   };
+
 })();
