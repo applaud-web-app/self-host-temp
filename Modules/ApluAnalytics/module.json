@@ -1,0 +1,11 @@
+{
+    "name": "ApluAnalytics",
+    "alias": "apluanalytics",
+    "description": "",
+    "keywords": [],
+    "priority": 0,
+    "providers": [
+        "Modules\\ApluAnalytics\\Providers\\ApluAnalyticsServiceProvider"
+    ],
+    "files": []
+}

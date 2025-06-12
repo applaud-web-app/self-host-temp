@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Theme Purchase Confirmation</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        /* General Styles */
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #f4f6f8;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: #333333;
+        }
+        .email-wrapper {
+            width: 100%;
+            background-color: #f4f6f8;
+            padding: 8px 0;
+        }
+        .email-content {
+            max-width: 700px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            border-radius: 8px;
+            border: 1px solid #ffc7b8;
+            overflow: hidden;
+        }
+        /* Header */
+        .email-header {
+            background: #ffede8;
+            padding: 8px;
+            text-align: center;
+            border-bottom: 1px solid #ffc7b8;
+        }
+        .email-header img {
+            max-width: 150px;
+            height: auto;
+        }
+        /* Body */
+        .email-body {
+            padding: 12px;
+            border-bottom: 1px solid #ffc7b8;
+        }
+        .email-body h1 {
+            color: #FD683E;
+            margin: 8px 0;
+            font-size: 20px;
+        }
+        .email-body h2 {
+            color: #000;
+            margin: 5px 0;
+            font-size: 18px;
+        }
+        .email-body p {
+            line-height: 1.5;
+            margin: 6px 0;
+            font-size: 14px;
+        }
+        .purchase-details {
+            background-color: #f9f9f9;
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
+            padding: 12px;
+            margin: 12px 0;
+        }
+        .purchase-details strong {
+            color: #FD683E;
+        }
+        .email-body ul li {
+            margin: 5px 0;
+            font-size: 14px;
+        }
+        .email-body a {
+            color: #FD683E;
+            text-decoration: none;
+        }
+        .cta-button {
+            display: inline-block;
+            padding: 8px 15px;
+            background-color: #FD683E;
+            color: #ffffff !important;
+            text-decoration: none;
+            border-radius: 6px;
+            font-weight: 400;
+            font-size: 14px;
+            margin: 12px 0;
+        }
+        .cta-button:hover {
+            background-color: #C7522A;
+        }
+        /* Footer */
+        .email-footer {
+            background-color: #ffede8;
+            padding: 8px 16px;
+            text-align: center;
+            font-size: 12px;
+            color: #000;
+            border-top: 1px solid #ffc7b8;
+        }
+        .email-footer a {
+            color: #000;
+            text-decoration: underline;
+            margin: 0 5px;
+        }
+        /* Responsive */
+        @media only screen and (max-width: 600px) {
+            .email-content {
+                width: 95% !important;
+                border-radius: 0;
+                border: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="email-wrapper">
+        <div class="email-content">
+            <!-- Header -->
+            <div class="email-header">
+                <img src="https://aplu.io/assets/images/logo.png" alt="Aplu Logo">
+            </div>
+            <!-- Body -->
+            <div class="email-body">
+                <h1>Thank You for Your Theme Purchase!</h1>
+                <p>Hello [First Name],</p>
+                <p>Thank you for purchasing our theme! Below you'll find all the details you need to download and install your new theme.</p>
+                
+                <div class="purchase-details">
+                    <h2>Your Purchase Information</h2>
+                    <p><strong>Email:</strong> [User Email]</p>
+                    <p><strong>Purchase Code:</strong> [Purchase Code]</p>
+                    <p><strong>Theme Name:</strong> [Theme Name]</p>
+                    <p><strong>Purchase Date:</strong> [Purchase Date]</p>
+                    <p><strong>Order ID:</strong> [Order ID]</p>
+                    <p><strong>Amount Paid:</strong> $[Amount]</p>
+                </div>
+
+                <h2>How to Download and Install Your Theme</h2>
+                <ol>
+                    <li><strong>Download your theme:</strong> Click the button below to access your downloads.</li>
+                    <li><strong>Install the theme:</strong> Upload the theme files to your website's admin panel.</li>
+                    <li><strong>Activate with your purchase code:</strong> Enter the purchase code above when prompted.</li>
+                    <li><strong>Customize:</strong> Configure the theme settings to match your brand.</li>
+                </ol>
+
+                <div style="text-align: center;">
+                    <a href="[Download_Link]" class="cta-button">Download Your Theme</a>
+                </div>
+
+                <h2>Need Help With Installation?</h2>
+                <p>We have comprehensive documentation to guide you through the installation process. <a href="[Documentation_Link]">View our installation guide</a>.</p>
+                <p>If you encounter any issues or have questions, our support team is ready to assist you at <a href="mailto:support@aplu.io">support@aplu.io</a>.</p>
+                
+                <h2>License Information</h2>
+                <p>Your purchase includes <strong>[License Type]</strong> license for this theme. Please review our <a href="[License_Link]">license terms</a> for usage rights and restrictions.</p>
+            </div>
+            <!-- Footer -->
+            <div class="email-footer">
+                &copy; 2024 Aplu. All rights reserved.<br>
+                <a href="[Unsubscribe_Link]">Unsubscribe</a> | 
+                <a href="https://aplu.io/privacy-policy/">Privacy Policy</a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

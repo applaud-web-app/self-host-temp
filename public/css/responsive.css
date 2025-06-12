@@ -1,0 +1,433 @@
+/*====================================================
+
+        All media queries css
+
+====================================================*/
+
+
+
+@media(max-width: 1600px) {
+    .deznav .metismenu>li a>i {
+        font-size: 0.9375rem;
+    }
+
+    [data-layout="horizontal"] .deznav .metismenu>li>a i {
+        padding: 8px;
+    }
+
+    [data-sidebar-style="full"][data-layout="horizontal"] .deznav .metismenu>li>a {
+        font-size: 14px;
+
+
+    }
+
+    [data-layout="horizontal"] .deznav .metismenu>li>a {
+        padding: 0.7375rem 1.8rem 0.7375rem 0.7375rem;
+        margin: 0.125rem 0.125rem;
+    }
+
+
+}
+
+@media(max-width: 1367px) {
+
+
+    .login_logo img {
+        width: 226px;
+        height: auto;
+    }
+
+
+    .filter_area .filter_col {
+        height: 130px;
+    }
+
+    .receipt_box {
+        border: 2px solid var(--primary);
+        padding: 15px;
+        width: 80%;
+        margin: auto;
+    }
+
+    .auth-form {
+        padding: 1.125rem 2.125rem;
+    }
+
+
+    [data-layout="horizontal"] .deznav .metismenu>li>a {
+        padding: 0.7375rem 1.5rem 0.7375rem 0.7375rem;
+        margin: 0.125rem 0.125rem;
+    }
+
+    [data-sidebar-style="full"][data-layout="horizontal"] .deznav .metismenu>li>a {
+        font-size: 0.875rem;
+    }
+
+
+    .deznav .metismenu>li a>i {
+        font-size: 0.875rem;
+    }
+
+
+    .pay-sidebar .sidebar {
+        font-size: 0.875rem
+    }
+
+    .pay-sidebar .sidebar ul li {
+        padding: 12px 15px;
+
+    }
+
+    .fee-listbtn li .listbtn {
+
+        padding: 5px 20px;
+
+    }
+
+    .breadcrumb-item {
+        font-size: 0.875rem;
+    }
+
+
+
+
+}
+
+
+
+@media only screen and (min-width: 991px) and (max-width: 1200px) {
+
+    [data-sidebar-style="full"][data-layout="horizontal"] .deznav .metismenu>li>a {
+        font-size: 0.75rem;
+    }
+
+    [data-layout="horizontal"] .deznav .metismenu>li>a i {
+        padding: 5px;
+    }
+}
+
+
+
+@media(max-width: 1024px) {
+
+
+
+    [data-sidebar-style="full"][data-layout="horizontal"] .deznav .metismenu>li>a {
+        font-size: 0.75rem;
+    }
+
+}
+
+
+
+@media(max-width: 992px) {
+
+
+
+
+    .switch .label .toggle-inner {
+        z-index: 2;
+        position: absolute;
+        top: 1px;
+        left: 1px;
+        height: 18px;
+        width: 38px;
+        border-radius: 15px;
+        overflow: hidden;
+
+    }
+
+    .switch .label .toggle {
+        isolation: isolate;
+        position: relative;
+        height: 20px;
+        width: 40px;
+        border-radius: 15px;
+        background: #d6d6d6;
+        overflow: hidden;
+    }
+
+
+
+    .stopblock {
+        margin: 15px 15px 15px 0px;
+        min-width: auto;
+    }
+
+    .pright-sticky {
+        position: relative;
+        top: 0;
+        z-index: 1;
+        height: fit-content;
+    }
+
+
+
+}
+
+
+@media(max-width: 768px) {
+
+    .market-sidebar .metismenu > li.mm-active > a i, .market-sidebar .metismenu > li:hover > a i {
+        padding: 5px;
+    }
+
+    .register-area .auth-form .custom-radio {
+        display: flex;
+        flex-wrap: nowrap;
+    }
+
+    .register-area .auth-form .custom-radio label {
+        margin-right: 6px;
+        margin-bottom: 0px;
+    }
+
+    .register-area .auth-form .custom-radio label span {
+        padding: 10px 8px;
+    }
+
+    .register-area .auth-form .custom-radio label span:before {
+        margin-right: 5px;
+    }
+    .login-reg-form {
+
+        background-size: auto;
+    }
+
+    .nav-header {
+        width: 4rem;
+    }
+
+    .marketheader .header-right .recipe {
+        display: flex;
+    }
+
+    .market-sidebar .metismenu>li a>i {
+        color: #fff;
+    }
+
+    .header-desklogo {
+        display: none;
+    }
+
+    .header-moblogo {
+        display: block;
+       
+    }
+
+    .main-logo img {
+        width: auto;
+        height: 3rem;
+        margin: auto;
+        object-fit: scale-down;
+    }
+
+    .login_logo img {
+        width: 160px;
+        height: auto;
+    }
+
+    .header .header-content {
+        padding-left: 2rem;
+        padding-right: 0.938rem;
+    }
+
+
+
+    .navbar-expand .header-profile {
+        margin-left: 1rem;
+    }
+
+    .custom-search input {
+        font-size: 1rem;
+        height: 3rem;
+    }
+
+    .custom-search button {
+        width: 36px;
+        vertical-align: middle;
+        display: grid;
+        height: 36px;
+    }
+
+
+    .chart-container {
+        position: relative;
+        height: 250px;
+    }
+
+    .reg-left-part {
+        display: none;
+    }
+
+    .desklogo {
+        display: none;
+    }
+
+    .moblogo {
+        display: block;
+    }
+
+    .login_heading {
+        font-size: 20px;
+    }
+    .custom-radio {
+        display: block;
+
+    }
+
+    .custom-radio label {
+        font-size: 14px;
+       
+        margin-right: 0.5rem;
+        margin-bottom: 0.25em;
+    }
+
+    .custom-radio label span {
+        padding: 8px 16px;
+    }
+
+    .custom-radio label span:before {
+        width: 0.75rem;
+        height: 0.75rem;
+        margin-right: 0.375rem;
+    }
+
+    .breadcrumb-search {
+        width: 14rem;
+    }
+
+
+
+    .customer-search {
+        width: 100%;
+        margin-bottom: 15px;
+    }
+
+
+
+
+
+    .selectmark {
+        width: 100px
+    }
+
+
+    .syll-card img {
+        width: 100%;
+        height: 160px;
+        object-fit: contain;
+
+    }
+
+
+    .step-block .step-btn {
+        margin-right: 5px;
+        margin-bottom: 5px;
+        padding: 6px 15px;
+        margin-top: 5px;
+        font-size: .865rem;
+
+    }
+
+    .userprofile .upimage {
+        width: 42px;
+        height: 42px;
+
+    }
+
+    #side_pattern {
+        background-size: 200px;
+
+    }
+    .form-floating .toggle-password {
+        position: absolute;
+        right: 16px;
+        font-size: 16px;
+        top: 16px;
+        cursor: pointer;
+    }
+
+    /* .chart-container .canvas-chart{
+        width: 100%;
+        height: auto;
+    } */
+
+
+}
+
+
+@media(max-width: 576px) {
+
+
+
+    .coin-tabs {
+
+        padding: 0.625rem 0.6rem;
+
+    }
+
+    .coin-tabs .nav-tabs .nav-item .nav-link {
+
+        padding: 5px 8px;
+
+    }
+
+
+    .top-right-btn a.mob-icon {
+        padding: 4px;
+    }
+
+    .navbar-expand .header-profile {
+        margin-left: 0.5rem;
+    }
+
+ 
+    .custom-search {
+
+        min-width: 100%;
+
+
+    }
+
+
+
+
+
+}
+
+@media(max-width: 480px) {}
+
+
+
+@media only screen and (max-width: 320px) {
+    .grid {
+        -moz-column-count: 1;
+        -webkit-column-count: 1;
+        column-count: 1;
+    }
+}
+
+@media only screen and (min-width: 321px) and (max-width: 768px) {
+    .grid {
+        -moz-column-count: 1;
+        -webkit-column-count: 1;
+        column-count: 1;
+    }
+}
+
+@media only screen and (min-width: 769px) and (max-width: 1050px) {
+    .grid {
+        -moz-column-count: 2;
+        -webkit-column-count: 2;
+        column-count: 2;
+    }
+}
+
+@media only screen and (min-width: 1201px) {
+    .grid {
+        -moz-column-count: 3;
+        -webkit-column-count: 3;
+        column-count: 3;
+    }
+}
