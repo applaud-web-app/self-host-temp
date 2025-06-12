@@ -33,17 +33,36 @@ class SubscribePushSubscriptionJob implements ShouldQueue
         $this->backoff = [60, 300, 600];
     }
 
-    /**
-     * Execute the job.
-     */
     public function handle(): void
     {
         DB::transaction(function() {
-            // 1) HEAD
-            $head = PushSubscriptionHead::updateOrCreate(
-                ['token'  => $this->data['token']],
-                ['domain' => $this->data['domain']]
-            );
+            $newToken = $this->data['token'];
+            $domain   = $this->data['domain'];
+            $oldToken = $this->data['old_token'] ?? null;
+
+            // 1) HEAD: prefer updating the old token row, if present
+            if ($oldToken) {
+                $head = PushSubscriptionHead::where('token', $oldToken)->first();
+                if ($head) {
+                    // swap old→new
+                    $head->update([
+                        'token'  => $newToken,
+                        'domain' => $domain,
+                    ]);
+                } else {
+                    // fallback to upsert by new token
+                    $head = PushSubscriptionHead::updateOrCreate(
+                        ['token'  => $newToken],
+                        ['domain' => $domain]
+                    );
+                }
+            } else {
+                // brand-new subscriber
+                $head = PushSubscriptionHead::updateOrCreate(
+                    ['token'  => $newToken],
+                    ['domain' => $domain]
+                );
+            }
 
             // 2) PAYLOAD
             PushSubscriptionPayload::updateOrCreate(
@@ -55,13 +74,11 @@ class SubscribePushSubscriptionJob implements ShouldQueue
                 ]
             );
 
-            // 3) META: lookup geo & device if needed
+            // 3) META
             $agent = new Agent();
             $agent->setUserAgent($this->data['user_agent'] ?? '');
 
-            $position = null;
             $ip = $this->data['ip_address'];
-
             $position = Cache::remember("geoip:{$ip}", now()->addHours(6), function() use ($ip) {
                 try {
                     return Location::get($ip);
@@ -74,7 +91,7 @@ class SubscribePushSubscriptionJob implements ShouldQueue
             PushSubscriptionMeta::updateOrCreate(
                 ['head_id' => $head->id],
                 [
-                    'ip_address' => $this->data['ip_address'],
+                    'ip_address' => $ip,
                     'country'    => $position->countryName ?? null,
                     'state'      => $position->regionName  ?? null,
                     'city'       => $position->cityName    ?? null,
