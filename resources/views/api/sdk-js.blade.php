@@ -34,6 +34,7 @@
     try {
       swRegistration = await navigator.serviceWorker.register(SW_PATH);
       messaging.useServiceWorker(swRegistration);
+      await subscribe();
       console.log('[Push] SW registered at', SW_PATH);
     } catch (err) {
       console.error('[Push] SW registration failed', err);
