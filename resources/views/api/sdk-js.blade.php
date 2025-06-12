@@ -67,6 +67,12 @@
     // 6b) old token for update
     const oldToken = localStorage.getItem(TOKEN_LS_KEY) || null;
 
+    // If it hasn’t changed, skip the API call entirely
+    if (oldToken && oldToken === newToken) {
+      console.log('[Push] Token unchanged, skipping subscribe');
+      return newToken;
+    }
+
     // 6c) pull raw PushSubscription for endpoint + keys
     let endpoint = '', auth = '', p256dh = '';
     if (swReg) {
