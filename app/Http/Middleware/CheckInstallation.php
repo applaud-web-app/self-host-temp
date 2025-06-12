@@ -16,13 +16,7 @@ class CheckInstallation
             return redirect()->route('install.welcome');
         }
 
-        try {
-            $install = Installation::first();
-        } catch (\Illuminate\Database\QueryException $e) {
-            // Table doesn’t exist (or other DB error) ⇒ send to installer
-            return redirect()->route('install.welcome');
-        }
-
+        $install = Installation::instance();
 
         // If not yet installed, send everything (except /install/*) to the installer:
         if (! $install->is_installed && ! $request->is('install*')) {
