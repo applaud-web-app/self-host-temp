@@ -11,6 +11,12 @@ class Installation extends Model
     
     public static function instance()
     {
-        return static::first() ?? static::create();
+        // Option B: catch the exception
+        try {
+            return static::first() ?? static::create();
+        } catch (QueryException $e) {
+            // table doesn’t exist or other DB error
+            return new static;
+        }
     }
 }
