@@ -14,7 +14,7 @@ class PushApiController extends Controller
         $cfg   = PushConfig::firstOrFail()->web_app_config;
         $vapid = PushConfig::firstOrFail()->vapid_public_key;
 
-        return response()->view('push.sdk-js', compact('cfg','vapid'))->header('Content-Type', 'application/javascript');
+        return response()->view('api.sdk-js', compact('cfg','vapid'))->header('Content-Type', 'application/javascript');
     }
 
     public function subscribe(Request $req)
