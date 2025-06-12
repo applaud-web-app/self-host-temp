@@ -65,8 +65,6 @@ class NotificationController extends Controller
                             ? $row->recurring_start_date->format('Y-m-d')
                             : '');
                 })
-
-                // clicks – if you have a relationship or stored count
                 ->addColumn('clicks', fn($row) => $row->clicks_count ?? 0)
 
                 // actions column
@@ -175,28 +173,101 @@ class NotificationController extends Controller
         return compact('title', 'description', 'image');
     }
 
+    // public function store(Request $request)
+    // {
+    //     // 1) validate all except campaign_name
+    //     $data = $request->validate([
+    //         'target_url'           => 'required|url',
+    //         'title'                => 'required|string|max:255',
+    //         'description'          => 'required|string',
+    //         'bannerimage'          => 'nullable|url',
+    //         'icons'                => 'nullable|url',
+    //         'schedule_type'        => 'required|in:Instant,Schedule',
+
+    //         // only required if Schedule – otherwise allow null
+    //         'one_time_datetime'    => 'nullable|required_if:schedule_type,Schedule|date',
+    //         'recurring_start_date' => 'nullable|required_if:schedule_type,Schedule|date',
+    //         'recurring_end_date'   => 'nullable|required_if:schedule_type,Schedule|date',
+    //         'occurrence'           => 'nullable|required_if:schedule_type,Schedule|in:daily,weekly,monthly',
+    //         'recurring_start_time' => 'nullable|required_if:schedule_type,Schedule|date_format:H:i',
+
+    //         'domain_name'          => 'required|array|min:1',
+    //         'domain_name.*'        => 'required|string|exists:domains,name',
+    //     ], [], [
+    //         // friendlier attribute names
+    //         'one_time_datetime'    => 'one-time date & time',
+    //         'recurring_start_date' => 'recurring start date',
+    //         'recurring_end_date'   => 'recurring end date',
+    //         'recurring_start_time' => 'recurring start time',
+    //         'occurrence'           => 'repeat interval',
+    //     ]);
+
+    //     try {
+
+    //         // 2) overwrite/generate campaign_name
+    //         $data['campaign_name'] = 'CAMP#' . random_int(1000, 9999);
+
+    //         // 3) create notification
+    //         $notification = Notification::create([
+    //             'target_url'           => $data['target_url'],
+    //             'campaign_name'        => $data['campaign_name'],
+    //             'title'                => $data['title'],
+    //             'description'          => $data['description'],
+    //             'banner_image'         => $data['bannerimage']  ?? null,
+    //             'banner_icon'          => $data['icons']        ?? null,
+    //             'schedule_type'        => strtolower($data['schedule_type']),
+    //             'one_time_datetime'    => $data['schedule_type']==='Schedule' 
+    //                                     ? $data['one_time_datetime'] : null,
+    //             'recurring_start_date' => $data['schedule_type']==='Schedule' 
+    //                                     ? $data['recurring_start_date'] : null,
+    //             'recurring_end_date'   => $data['schedule_type']==='Schedule' 
+    //                                     ? $data['recurring_end_date'] : null,
+    //             'occurrence'           => $data['schedule_type']==='Schedule' 
+    //                                     ? $data['occurrence'] : null,
+    //             'recurring_start_time' => $data['schedule_type']==='Schedule' 
+    //                                     ? $data['recurring_start_time'] : null,
+    //         ]);
+
+    //         // 4) attach domains
+    //         $ids = Domain::whereIn('name', $request->domain_name)->pluck('id');
+    //         $notification->domains()->sync($ids);
+
+    //         // 5) queue the sending job
+    //         // SendNotificationJob::dispatch($notification);
+
+    //         return redirect()->route('notification.view')->with('success', "Notification “{$data['campaign_name']}” queued for sending.");
+    //     } catch (\Throwable $th) {
+            
+    //         // Log the error for debugging
+    //         \Log::error('Failed to create notification: ' . $th->getMessage(), [
+    //             'data' => $data,
+    //             'exception' => $th,
+    //         ]);
+
+    //         return back()->withErrors([
+    //             'general' => 'Failed to create notification. Please try again later.'
+    //         ])->withInput($data);
+    //     }
+    // }
+
     public function store(Request $request)
     {
-        // 1) validate all except campaign_name
+        // 1) Validate
         $data = $request->validate([
             'target_url'           => 'required|url',
             'title'                => 'required|string|max:255',
             'description'          => 'required|string',
-            'bannerimage'          => 'nullable|url',
-            'icons'                => 'nullable|url',
+            'banner_image'         => 'nullable|url',
+            'banner_icon'          => 'nullable|url',
             'schedule_type'        => 'required|in:Instant,Schedule',
-
-            // only required if Schedule – otherwise allow null
-            'one_time_datetime'    => 'nullable|required_if:schedule_type,Schedule|date',
-            'recurring_start_date' => 'nullable|required_if:schedule_type,Schedule|date',
-            'recurring_end_date'   => 'nullable|required_if:schedule_type,Schedule|date',
-            'occurrence'           => 'nullable|required_if:schedule_type,Schedule|in:daily,weekly,monthly',
-            'recurring_start_time' => 'nullable|required_if:schedule_type,Schedule|date_format:H:i',
-
+            'one_time_datetime'    => 'required_if:schedule_type,Schedule|nullable|date',
+            'recurring_start_date' => 'required_if:schedule_type,Schedule|nullable|date',
+            'recurring_end_date'   => 'required_if:schedule_type,Schedule|nullable|date',
+            'occurrence'           => 'required_if:schedule_type,Schedule|nullable|in:daily,weekly,monthly',
+            'recurring_start_time' => 'required_if:schedule_type,Schedule|nullable|date_format:H:i',
             'domain_name'          => 'required|array|min:1',
             'domain_name.*'        => 'required|string|exists:domains,name',
         ], [], [
-            // friendlier attribute names
             'one_time_datetime'    => 'one-time date & time',
             'recurring_start_date' => 'recurring start date',
             'recurring_end_date'   => 'recurring end date',
@@ -205,50 +276,48 @@ class NotificationController extends Controller
         ]);
 
         try {
-
-            // 2) overwrite/generate campaign_name
+            // 2) Generate a campaign name
             $data['campaign_name'] = 'CAMP#' . random_int(1000, 9999);
 
-            // 3) create notification
+            // 3) Create Notification
             $notification = Notification::create([
                 'target_url'           => $data['target_url'],
                 'campaign_name'        => $data['campaign_name'],
                 'title'                => $data['title'],
                 'description'          => $data['description'],
-                'banner_image'         => $data['bannerimage']  ?? null,
-                'banner_icon'          => $data['icons']        ?? null,
+                'banner_image'         => $data['banner_image']  ?? null,
+                'banner_icon'          => $data['banner_icon']   ?? null,
                 'schedule_type'        => strtolower($data['schedule_type']),
                 'one_time_datetime'    => $data['schedule_type']==='Schedule' 
-                                        ? $data['one_time_datetime'] : null,
+                                            ? $data['one_time_datetime']    : null,
                 'recurring_start_date' => $data['schedule_type']==='Schedule' 
-                                        ? $data['recurring_start_date'] : null,
+                                            ? $data['recurring_start_date'] : null,
                 'recurring_end_date'   => $data['schedule_type']==='Schedule' 
-                                        ? $data['recurring_end_date'] : null,
+                                            ? $data['recurring_end_date']   : null,
                 'occurrence'           => $data['schedule_type']==='Schedule' 
-                                        ? $data['occurrence'] : null,
+                                            ? $data['occurrence']           : null,
                 'recurring_start_time' => $data['schedule_type']==='Schedule' 
-                                        ? $data['recurring_start_time'] : null,
+                                            ? $data['recurring_start_time']  : null,
             ]);
 
-            // 4) attach domains
-            $ids = Domain::whereIn('name', $request->domain_name)->pluck('id');
+            // 4) Attach domains
+            $ids = Domain::whereIn('name', $data['domain_name'])->pluck('id');
             $notification->domains()->sync($ids);
 
-            // 5) queue the sending job
-            // SendNotificationJob::dispatch($notification);
+            // 5) Dispatch send job (immediately for Instant, or you could delay for Schedule)
+            SendNotificationJob::dispatch($notification->id);
 
-            return redirect()->route('notification.view')->with('success', "Notification “{$data['campaign_name']}” queued for sending.");
+            return redirect()
+                ->route('notification.view')
+                ->with('success', "Notification “{$data['campaign_name']}” queued for sending.");
         } catch (\Throwable $th) {
-            
-            // Log the error for debugging
-            \Log::error('Failed to create notification: ' . $th->getMessage(), [
-                'data' => $data,
+            Log::error('Failed to create notification: '.$th->getMessage(), [
+                'data'      => $data,
                 'exception' => $th,
             ]);
-
-            return back()->withErrors([
-                'general' => 'Failed to create notification. Please try again later.'
-            ])->withInput($data);
+            return back()
+                ->withErrors(['general' => 'Failed to create notification. Please try again later.'])
+                ->withInput($data);
         }
     }
 

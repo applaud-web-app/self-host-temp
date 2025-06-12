@@ -15,9 +15,11 @@ return new class extends Migration
             $table->bigIncrements('id');
             $table->string('token')->unique();
             $table->string('domain');
+            $table->tinyInteger('status')->default(1);
             $table->timestamps();
 
             $table->index('domain');
+            $table->index('status');
         });
     }
 
