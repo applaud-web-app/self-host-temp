@@ -40,29 +40,12 @@ class SubscribePushSubscriptionJob implements ShouldQueue
             $domain   = $this->data['domain'];
             $oldToken = $this->data['old_token'] ?? null;
 
-            // 1) HEAD: prefer updating the old token row, if present
-            if ($oldToken) {
-                $head = PushSubscriptionHead::where('token', $oldToken)->first();
-                if ($head) {
-                    // swap old→new
-                    $head->update([
-                        'token'  => $newToken,
-                        'domain' => $domain,
-                    ]);
-                } else {
-                    // fallback to upsert by new token
-                    $head = PushSubscriptionHead::updateOrCreate(
-                        ['token'  => $newToken],
-                        ['domain' => $domain]
-                    );
-                }
-            } else {
-                // brand-new subscriber
-                $head = PushSubscriptionHead::updateOrCreate(
-                    ['token'  => $newToken],
-                    ['domain' => $domain]
-                );
-            }
+            // 1) HEAD — get existing by oldToken or by newToken
+            $filterToken = $oldToken ?: $newToken;
+            $head = PushSubscriptionHead::firstOrNew(['token' => $filterToken]);
+            $head->token  = $newToken;
+            $head->domain = $domain;
+            $head->save();
 
             // 2) PAYLOAD
             PushSubscriptionPayload::updateOrCreate(
@@ -74,7 +57,7 @@ class SubscribePushSubscriptionJob implements ShouldQueue
                 ]
             );
 
-            // 3) META
+            // 3) META (same as before)
             $agent = new Agent();
             $agent->setUserAgent($this->data['user_agent'] ?? '');
 
