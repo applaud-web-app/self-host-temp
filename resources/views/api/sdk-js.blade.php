@@ -8,34 +8,32 @@
       const s = document.createElement('script');
       s.src = src;
       s.onload = resolve;
-      s.onerror = ()=>reject(new Error(`Failed to load ${src}`));
+      s.onerror = () => reject(new Error(`Failed to load ${src}`));
       document.head.appendChild(s);
     });
   }
 
-  // 2) load Firebase compat libs
-  await load('https://code.jquery.com/jquery-3.6.0.min.js');
+  // 2) load Firebase compat libraries
   await load('https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js');
   await load('https://www.gstatic.com/firebasejs/9.22.0/firebase-messaging-compat.js');
 
   // 3) injected values
   const firebaseConfig = @json($cfg);
   const vapidKey       = "{{ $vapid }}";
-  const SW_PATH       = "/apluselfhost-messaging-sw.js";  // your real SW filename
-  const SUBSCRIBE_URL = "/api/push/subscribe";
+  const SW_PATH        = "/apluselfhost-messaging-sw.js";  // your actual SW filename
+  const SUBSCRIBE_URL  = "/api/push/subscribe";
 
   // 4) init Firebase & Messaging
   firebase.initializeApp(firebaseConfig);
   const messaging = firebase.messaging();
 
-  // 5) register *your* SW and tell FCM about it
+  // 5) register *your* SW
   let swRegistration = null;
   if ('serviceWorker' in navigator) {
     try {
       swRegistration = await navigator.serviceWorker.register(SW_PATH);
-      messaging.useServiceWorker(swRegistration);
-      await subscribe();
       console.log('[Push] SW registered at', SW_PATH);
+      // no more useServiceWorker in v9, we'll pass the registration to getToken
     } catch (err) {
       console.error('[Push] SW registration failed', err);
     }
@@ -50,7 +48,11 @@
       throw new Error(`Notification permission ${perm}`);
     }
 
-    const token = await messaging.getToken({ vapidKey });
+    // pass your SW registration so Firebase won't try the default SW
+    const tokenOpts = { vapidKey };
+    if (swRegistration) tokenOpts.serviceWorkerRegistration = swRegistration;
+
+    const token = await messaging.getToken(tokenOpts);
     if (!token) {
       throw new Error('No FCM token retrieved');
     }
@@ -84,24 +86,25 @@
     });
   }
 
-  // 9) handle foreground (in-page) messages
+  // 9) handle foreground messages
   messaging.onMessage(function(payload) {
     const n = payload.notification || {};
-    showNotification(n.title || '', {
-      body:  n.body,
-      icon:  n.icon,
-      image: n.image,
-      data:  payload.data
-    });
-  });
-
-  // helper to abstract between SW and window.Notification
-  function showNotification(title, opts) {
     if (swRegistration && typeof swRegistration.showNotification === 'function') {
-      return swRegistration.showNotification(title, opts);
+      swRegistration.showNotification(n.title || '', {
+        body:  n.body,
+        icon:  n.icon,
+        image: n.image,
+        data:  payload.data
+      });
+    } else {
+      new Notification(n.title || '', {
+        body:  n.body,
+        icon:  n.icon,
+        image: n.image,
+        data:  payload.data
+      });
     }
-    return new Notification(title, opts);
-  }
+  });
 
   // 10) expose a manual refresh helper
   window.pushNotifyRefreshToken = async function() {
