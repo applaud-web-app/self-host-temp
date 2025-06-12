@@ -17,11 +17,9 @@
     document.head.appendChild(s);
   });
 
-  // 2) load Firebase compat libraries in parallel
-  await Promise.all([
-    load('https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js'),
-    load('https://www.gstatic.com/firebasejs/9.22.0/firebase-messaging-compat.js'),
-  ]);
+  // 2) load Firebase compat libs _in sequence_
+  await load('https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js');
+  await load('https://www.gstatic.com/firebasejs/9.22.0/firebase-messaging-compat.js');
 
   // 3) init Firebase
   firebase.initializeApp(@json($cfg));
