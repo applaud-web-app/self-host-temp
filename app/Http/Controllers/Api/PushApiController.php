@@ -31,7 +31,7 @@ class PushApiController extends Controller
           $data = $request->validate([
               'token'    => 'required|string',
               'domain'   => 'required|string|exists:domains,name',
-              'old_token' => 'nullable|string|exists:push_subscriptions_head,token',
+              'old_token' => 'nullable|string',
               'endpoint' => 'required|url',
               'auth'     => 'required|string',
               'p256dh'   => 'required|string',
