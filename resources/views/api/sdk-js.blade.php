@@ -54,6 +54,7 @@
     // ask for notification permission
     const perm = await Notification.requestPermission();
     if (perm !== 'granted') {
+      window.pushNotifyUnsubscribe();
       console.warn('[Push] Notification permission not granted');
       return null;
     }
