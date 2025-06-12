@@ -73,7 +73,7 @@ class PushApiController extends Controller
   {
       try {
         $request->validate([
-          'token' => 'required|string|exists:push_subscriptions_head,token',
+          'token' => 'required|string',
         ]);
 
         $deleted = PushSubscriptionHead::where('token', $request->token)->delete();
