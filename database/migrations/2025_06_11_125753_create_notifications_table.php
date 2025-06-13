@@ -25,6 +25,10 @@ return new class extends Migration
             // $table->date('recurring_end_date')->nullable();
             // $table->enum('occurrence', ['daily', 'weekly', 'monthly'])->nullable();
             // $table->time('recurring_start_time')->nullable();
+            $table->string('btn_1_title')->nullable();
+            $table->string('btn_1_url')->nullable();
+            $table->string('btn_title_2')->nullable();
+            $table->string('btn_url_2')->nullable();
             $table->string('message_id');
             $table->unsignedBigInteger('active_count')->default(0);
             $table->unsignedBigInteger('success_count')->default(0);

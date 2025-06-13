@@ -188,8 +188,24 @@ class NotificationController extends Controller
             'one_time_datetime'    => 'required_if:schedule_type,Schedule|nullable|date',
             'domain_name'          => 'required|array|min:1',
             'domain_name.*'        => 'required|string|exists:domains,name',
+
+            // our new CTA checkbox
+            'cta_enabled'       => 'sometimes|boolean',
+
+            // button 1 required only if CTA enabled
+            'btn_1_title'       => 'required_if:cta_enabled,1|string|max:255',
+            'btn_1_url'         => 'required_if:cta_enabled,1|url',
+
+            // button 2 only required if one of its pair is present
+            'btn_title_2'       => 'nullable|required_with:btn_url_2|string|max:255',
+            'btn_url_2'         => 'nullable|required_with:btn_title_2|url',
+            
         ], [], [
-            'one_time_datetime'    => 'one-time date & time',
+            'one_time_datetime' => 'one‐time date & time',
+            'btn_1_title'       => 'Button 1 title',
+            'btn_1_url'         => 'Button 1 URL',
+            'btn_title_2'       => 'Button 2 title',
+            'btn_url_2'         => 'Button 2 URL',
         ]);
 
         try {
@@ -207,6 +223,12 @@ class NotificationController extends Controller
                 'schedule_type'        => strtolower($data['schedule_type']),
                 'one_time_datetime'    => $data['schedule_type']==='Schedule' ? $data['one_time_datetime'] : null,
                 'message_id'           => Str::uuid(),
+                
+                // CTA fields (will be null if not enabled)
+                'btn_1_title'        => $data['btn_1_title']   ?? null,
+                'btn_1_url'          => $data['btn_1_url']     ?? null,
+                'btn_title_2'        => $data['btn_title_2']   ?? null,
+                'btn_url_2'          => $data['btn_url_2']     ?? null,
             ]);
 
             // 4) Attach domains
