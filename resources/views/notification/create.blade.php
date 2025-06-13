@@ -139,6 +139,62 @@
                                     </div>
                                 </div>
                             </div>
+
+                               <div class="card-footer">
+                                <div class="form-check mb-2">
+                                    <input type="checkbox" class="form-check-input" id="ctaCheckbox"
+                                        onchange="createCard()" value="">
+                                    <label class="form-check-label" for="ctaCheckbox">Enable CTA's Section</label>
+                                </div>
+                                <div id="cardContainer" class="cardContainer" style="display: none">
+                                    <div class="border p-3 rounded-1 mb-2" id="first_btn">
+                                        <h5 class="mb-2 badge badge-primary rounded-0">Button 1</h5>
+                                        <div class="row">
+                                            <div class="col-lg-3 col-12">
+                                                <label for="titleInput1" class="form-label">Title: <span
+                                                        class="text-danger">*</span>
+                                                </label>
+                                                <input type="text" class="form-control" id="titleInput1"
+                                                    placeholder="Click Here" onkeyup="btn_title_prv1(this.value)"
+                                                    name="btn_1_title">
+                                            </div>
+                                            <div class="col-lg-9 col-12">
+                                                <label for="urlInput1" class="form-label">Landing URL: <span
+                                                        class="text-danger">*</span>
+                                                </label>
+                                                <input type="url" class="form-control" name="btn_1_url"
+                                                    id="urlInput1" placeholder="Enter URL">
+                                            </div>
+                                        </div>
+                                        <button type="button" class="btn btn-sm mt-3 btn-outline-secondary"
+                                            onclick="toggleSecondBtn()">
+                                            <i class="fas fa-plus"></i> Add Another </button>
+                                    </div>
+                                    <div id="second_btn" class="border p-3 rounded-1 mb-2" style="display: none">
+                                        <h5 class="mb-2 badge badge-secondary rounded-0">Button 2</h5>
+                                        <div class="row">
+                                            <div class="col-lg-3">
+                                                <label for="btn_title_2" class="form-label">Title: <span
+                                                        class="text-danger">*</span>
+                                                </label>
+                                                <input type="text" class="form-control" name="btn_title_2"
+                                                    placeholder="Click Here" onkeyup="btn_title_prv2(this.value)">
+                                            </div>
+                                            <div class="col-lg-9">
+                                                <label for="btn_url_2" class="form-label">Landing URL: <span
+                                                        class="text-danger">*</span>
+                                                </label>
+                                                <input type="url" class="form-control" name="btn_url_2"
+                                                    id="urlInput2" placeholder="Enter URL">
+                                            </div>
+                                        </div>
+                                        <button type="button" class="btn btn-sm mt-3 btn-outline-danger "
+                                            onclick="removeSecondBtn()">
+                                            <i class="fas fa-trash"></i> Delete </button>
+                                    </div>
+                                </div>
+                            </div>
+
                         </div>
 
                         <!-- Domain Selection -->
@@ -317,6 +373,19 @@
                                                     </p>
                                                 </div>
                                             </div>
+
+                                            <div class="row g-2">
+                                                <div class="col-6 btn_prv" style="display:none;" id="btn_prv">
+                                                    <span id="btn_title1"
+                                                        class="btn_title1 btn btn-dark w-100 btn-sm">Click Here</span>
+                                                </div>
+                                                <div class="col-6 btn2_prv" style="display:none;" id="btn2_prv">
+                                                    <span id="btn_title2"
+                                                        class="btn_title2 btn btn-dark w-100 btn-sm">Click Here</span>
+                                                </div>
+                                            </div>
+
+
                                         </div>
                                     </div>
                                     <div class="android_view" style="display: none;">
@@ -342,6 +411,17 @@
                                             </div>
                                             <img src="" id="message_image"
                                                 class="feat_img message_image img-fluid mt-3" alt="">
+
+                                            <div class="d-flex align-items-center">
+                                                <div class="mt-3 me-3 btn_prv" style="display:none;" id="btn_prv">
+                                                    <span id="btn_title1" class="btn_title1 text-primary fs-16">Click
+                                                        Here</span>
+                                                </div>
+                                                <div class="mt-3 me-3 btn2_prv" style="display:none;" id="btn2_prv">
+                                                    <span id="btn_title2" class="btn_title2 text-primary fs-16">Click
+                                                        Here</span>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -837,6 +917,111 @@
                 injected=true;
             });
         })();
-        
+
     </script>
+<script>
+  $(function() {
+    // Cache selectors
+    const $ctaCheckbox    = $('#ctaCheckbox');
+    const $cardContainer  = $('#cardContainer');
+    const $firstBtn       = $('#first_btn');
+    const $addAnotherBtn  = $firstBtn.find('button');
+    const $secondBtn      = $('#second_btn');
+    const $removeBtn      = $secondBtn.find('button');
+    const $btnPreview1    = $('.btn_prv');
+    const $btnPreview2    = $('.btn2_prv');
+    const $btnTitle1Spans = $('.btn_title1');
+    const $btnTitle2Spans = $('.btn_title2');
+    const $titleInput1    = $('#titleInput1');
+    const $btn2Input      = $('input[name="btn_title_2"]');
+
+    // Update first CTA preview
+    function updateFirstPreview(text) {
+      $btnTitle1Spans.text(text || 'Click Here');
+      if ($ctaCheckbox.is(':checked') && text.trim()) {
+        $btnPreview1.show();
+      } else {
+        $btnPreview1.hide();
+      }
+    }
+
+    // Update second CTA preview
+    function updateSecondPreview(text) {
+      $btnTitle2Spans.text(text || 'Click Here');
+      if ($ctaCheckbox.is(':checked') && $secondBtn.is(':visible') && text.trim()) {
+        $btnPreview2.show();
+      } else {
+        $btnPreview2.hide();
+      }
+    }
+
+    // Reset the "Add Another" button text
+    function setAddBtnDefault() {
+      $addAnotherBtn.html('<i class="fas fa-plus"></i> Add Another');
+    }
+
+    // Clear second-CTA inputs
+    function clearSecondFields() {
+      $secondBtn.find('input').val('');
+    }
+
+    // Show/hide CTA section
+    function toggleCTASection() {
+      if ($ctaCheckbox.is(':checked')) {
+        $cardContainer.slideDown(200, function() {
+          updateFirstPreview($titleInput1.val());
+          updateSecondPreview($btn2Input.val());
+        });
+      } else {
+        $cardContainer.slideUp(200, function() {
+          clearSecondFields();
+          setAddBtnDefault();
+        });
+        updateFirstPreview('');
+        updateSecondPreview('');
+      }
+    }
+
+    // Toggle second CTA on/off
+    function toggleSecondBtn() {
+      if ($secondBtn.is(':visible')) {
+        $secondBtn.slideUp(200, function() {
+          updateSecondPreview('');
+        });
+        setAddBtnDefault();
+        clearSecondFields();
+      } else {
+        $secondBtn.slideDown(200, function() {
+          updateSecondPreview($btn2Input.val());
+        });
+        $addAnotherBtn.html('<i class="fas fa-minus"></i> Hide');
+      }
+    }
+
+    // Remove/hide second CTA
+    function removeSecondBtn() {
+      $secondBtn.slideUp(200, function() {
+        updateSecondPreview('');
+      });
+      setAddBtnDefault();
+      clearSecondFields();
+    }
+
+    // Wire up events
+    $ctaCheckbox.on('change', toggleCTASection);
+    $addAnotherBtn.on('click', toggleSecondBtn);
+    $removeBtn.on('click', removeSecondBtn);
+    $titleInput1.on('input', () => updateFirstPreview($titleInput1.val()));
+    $btn2Input.on('input', () => updateSecondPreview($btn2Input.val()));
+
+    // Initial state
+    $cardContainer.hide();
+    $secondBtn.hide();
+    $btnPreview1.hide();
+    $btnPreview2.hide();
+  });
+</script>
+
+
+
 @endpush
