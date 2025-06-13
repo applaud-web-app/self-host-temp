@@ -354,7 +354,7 @@
                                     <div class="windows_view">
                                         <img src="" id="message_image" class="feat_img img-fluid message_image"
                                             alt="" style="display: none;">
-                                        <div class="windows_body mt-3">
+                                        <div class="windows_body">
                                             <div class="d-flex align-items-center">
                                                 <img src="{{ asset('images/chrome.png') }}" class="me-2"
                                                     alt="Chrome">
