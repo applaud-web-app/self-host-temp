@@ -79,6 +79,7 @@
                                     </div>
                                 </div>
                                 {{-- Service Account JSON --}}
+                                  <hr style=" border-top: 1px dashed #ccc;">
                                 <div class="mb-3">
                                     <label class="form-label">
                                         Service Account JSON <span class="text-danger">*</span>
@@ -91,10 +92,11 @@
                                     <input type="file" class="form-control" id="service_account_json_file"
                                         name="service_account_json_file" accept=".json,application/json">
                                 </div>
+                                <hr style=" border-top: 1px dashed #ccc;">
 
                                 {{-- VAPID keys --}}
                                 <div class="row g-3 mb-3">
-                                    <div class="col-md-6">
+                                    <div class="col-md-12">
                                         <label for="vapid_public_key" class="form-label">
                                             VAPID Public Key <span class="text-danger">*</span>
                                         </label>
@@ -103,7 +105,7 @@
                                             value="{{ old('vapid_public_key', $config->vapid_public_key ?? '') }}"
                                             placeholder="e.g. BP...kQ">
                                     </div>
-                                    <div class="col-md-6">
+                                    <div class="col-md-12">
                                         <label for="vapid_private_key" class="form-label">
                                             VAPID Private Key <span class="text-danger">*</span>
                                         </label>

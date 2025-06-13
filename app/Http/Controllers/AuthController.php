@@ -40,4 +40,16 @@ class AuthController extends Controller
             'email' => 'Invalid credentials. Please try again.'
         ])->withInput($request->only('email', 'remember_me'));
     }
+
+
+     public function logout(Request $request)
+    {
+        Auth::logout();        
+
+        return redirect()
+            ->route('login')
+            ->with('success', 'You have been logged out.');
+    }
+
+
 }

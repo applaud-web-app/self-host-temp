@@ -118,10 +118,18 @@
                                         <i class="far fa-user text-primary"></i>
                                         <span class="ms-1">Profile</span>
                                     </a>
-                                    <a href="#" class="dropdown-item ai-icon text-danger">
+                                  <a href="#"
+                                    class="dropdown-item ai-icon text-danger"
+                                    onclick="event.preventDefault();
+                                                document.getElementById('logout-form').submit();">
                                         <i class="far fa-sign-out text-danger"></i>
                                         <span class="ms-1">Logout</span>
                                     </a>
+
+                                    <form id="logout-form" action="{{ route('logout') }}"
+                                        method="POST" class="d-none">
+                                        @csrf
+                                    </form>
                                 </div>
                             </li>
                         </ul>

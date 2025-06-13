@@ -48,9 +48,14 @@ Route::controller(AuthController::class)->group(function () {
 });
 
 // Optional: Home page (static)
-Route::get('/dashboard', [DashboardController::class, 'dashboard'])->name('dashboard');
+Route::get('/dashboard', [DashboardController::class, 'dashboard'])->name('dashboard')->middleware('auth');
 
 Route::middleware(['auth','ensure_push_config'])->group(function() {
+
+    // Settings routes
+    Route::controller(AuthController::class)->group(function () {
+        Route::post('logout', 'logout')->name('logout');
+    });
 
     // Push Config routes
     Route::controller(PushConfigController::class)->prefix('settings/push')->name('settings.push.')->group(function () {
