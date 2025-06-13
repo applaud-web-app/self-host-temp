@@ -50,7 +50,7 @@ messaging.setBackgroundMessageHandler(payload => {
   sendAnalytics('received', payload);
 
   const notif = payload.data || {};
-  const title = d.title || 'Notification';
+  const title = notif.title || 'Notification';
   const options = {
     body: notif.body,
     icon: notif.icon || '/favicon.ico',
