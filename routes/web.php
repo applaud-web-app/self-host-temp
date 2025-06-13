@@ -7,6 +7,8 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\PushConfigController;
 use App\Http\Controllers\DomainController;
 use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\SettingsController;
+
 
 
 Route::prefix('install')->group(function () {
@@ -86,30 +88,38 @@ Route::middleware(['auth','ensure_push_config'])->group(function() {
     Route::get('/profile', [Controller::class, 'profile'])->name('profile');
 
     // Settings routes (using the same Controller)
-    Route::prefix('settings')->group(function () {
-        Route::get('/general',       [Controller::class, 'generalSettings'])->name('settings.general');
-        Route::get('/email',         [Controller::class, 'emailSettings'])->name('settings.email');
-        Route::get('/server-info',   [Controller::class, 'serverInfo'])->name('settings.server-info');
-        Route::get('/utilities',     [Controller::class, 'utilities'])->name('settings.utilities');
-        Route::post('/utilities/purge-cache',  [Controller::class, 'purgeCache'])->name('settings.utilities.purge-cache');
-        Route::post('/utilities/clear-log',    [Controller::class, 'clearLog'])->name('settings.utilities.clear-log');
-        Route::post('/utilities/make-cache',   [Controller::class, 'makeCache'])->name('settings.utilities.make-cache');
-        Route::get('/upgrade', [Controller::class, 'upgrade'])->name('settings.upgrade');
-        Route::get('/backup-subscribers', [Controller::class, 'backupSubscribersPage'])->name('settings.backup-subscribers'); // Fixed naming
-        Route::get('/firebase-setup', [Controller::class, 'firebaseSetup'])->name('settings.firebase-setup'); // Fixed naming
-    });
-
-
-    // Install Wizard Routes (views only)
-    // Route::prefix('install')->group(function () {
-    //     Route::get('/',                 [Controller::class, 'installWelcome'])->name('install.welcome');
-    //     Route::get('/environment',      [Controller::class, 'installEnvironment'])->name('install.environment');
-    //     Route::get('/license',          [Controller::class, 'installLicense'])->name('install.license');
-    //     Route::get('/database',         [Controller::class, 'installDatabase'])->name('install.database');
-    //     Route::get('/cron',             [Controller::class, 'installCron'])->name('install.cron');
-    //     Route::get('/admin-setup',      [Controller::class, 'adminSetup'])->name('install.admin-setup');
-    //     Route::get('/complete',         [Controller::class, 'installComplete'])->name('install.complete');
+    // Route::prefix('settings')->group(function () {
+    //     Route::get('/general',       [Controller::class, 'generalSettings'])->name('settings.general');
+    //     Route::get('/email',         [Controller::class, 'emailSettings'])->name('settings.email');
+    //     Route::get('/server-info',   [Controller::class, 'serverInfo'])->name('settings.server-info');
+    //     Route::get('/utilities',     [Controller::class, 'utilities'])->name('settings.utilities');
+    //     Route::post('/utilities/purge-cache',  [Controller::class, 'purgeCache'])->name('settings.utilities.purge-cache');
+    //     Route::post('/utilities/clear-log',    [Controller::class, 'clearLog'])->name('settings.utilities.clear-log');
+    //     Route::post('/utilities/make-cache',   [Controller::class, 'makeCache'])->name('settings.utilities.make-cache');
+    //     Route::get('/upgrade', [Controller::class, 'upgrade'])->name('settings.upgrade');
+    //     Route::get('/backup-subscribers', [Controller::class, 'backupSubscribersPage'])->name('settings.backup-subscribers'); // Fixed naming
+    //     Route::get('/firebase-setup', [Controller::class, 'firebaseSetup'])->name('settings.firebase-setup'); // Fixed naming
     // });
+
+
+
+    Route::middleware(['auth','ensure_push_config'])->group(function() {
+    Route::prefix('settings')->controller(SettingsController::class)->name('settings.')->group(function() {
+         Route::get('/general', 'generalSettings')->name('general');
+             Route::post('/general','updateGeneralSettings');
+        Route::get('/email', 'emailSettings')->name('email');
+             Route::post('/email','updateEmailSettings');
+           Route::get('/server-info',         'serverInfo')->name('server-info');
+             Route::get('/server-info/metrics', 'serverMetrics')->name('server-info.metrics');
+        Route::get('/utilities',     'utilities')->name('utilities');
+        Route::post('/utilities/purge-cache',  'purgeCache')->name('utilities.purge-cache');
+        Route::post('/utilities/clear-log',    'clearLog')->name('utilities.clear-log');
+        Route::post('/utilities/make-cache',   'makeCache')->name('utilities.make-cache');
+        Route::get('/upgrade',       'upgrade')->name('upgrade');
+        Route::get('/backup-subscribers','backupSubscribersPage')->name('backup-subscribers');
+        Route::get('/firebase-setup','firebaseSetup')->name('firebase-setup');
+    });
+});
 
     Route::get('/addons', [Controller::class, 'addons'])->name('addons');
 
