@@ -364,7 +364,7 @@
     </section>
 
     <!-- Modal: Select Icons -->
-    <div class="modal fade" id="staticBackdrop" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1"
+      <div class="modal fade" id="staticBackdrop" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1"
         aria-labelledby="staticBackdropLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-scrollable modal-lg">
             <div class="modal-content">
@@ -372,23 +372,11 @@
                     <h5 class="modal-title fs-20" id="staticBackdropLabel">Select Icons</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-                <div class="modal-body d-flex flex-wrap">
-                    @php
-                        use Illuminate\Support\Facades\File;
-                        // Fetch every file in public/images/push/icons
-                        $files = File::files(public_path('images/push/icons'));
-                    @endphp
-
-                    @foreach ($files as $file)
-                        @php
-                            $filename = $file->getFilename();
-                        @endphp
-                        <div class="m-1">
-                            <img src="{{ asset('images/push/icons/' . $filename) }}" class="img-thumbnail p-2"
-                                alt="{{ $filename }}" onclick="setImageUrl(this.src)" width="52"
-                                height="52">
-                        </div>
-                    @endforeach
+                <div class="modal-body d-flex flex-wrap" id="icon-container">
+                    <!-- spinner until icons load -->
+                    <div id="icon-loader" class="spinner-border m-auto" role="status">
+                        <span class="visually-hidden">Loading…</span>
+                    </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-sm btn-danger" data-bs-dismiss="modal">Close</button>
@@ -400,6 +388,19 @@
 
 @push('scripts')
     <script src="{{ asset('vendor/select2/js/select2.full.min.js') }}"></script>
+
+     @php
+        use Illuminate\Support\Facades\File;
+        $files = File::files(public_path('images/push/icons'));
+        $iconUrls = collect($files)
+            ->map(fn($f) => asset('images/push/icons/' . $f->getFilename()))
+            ->toJson();
+    @endphp
+
+     <script>
+        const ICON_URLS = {!! $iconUrls !!};
+    </script>
+
     <script>
         // Show or hide schedule fields
         function hideorshow(e) {
@@ -561,65 +562,7 @@
             });
         });
 
-        // Form validation using <div> for errors
-        // $(document).ready(function() {
-        //     $("#notificationform").validate({
-        //         errorElement: "div",
-        //         errorClass: "invalid-feedback",
-        //         rules: {
-        //             target_url: {
-        //                 required: true,
-        //                 url: true
-        //             },
-        //             campaign_name: { required: true },
-        //             title: { required: true },
-        //             description: { required: true },
-        //             // Removed CTA-related rules
-        //             one_time_datetime: { required: function() {
-        //                 return $('#Schedule').is(':checked');
-        //             }},
-        //             recurring_start_date: { required: function() {
-        //                 return $('#Schedule').is(':checked');
-        //             }},
-        //             recurring_end_date: { required: function() {
-        //                 return $('#Schedule').is(':checked') && !$('#end_date').is(':checked');
-        //             }},
-        //             occurrence: { required: function() {
-        //                 return $('#Schedule').is(':checked');
-        //             }},
-        //             recurring_start_time: { required: function() {
-        //                 return $('#Schedule').is(':checked');
-        //             }}
-        //         },
-        //         messages: {
-        //             target_url: "Please enter a valid URL.",
-        //             title: "Title is required.",
-        //             description: "Notification Message is required.",
-        //             one_time_datetime: "Start Date & Time is required when scheduling.",
-        //             recurring_start_date: "Recurring Start Date is required when scheduling.",
-        //             recurring_end_date: "Recurring End Date is required unless 'Never Ends' is checked.",
-        //             occurrence: "Please select a repeat interval.",
-        //             recurring_start_time: "Recurring Start Time is required when scheduling."
-        //         },
-        //         errorPlacement: function(error, element) {
-        //             // Insert <div class="invalid-feedback"> immediately after the input
-        //             error.insertAfter(element);
-        //         },
-        //         highlight: function(element) {
-        //             $(element).addClass("is-invalid");
-        //         },
-        //         unhighlight: function(element) {
-        //             $(element).removeClass("is-invalid");
-        //         },
-        //         submitHandler: function(form) {
-        //             var $btn = $('#sendNotification');
-        //             $btn.prop('disabled', true);
-        //             $('#sendNotification').text(' Processing...');
-        //             $btn.prepend('<i class="fas fa-spinner fa-spin me-2"></i>');
-        //             form.submit();
-        //         }
-        //     });
-        // });
+       
     </script>
     <script>
         $(function() {
@@ -876,5 +819,24 @@
                 }
             });
         });
+
+
+        (function(){
+            let injected=false;
+            $('#staticBackdrop').on('show.bs.modal',function(){
+                if(injected) return;
+                const $ct = $('#icon-container').empty();
+                ICON_URLS.forEach(url=>{
+                    $('<div class="m-1">')
+                        .append($('<img>').attr({src:url,width:52,height:52,class:'img-thumbnail p-2',alt:'icon'})
+                            .css('cursor','pointer')
+                            .click(()=> setImageUrl(url))
+                        )
+                        .appendTo($ct);
+                });
+                injected=true;
+            });
+        })();
+        
     </script>
 @endpush

@@ -81,7 +81,19 @@
               </div>
 
               <div class="text-end mt-3">
-                <button type="submit" class="btn btn-primary">Save Settings</button>
+                <button
+                  type="submit"
+                  id="saveBtn"
+                  class="btn btn-primary"
+                >
+                  <span id="saveBtnText">Save Settings</span>
+                  <span
+                    id="saveBtnSpinner"
+                    class="spinner-border spinner-border-sm ms-2 d-none"
+                    role="status"
+                    aria-hidden="true"
+                  ></span>
+                </button>
               </div>
             </form>
           </div>
@@ -105,14 +117,22 @@
 </section>
 
 <script>
-  // Bootstrap form validation
   (function () {
     'use strict';
     const form = document.getElementById('generalSettingsForm');
+    const saveBtn = document.getElementById('saveBtn');
+    const saveBtnText = document.getElementById('saveBtnText');
+    const saveBtnSpinner = document.getElementById('saveBtnSpinner');
+
     form.addEventListener('submit', function (event) {
       if (!form.checkValidity()) {
         event.preventDefault();
         event.stopPropagation();
+      } else {
+        // Disable the button, change text, and show spinner
+        saveBtn.disabled = true;
+        saveBtnText.textContent = 'Processing…';
+        saveBtnSpinner.classList.remove('d-none');
       }
       form.classList.add('was-validated');
     }, false);

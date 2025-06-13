@@ -49,6 +49,7 @@
                        class="form-control @error('mail_driver') is-invalid @enderror"
                        value="{{ old('mail_driver', $email->mail_driver) }}"
                        required>
+                <div class="invalid-feedback">Please enter a mail driver.</div>
               </div>
 
               <div class="form-group mb-3">
@@ -58,6 +59,7 @@
                        value="{{ old('mail_host', $email->mail_host) }}"
                        placeholder="smtp.example.com"
                        required>
+                <div class="invalid-feedback">Please enter a mail host.</div>
               </div>
 
               <div class="row mb-3">
@@ -67,6 +69,7 @@
                          class="form-control @error('mail_port') is-invalid @enderror"
                          value="{{ old('mail_port', $email->mail_port) }}"
                          placeholder="587" required>
+                  <div class="invalid-feedback">Please enter a mail port.</div>
                 </div>
                 <div class="col-md-6 form-group">
                   <label for="mail_encryption">Encryption</label>
@@ -85,6 +88,7 @@
                        class="form-control @error('mail_username') is-invalid @enderror"
                        value="{{ old('mail_username', $email->mail_username) }}"
                        required>
+                <div class="invalid-feedback">Please enter a username.</div>
               </div>
 
               <div class="form-group mb-3">
@@ -94,20 +98,20 @@
                          class="form-control @error('mail_password') is-invalid @enderror"
                          value="{{ old('mail_password', $email->mail_password) }}"
                          placeholder="••••••••" required>
-                  <span class="toggle-password" onclick="togglePassword('mail_password', this)">
+                  <span class="toggle-password" onclick="togglePassword('mail_password', this)" style="cursor: pointer; position: absolute; top: 50%; right: 10px; transform: translateY(-50%);">
                     <i class="fas fa-eye"></i>
                   </span>
                   <div class="invalid-feedback">Please enter the mail password.</div>
                 </div>
               </div>
 
-       
               <div class="form-group mb-3">
                 <label for="mail_from_address">From Address <span class="text-danger">*</span></label>
                 <input type="email" id="mail_from_address" name="mail_from_address"
                        class="form-control @error('mail_from_address') is-invalid @enderror"
                        value="{{ old('mail_from_address', $email->mail_from_address) }}"
                        required>
+                <div class="invalid-feedback">Please enter a valid email address.</div>
               </div>
 
               <div class="form-group mb-3">
@@ -116,10 +120,14 @@
                        class="form-control @error('mail_from_name') is-invalid @enderror"
                        value="{{ old('mail_from_name', $email->mail_from_name) }}"
                        required>
+                <div class="invalid-feedback">Please enter the from name.</div>
               </div>
 
               <div class="text-end">
-                <button type="submit" class="btn btn-primary">Save Email Settings</button>
+                <button type="submit" id="saveEmailBtn" class="btn btn-primary">
+                  <span id="saveEmailBtnText">Save Email Settings</span>
+                  <span id="saveEmailSpinner" class="spinner-border spinner-border-sm ms-2 d-none" role="status" aria-hidden="true"></span>
+                </button>
               </div>
             </form>
           </div>
@@ -146,8 +154,20 @@
   (function(){
     'use strict';
     const form = document.getElementById('emailSettingsForm');
+    const saveBtn = document.getElementById('saveEmailBtn');
+    const saveBtnText = document.getElementById('saveEmailBtnText');
+    const saveSpinner = document.getElementById('saveEmailSpinner');
+
     form.addEventListener('submit', function(e){
-      if(!form.checkValidity()){ e.preventDefault(); e.stopPropagation(); }
+      if (!form.checkValidity()) {
+        e.preventDefault();
+        e.stopPropagation();
+      } else {
+        // disable button, update text & show spinner
+        saveBtn.disabled = true;
+        saveBtnText.textContent = 'Processing…';
+        saveSpinner.classList.remove('d-none');
+      }
       form.classList.add('was-validated');
     }, false);
   })();
