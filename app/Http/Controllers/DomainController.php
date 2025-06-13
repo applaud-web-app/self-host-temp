@@ -196,7 +196,6 @@ class DomainController extends Controller
             $domain   = $response['domain'];
 
             $domain = Domain::where('name', $domain)->where('status',1)->first();
-            // Check if the domain exists and is active
             if (!$domain) {
                 return redirect()->route('domain.view')->with('error', 'Domain not found or inactive.');
             }
