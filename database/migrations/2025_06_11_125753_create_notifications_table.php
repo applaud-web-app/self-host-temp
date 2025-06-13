@@ -25,6 +25,9 @@ return new class extends Migration
             $table->date('recurring_end_date')->nullable();
             $table->enum('occurrence', ['daily', 'weekly', 'monthly'])->nullable();
             $table->time('recurring_start_time')->nullable();
+            $table->unsignedBigInteger('active_count')->default(0);
+            $table->unsignedBigInteger('success_count')->default(0);
+            $table->unsignedBigInteger('failed_count')->default(0);
             $table->timestamps();
         });
     }

@@ -1,7 +1,4 @@
 <?php
-
-// app/Jobs/SendNotificationBatchJob.php
-
 namespace App\Jobs;
 
 use App\Models\Notification;
@@ -30,11 +27,11 @@ class SendNotificationBatchJob implements ShouldQueue
     protected array   $tokens;
 
     public function __construct(
-        int $notificationId,
+        int     $notificationId,
         Factory $factory,
-        array $webPush,
-        array $subscriptionIds,
-        array $tokens
+        array   $webPush,
+        array   $subscriptionIds,
+        array   $tokens
     ) {
         $this->notificationId   = $notificationId;
         $this->factory          = $factory;
@@ -49,20 +46,26 @@ class SendNotificationBatchJob implements ShouldQueue
             return;
         }
 
+        // Predefine shared variables
+        $total     = count($this->tokens);
+        $now       = now();
         $messaging = $this->factory->createMessaging();
         $config    = WebPushConfig::fromArray($this->webPush);
         $message   = CloudMessage::new()->withWebPushConfig($config);
 
         try {
-            $batch = $messaging->sendMulticast($message, $this->tokens);
+            $report         = $messaging->sendMulticast($message, $this->tokens);
+            $successCount   = $report->successes()->count();
+            $failCount      = $report->failures()->count();
 
-            $now        = now();
-            $rows       = [];
-            $successKs  = $batch->successes()->keys();
-            $total      = count($this->tokens);
+            // Extract failure indexes from the report items
+            $failureItems   = $report->failures()->getItems();
+            $failureIndexes = array_keys($failureItems);
 
-            foreach ($this->subscriptionIds as $i => $subId) {
-                $ok = in_array($i, $successKs, true);
+            $rows = [];
+            foreach ($this->subscriptionIds as $index => $subId) {
+                $ok = ! in_array($index, $failureIndexes, true);
+
                 $rows[] = [
                     'notification_id'      => $this->notificationId,
                     'subscription_head_id' => $subId,
@@ -70,36 +73,29 @@ class SendNotificationBatchJob implements ShouldQueue
                     'created_at'           => $now,
                     'updated_at'           => $now,
                 ];
+
                 if (! $ok) {
-                    // deactivate the bad token
-                    PushSubscriptionHead::where('id', $subId)
-                                         ->update(['status' => 0]);
+                    PushSubscriptionHead::where('id', $subId)->update(['status' => 0]);
                 }
             }
 
-            // bulk‐insert results
-            DB::table('notification_sends')
-              ->insertOrIgnore($rows);
+            // Bulk insert results
+            DB::table('notification_sends')->insertOrIgnore($rows);
 
-            // bump your counters on the Notification model
-            $successCount = $batch->successes()->count();
-            $failCount    = $total - $successCount;
-
+            // Update notification counters
+            Notification::where('id', $this->notificationId)
+                        ->increment('active_count', $total);
             Notification::where('id', $this->notificationId)
                         ->increment('success_count', $successCount);
             Notification::where('id', $this->notificationId)
                         ->increment('failed_count', $failCount);
-            Notification::where('id', $this->notificationId)
-                        ->increment('active_count', $total);
-
         } catch (\Throwable $e) {
             Log::error("Batch send error [notif={$this->notificationId}]", [
                 'error'            => $e->getMessage(),
                 'subscriber_count' => $total,
             ]);
 
-            // record them all as failed in one go
-            $now  = now();
+            // Record all as failed
             $rows = array_map(fn($subId) => [
                 'notification_id'      => $this->notificationId,
                 'subscription_head_id' => $subId,

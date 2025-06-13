@@ -19,6 +19,9 @@ class Notification extends Model
         'recurring_end_date',
         'occurrence',
         'recurring_start_time',
+        'active_count',
+        'success_count',
+        'failed_count',
     ];
 
     protected $casts = [

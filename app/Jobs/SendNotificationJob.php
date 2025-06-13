@@ -13,7 +13,6 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Support\Facades\Log;
 use Kreait\Firebase\Factory;
-use Kreait\Firebase\ServiceAccount;
 
 class SendNotificationJob implements ShouldQueue
 {
@@ -40,9 +39,15 @@ class SendNotificationJob implements ShouldQueue
             return;
         }
 
-        // 2) build the Firebase factory
-        $serviceAccount = ServiceAccount::fromValue($cfg->service_account_json);
-        $factory        = (new Factory())->withServiceAccount($serviceAccount);
+        // 2) decrypt & decode into an array, then hand straight to the factory
+        $rawJson     = decrypt($cfg->service_account_json);
+        $credentials = json_decode($rawJson, true);
+        if (! is_array($credentials)) {
+            Log::error('Invalid FCM JSON credentials');
+            return;
+        }
+        $factory = (new Factory())->withServiceAccount($credentials);
+
 
         // 3) prepare your payload once
         $webPushData = [
@@ -66,14 +71,13 @@ class SendNotificationJob implements ShouldQueue
             ->chunkById(500, function ($subs) use ($factory, $webPushData) {
                 $ids    = $subs->pluck('id')->all();
                 $tokens = $subs->pluck('token')->all();
-
                 SendNotificationBatchJob::dispatch(
                     $this->notificationId,
                     $factory,
                     $webPushData,
                     $ids,
                     $tokens
-                )->onQueue('notifications');
+                );
             });
     }
 
