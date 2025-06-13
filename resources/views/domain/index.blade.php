@@ -9,8 +9,8 @@
                     style="max-width:150px;">
                 <select id="filterStatus" class="form-select me-2 form-control" style="max-width:150px;">
                     <option value="">All Status</option>
-                    <option value="active">Active</option>
-                    <option value="inactive">Inactive</option>
+                    <option value="1">Active</option>
+                    <option value="0">Inactive</option>
                 </select>
                 <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addDomainModal">
                     <i class="fas fa-plus pe-2"></i>Add Domain
@@ -74,7 +74,7 @@
     <script>
         $(document).ready(function() {
             // Initialize DataTable
-            $('#domainTable').DataTable({
+            var table = $('#domainTable').DataTable({
                 searching: false,
                 paging: true,
                 select: false,
@@ -87,6 +87,13 @@
                 lengthChange: false,
                 processing: true,
                 serverSide: true,
+                ajax: {
+                    url: "{{ route('domain.view') }}",
+                    data: function(d) {
+                        d.search_name   = $('#searchName').val();
+                        d.filter_status = $('#filterStatus').val();
+                    }
+                },
                 columns: [{
                         data: 'DT_RowIndex',
                         name: 'DT_RowIndex',
@@ -114,25 +121,13 @@
                 ]
             });
 
-            // Focus on the input when modal opens
-            // $('#addDomainModal').on('shown.bs.modal', function() {
-            //     $(this).find('input').focus();
-            // });
-
-            // Handle Add Domain form submission (static demo)
-            // $('#addDomainForm').submit(function(e) {
-            //     e.preventDefault();
-            //     const domainName = $(this).find('input').val().trim();
-
-            //     if (!domainName) {
-            //         alert('Please enter a domain name');
-            //         return;
-            //     }
-
-            //     $('#addDomainModal').modal('hide');
-            //     $(this).trigger('reset');
-            //     alert(`Domain "${domainName}" added successfully!`);
-            // });
+            // redraw the table whenever the user types or changes the filter
+            $('#searchName').on('keyup', function() {
+                table.draw();
+            });
+            $('#filterStatus').on('change', function() {
+                table.draw();
+            });
         });
     </script>
 
@@ -151,16 +146,16 @@
                     domain_name: {
                         required: true,
                         domain: true,
-                        remote: {
-                            url: "{{ route('domain.check') }}",
-                            type: "post",
-                            data: {
-                                _token: "{{ csrf_token() }}",
-                                domain_name: function() {
-                                    return $("#domain_name").val();
-                                }
-                            }
-                        }
+                        // remote: {
+                        //     url: "{{ route('domain.check') }}",
+                        //     type: "post",
+                        //     data: {
+                        //         _token: "{{ csrf_token() }}",
+                        //         domain_name: function() {
+                        //             return $("#domain_name").val();
+                        //         }
+                        //     }
+                        // }
                     }
                 },
                 messages: {
