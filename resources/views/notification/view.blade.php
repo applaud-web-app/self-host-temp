@@ -35,7 +35,7 @@
         <div class="d-flex flex-wrap align-items-center text-head mb-3">
             <h2 class="mb-3 me-auto">Campaign Reports</h2>
             <div class="mb-3">
-                <a href="{{ route('send-notification') }}" class="btn btn-primary">
+                <a href="{{ route('notification.create') }}" class="btn btn-primary">
                     <i class="far fa-plus-circle me-2"></i> Add New
                 </a>
             </div>

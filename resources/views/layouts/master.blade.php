@@ -167,10 +167,10 @@
             <span class="nav-text">Subscriptions</span>
         </a>
     </li>
- {{-- Core app menus --}}
-    @foreach (\Module::allEnabled() as $module)
+    {{-- Core app menus --}}
+    {{-- @foreach (\Module::allEnabled() as $module)
         @includeIf(strtolower($module->getLowerName()) . '::partials.menu')
-    @endforeach
+    @endforeach --}}
       <li>
         <a class="ai-icon" href="{{ route('addons') }}" aria-expanded="false">
             <i class="fal fa-credit-card"></i>

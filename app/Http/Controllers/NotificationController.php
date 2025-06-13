@@ -9,6 +9,7 @@ use App\Jobs\SendNotificationJob;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Http;
 use Yajra\DataTables\Facades\DataTables;
+use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
 
 class NotificationController extends Controller
@@ -69,7 +70,7 @@ class NotificationController extends Controller
 
                 // actions column
                 ->addColumn('action', fn($row) =>
-                    '<a href="'.route('notifications.show',$row->id)
+                    '<a href="'.route('notification.view',$row->id)
                     .'" class="btn btn-sm btn-primary">View</a>'
                 )
                 ->rawColumns(['action'])
@@ -305,7 +306,13 @@ class NotificationController extends Controller
             $notification->domains()->sync($ids);
 
             // 5) Dispatch send job (immediately for Instant, or you could delay for Schedule)
+            // if ($notification->schedule_type === 'schedule' && $notification->one_time_datetime) {
+            //     SendNotificationJob::dispatch($notification->id)->delay(Carbon::parse($notification->one_time_datetime))->onQueue('notifications');
+            // } else {
+            //     SendNotificationJob::dispatch($notification->id)->onQueue('notifications');
+            // }
             SendNotificationJob::dispatch($notification->id);
+
 
             return redirect()
                 ->route('notification.view')

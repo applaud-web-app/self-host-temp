@@ -72,7 +72,7 @@ Route::middleware(['auth','ensure_push_config'])->group(function() {
         Route::get('/','view')->name('view');
         Route::get('/create','create')->name('create');
         Route::post('/send','store')->name('send');
-        Route::get('/{notification}','show')->name('show');
+        // Route::get('/{notification}','show')->name('show');
         Route::post('/{notification}/send','send')->name('resend');
         Route::post('/fetch-meta', 'fetchMeta')->name('fetchMeta');
     });

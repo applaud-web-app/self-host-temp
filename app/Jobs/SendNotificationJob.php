@@ -1,25 +1,28 @@
 <?php
 
+// app/Jobs/SendNotificationJob.php
+
 namespace App\Jobs;
 
-use Throwable;
-use App\Models\Notification;
+use App\Models\PushConfig;
 use App\Models\PushSubscriptionHead;
+use App\Models\Notification;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Kreait\Firebase\Factory;
+use Kreait\Firebase\ServiceAccount;
 
 class SendNotificationJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable;
 
+    public int $tries   = 1;      // only one attempt
+    public int $timeout = 3600;   // plenty of time for chunking
+
     protected int $notificationId;
-    public int $timeout = 3600;
-    public int $tries   = 3;
 
     public function __construct(int $notificationId)
     {
@@ -28,99 +31,56 @@ class SendNotificationJob implements ShouldQueue
 
     public function handle(): void
     {
-        $notification = Notification::with('domains')->findOrFail($this->notificationId);
-        $domainNames  = $notification->domains->pluck('name')->toArray();
+        $notification = Notification::findOrFail($this->notificationId);
 
-        $message = [
-            'notification' => [
-                'title' => $notification->title,
-                'body'  => $notification->description,
-                'icon'  => $notification->banner_icon,
-                'image' => $notification->banner_image,
-            ],
+        // 1) grab your JSON straight from the DB
+        $cfg = PushConfig::first();
+        if (! $cfg || ! $cfg->service_account_json) {
+            Log::error('FCM config missing in DB');
+            return;
+        }
+
+        // 2) build the Firebase factory
+        $serviceAccount = ServiceAccount::fromValue($cfg->service_account_json);
+        $factory        = (new Factory())->withServiceAccount($serviceAccount);
+
+        // 3) prepare your payload once
+        $webPushData = [
             'data' => [
-                'click_action'  => $notification->target_url,
-                'campaign_name' => $notification->campaign_name,
+                'title'           => $notification->title,
+                'body'            => $notification->description,
+                'icon'            => $notification->icon        ?? '',
+                'image'           => $notification->image       ?? '',
+                'click_action'    => $notification->click_url,
+                'notification_id' => $notification->id,
+            ],
+            'headers' => [
+                'Urgency' => 'high',
             ],
         ];
 
-        $serverKey = config('services.fcm.server_key');
-        if (!$serverKey) {
-            throw new \Exception('FCM server key not configured');
-        }
-
-        $init  = $succ = $fail = 0;
-        $nid   = $this->notificationId;
-
-        PushSubscriptionHead::whereIn('domain', $domainNames)
-            ->where('status', 1)
-            ->whereNotExists(function($q) use ($nid) {
-                $q->select(DB::raw(1))
-                  ->from('notification_sends')
-                  ->whereColumn('notification_sends.subscription_head_id', 'push_subscriptions_head.id')
-                  ->where('notification_sends.notification_id', $nid);
-            })
-            ->select(['id','token'])
-            ->chunkById(500, function($subs) use ($message, $serverKey, &$init, &$succ, &$fail, $nid) {
+        // 4) chunk through all active subscribers
+        PushSubscriptionHead::where('status', 1)
+            ->select(['id', 'token'])
+            ->orderBy('id')
+            ->chunkById(500, function ($subs) use ($factory, $webPushData) {
                 $ids    = $subs->pluck('id')->all();
                 $tokens = $subs->pluck('token')->all();
-                $init  += count($tokens);
-                if (empty($tokens)) {
-                    return;
-                }
 
-                $resp = Http::withHeaders([
-                        'Authorization' => 'key=' . $serverKey,
-                        'Content-Type'  => 'application/json',
-                    ])
-                    ->timeout(60)
-                    ->post('https://fcm.googleapis.com/fcm/send', array_merge(
-                        $message,
-                        ['registration_ids' => $tokens]
-                    ));
-
-                $results = $resp->json('results', []);
-
-                $rows      = [];
-                $failedIds = [];
-                foreach ($results as $i => $r) {
-                    $ok = !isset($r['error']);
-                    $rows[] = [
-                        'notification_id'      => $nid,
-                        'subscription_head_id' => $ids[$i] ?? null,
-                        'status'               => $ok,
-                        'created_at'           => now(),
-                        'updated_at'           => now(),
-                    ];
-                    if ($ok) {
-                        $succ++;
-                    } else {
-                        $fail++;
-                        $failedIds[] = $ids[$i];
-                    }
-                }
-
-                DB::table('notification_sends')->insertOrIgnore($rows);
-
-                if (!empty($failedIds)) {
-                    PushSubscriptionHead::whereIn('id', $failedIds)
-                                        ->update(['status' => 0]);
-                }
+                SendNotificationBatchJob::dispatch(
+                    $this->notificationId,
+                    $factory,
+                    $webPushData,
+                    $ids,
+                    $tokens
+                )->onQueue('notifications');
             });
-
-        $notification->update([
-            'active_count'   => $init,
-            'success_count'  => $succ,
-            'failed_count'   => $fail,
-            'inactive_count' => PushSubscriptionHead::where('status', 0)->count(),
-        ]);
     }
 
-    public function failed(Throwable $exception): void
+    public function failed(\Throwable $e): void
     {
-        Log::error('SendNotificationJob failed', [
-            'notification_id' => $this->notificationId,
-            'error'           => $exception->getMessage(),
+        Log::error("Master send failed [notif={$this->notificationId}]", [
+            'error' => $e->getMessage(),
         ]);
     }
 }
