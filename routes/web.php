@@ -116,7 +116,13 @@ Route::middleware(['auth','ensure_push_config'])->group(function() {
         Route::post('/utilities/clear-log',    'clearLog')->name('utilities.clear-log');
         Route::post('/utilities/make-cache',   'makeCache')->name('utilities.make-cache');
         Route::get('/upgrade',       'upgrade')->name('upgrade');
-        Route::get('/backup-subscribers','backupSubscribersPage')->name('backup-subscribers');
+           Route::get('/backup-subscribers', 'backupSubscribers')
+                  ->name('backup-subscribers');
+
+             Route::get('/backup-subscribers/download', 'downloadBackupSubscribers')
+                  ->name('backup-subscribers.download');
+
+
         Route::get('/firebase-setup','firebaseSetup')->name('firebase-setup');
     });
 });
