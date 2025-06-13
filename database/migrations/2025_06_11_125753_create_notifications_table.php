@@ -21,10 +21,14 @@ return new class extends Migration
             $table->string('banner_icon')->nullable();
             $table->enum('schedule_type', ['instant', 'schedule'])->default('instant');
             $table->dateTime('one_time_datetime')->nullable();
-            $table->date('recurring_start_date')->nullable();
-            $table->date('recurring_end_date')->nullable();
-            $table->enum('occurrence', ['daily', 'weekly', 'monthly'])->nullable();
-            $table->time('recurring_start_time')->nullable();
+            // $table->date('recurring_start_date')->nullable();
+            // $table->date('recurring_end_date')->nullable();
+            // $table->enum('occurrence', ['daily', 'weekly', 'monthly'])->nullable();
+            // $table->time('recurring_start_time')->nullable();
+            $table->string('message_id');
+            $table->unsignedBigInteger('active_count')->default(0);
+            $table->unsignedBigInteger('success_count')->default(0);
+            $table->unsignedBigInteger('failed_count')->default(0);
             $table->timestamps();
         });
     }

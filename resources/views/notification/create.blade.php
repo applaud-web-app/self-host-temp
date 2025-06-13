@@ -106,8 +106,8 @@
                                             <img src="{{ asset('images/default.png') }}" id="banner_image" alt="Banner"
                                                 class="img-fluid upimage">
                                             <div class="input-group">
-                                                <input type="url" class="form-control" id="image_input"
-                                                    name="bannerimage" placeholder="e.g.: https://example.com/image.jpg"
+                                                <input type="url" class="form-control" name="banner_image" id="image_input"
+                                                    placeholder="e.g.: https://example.com/image.jpg"
                                                     aria-label="Banner Image URL" value="{{ asset('images/default.png') }}"
                                                     onchange="changeBanner(this.value)" />
                                             </div>
@@ -121,7 +121,7 @@
                                             <img src="{{ asset('images/push/icons/alarm-1.png') }}" id="banner_icon"
                                                 alt="Icon" class="img-fluid upimage">
                                             <div class="input-group">
-                                                <input type="text" class="form-control banner_icon_trans" name="icons"
+                                                <input type="text" class="form-control banner_icon_trans" name="banner_icon"
                                                     id="target" placeholder="Select Icon"
                                                     value="{{ asset('images/push/icons/alarm-1.png') }}"
                                                     onchange="prv_icons(this.value)">

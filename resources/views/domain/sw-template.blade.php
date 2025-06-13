@@ -49,18 +49,19 @@ messaging.setBackgroundMessageHandler(payload => {
   // Report receipt
   sendAnalytics('received', payload);
 
-  const notif = payload.notification || {};
+  const notif = payload.data || {};
+  const title = notif.title || 'Notification';
   const options = {
     body: notif.body,
     icon: notif.icon || '/favicon.ico',
-    image: notif.image,
+    image: notif.image || undefined,
     data: {
       click_action: notif.click_action || payload.fcmOptions?.link || '/',
       raw: payload
     }
   };
 
-  return self.registration.showNotification(notif.title || 'Notification', options);
+  return self.registration.showNotification(title , options);
 });
 
 // 5) Fallback: raw push event

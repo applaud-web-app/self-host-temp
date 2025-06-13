@@ -13,7 +13,6 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Support\Facades\Log;
 use Kreait\Firebase\Factory;
-use Kreait\Firebase\ServiceAccount;
 
 class SendNotificationJob implements ShouldQueue
 {
@@ -31,56 +30,53 @@ class SendNotificationJob implements ShouldQueue
 
     public function handle(): void
     {
-        $notification = Notification::findOrFail($this->notificationId);
+        // ONLY SEND TO SELECT DOMAIN SUBSCRIBER NOT TO THE ALL -- PLEASE ADD THIS LOGIC
+        $notification = Notification::with('domains')->findOrFail($this->notificationId);
 
-        // 1) grab your JSON straight from the DB
-        $cfg = PushConfig::first();
-        if (! $cfg || ! $cfg->service_account_json) {
+        if (! $cfg = PushConfig::first()) {
             Log::error('FCM config missing in DB');
             return;
         }
 
-        // 2) build the Firebase factory
-        $serviceAccount = ServiceAccount::fromValue($cfg->service_account_json);
-        $factory        = (new Factory())->withServiceAccount($serviceAccount);
+        $factory = (new Factory())->withServiceAccount($cfg->credentials);
 
-        // 3) prepare your payload once
-        $webPushData = [
-            'data' => [
-                'title'           => $notification->title,
-                'body'            => $notification->description,
-                'icon'            => $notification->icon        ?? '',
-                'image'           => $notification->image       ?? '',
-                'click_action'    => $notification->click_url,
-                'notification_id' => $notification->id,
-            ],
-            'headers' => [
-                'Urgency' => 'high',
-            ],
+        $payload = [
+            'title'        => $notification->title,
+            'body'         => $notification->description,
+            'icon'         => $notification->banner_icon ?? '',
+            'image'        => $notification->banner_image ?? '',
+            'click_action' => $notification->target_url,
+            'message_id'   => (string) $notification->message_id,
         ];
 
-        // 4) chunk through all active subscribers
+        $payload = array_map(fn($v) => (string) $v, $payload);
+
+        $webPushData = [
+            'data'    => $payload,
+            'headers' => ['Urgency' => 'high'],
+        ];
+
+        $domainName = $notification->domains->pluck('name')->all();
+        
         PushSubscriptionHead::where('status', 1)
-            ->select(['id', 'token'])
+            ->whereIn('domain', $domainName)
+            ->select(['id','token'])
             ->orderBy('id')
             ->chunkById(500, function ($subs) use ($factory, $webPushData) {
                 $ids    = $subs->pluck('id')->all();
                 $tokens = $subs->pluck('token')->all();
-
                 SendNotificationBatchJob::dispatch(
                     $this->notificationId,
                     $factory,
                     $webPushData,
                     $ids,
                     $tokens
-                )->onQueue('notifications');
+                );
             });
     }
 
     public function failed(\Throwable $e): void
     {
-        Log::error("Master send failed [notif={$this->notificationId}]", [
-            'error' => $e->getMessage(),
-        ]);
+        Log::error("Master send failed [notif={$this->notificationId}]: " . $e->getMessage());
     }
 }

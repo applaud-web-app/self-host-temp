@@ -15,17 +15,14 @@ class Notification extends Model
         'banner_icon',
         'schedule_type',
         'one_time_datetime',
-        'recurring_start_date',
-        'recurring_end_date',
-        'occurrence',
-        'recurring_start_time',
+        'message_id',
+        'active_count',
+        'success_count',
+        'failed_count',
     ];
 
     protected $casts = [
         'one_time_datetime'    => 'datetime',
-        'recurring_start_date' => 'date',
-        'recurring_end_date'   => 'date',
-        'recurring_start_time' => 'datetime:H:i',
     ];
 
     /**
@@ -34,5 +31,13 @@ class Notification extends Model
     public function domains()
     {
         return $this->belongsToMany(Domain::class, 'domain_notification');
+    }
+
+    /**
+     * Send records of this notification.
+     */
+    public function sends()
+    {
+        return $this->hasMany(NotificationSend::class);
     }
 }
