@@ -156,14 +156,14 @@
                                                 </label>
                                                 <input type="text" class="form-control" id="titleInput1"
                                                     placeholder="Click Here" onkeyup="btn_title_prv1(this.value)"
-                                                    name="btn_1_title">
+                                                    name="btn_1_title" required>
                                             </div>
                                             <div class="col-lg-9 col-12">
                                                 <label for="urlInput1" class="form-label">Landing URL: <span
                                                         class="text-danger">*</span>
                                                 </label>
                                                 <input type="url" class="form-control" name="btn_1_url"
-                                                    id="urlInput1" placeholder="Enter URL">
+                                                    id="urlInput1" placeholder="Enter URL" required>
                                             </div>
                                         </div>
                                         <button type="button" class="btn btn-sm mt-3 btn-outline-secondary"
@@ -178,14 +178,14 @@
                                                         class="text-danger">*</span>
                                                 </label>
                                                 <input type="text" class="form-control" name="btn_title_2"
-                                                    placeholder="Click Here" onkeyup="btn_title_prv2(this.value)">
+                                                    placeholder="Click Here" onkeyup="btn_title_prv2(this.value)" required>
                                             </div>
                                             <div class="col-lg-9">
                                                 <label for="btn_url_2" class="form-label">Landing URL: <span
                                                         class="text-danger">*</span>
                                                 </label>
                                                 <input type="url" class="form-control" name="btn_url_2"
-                                                    id="urlInput2" placeholder="Enter URL">
+                                                    id="urlInput2" placeholder="Enter URL" required>
                                             </div>
                                         </div>
                                         <button type="button" class="btn btn-sm mt-3 btn-outline-danger "
@@ -751,6 +751,28 @@
                         required: function() {
                             return $('#Schedule').is(':checked');
                         }
+                    },
+                    btn_1_title: {
+                        required: function() {
+                            return $('#ctaCheckbox').is(':checked');
+                        }
+                    },
+                    btn_1_url: {
+                        required: function() {
+                            return $('#ctaCheckbox').is(':checked');
+                        },
+                        url: true
+                    },
+                    btn_title_2: {
+                        required: function() {
+                            return $('#ctaCheckbox').is(':checked') && $('#second_btn').is(':visible');
+                        }
+                    },
+                    btn_url_2: {
+                        required: function() {
+                            return $('#ctaCheckbox').is(':checked') && $('#second_btn').is(':visible');
+                        },
+                        url: true
                     }
                 },
                 messages: {
@@ -763,13 +785,21 @@
                     recurring_start_date: 'Recurring Start Date is required.',
                     recurring_end_date: 'Recurring End Date is required unless “Never Ends” is checked.',
                     occurrence: 'Please select a repeat interval.',
-                    recurring_start_time: 'Recurring Start Time is required.'
+                    recurring_start_time: 'Recurring Start Time is required.',
+                    btn_1_title: "Please enter a title for Button 1.",
+                    btn_1_url: "Please enter a valid URL for Button 1.",
+                    btn_title_2: "Please enter a title for Button 2.",
+                    btn_url_2: "Please enter a valid URL for Button 2."
                 },
                 errorPlacement: function(err, el) {
-                    if (el.attr('name') === 'domain_name[]') {
-                        err.appendTo('#domain-error-span');
+                    // put CTA errors right after their inputs
+                    if (element.attr('name') === 'btn_1_title' || element.attr('name') === 'btn_1_url' ||
+                        element.attr('name') === 'btn_title_2' || element.attr('name') === 'btn_url_2') {
+                        error.insertAfter(element);
+                    } else if (element.attr('name') === 'domain_name[]') {
+                        error.appendTo('#domain-error-span');
                     } else {
-                        err.insertAfter(el);
+                        error.insertAfter(element);
                     }
                 },
                 highlight: function(el) {

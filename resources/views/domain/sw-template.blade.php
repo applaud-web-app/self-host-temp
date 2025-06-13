@@ -49,6 +49,9 @@ messaging.onBackgroundMessage(payload => {
   // always ping "received" first
   sendAnalytics('received', messageId);
 
+  let actions = [];
+  try { actions = JSON.parse(d.actions || '[]'); } catch {}
+
   const title = d.title || 'Notification';
   const options = {
     body:    d.body          || '',
@@ -56,8 +59,13 @@ messaging.onBackgroundMessage(payload => {
     image:   d.image         || undefined,
     data: {
       click_action: d.click_action || payload.fcmOptions?.link || '/',
-      message_id: messageId  || ''
-    }
+      message_id: messageId,
+      actions: actions
+    },
+    actions: actions.map(a => ({
+      action: a.action,
+      title:  a.title
+    }))
   };
 
   return self.registration.showNotification(title, options);
@@ -71,15 +79,15 @@ self.addEventListener('push', event => {
   } catch {}
 
   // If it has a .data block, Firebase already showed it for us
-  if (payload.data) {
-    return;
-  }
+  if (payload.data) return;
 
   const d = payload.data || payload;
   const messageId = d.message_id || '';
-
   // ping raw push arrival
   sendAnalytics('received', messageId);
+
+  let actions = [];
+  try { actions = JSON.parse(d.actions || '[]'); } catch {}
 
   const title = d.title || 'Notification';
   const options = {
@@ -88,8 +96,10 @@ self.addEventListener('push', event => {
     image:   d.image         || undefined,
     data: {
       click_action: d.click_action || '/',
-      message_id:   d.message_id   || ''
-    }
+      message_id: messageId,
+      actions: actions
+    },
+    actions: actions.map(a => ({ action: a.action, title: a.title }))
   };
 
   event.waitUntil(self.registration.showNotification(title, options));
@@ -98,9 +108,22 @@ self.addEventListener('push', event => {
 // 6) Notification clicks
 self.addEventListener('notificationclick', event => {
   event.notification.close();
+
   const md = event.notification.data?.message_id || '';
   sendAnalytics('click', md);
-  const url = event.notification.data?.click_action || '/';
+
+  // Default URL if user taps the body
+  let url = event.notification.data?.click_action || '/';
+
+  // If they clicked a specific action button, find its URL
+  if (event.action) {
+    const acts = event.notification.data?.actions || [];
+    const match = acts.find(a => a.action === event.action);
+    if (match && match.url) {
+      url = match.url;
+    }
+  }
+
   event.waitUntil(clients.openWindow(url));
 });
 

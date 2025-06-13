@@ -48,8 +48,38 @@ class SendNotificationJob implements ShouldQueue
             'click_action' => $notification->target_url,
             'message_id'   => (string) $notification->message_id,
         ];
-
+        
         $payload = array_map(fn($v) => (string) $v, $payload);
+
+        $actions = [];
+         // Button 1
+        if ($notification->btn_1_title && $notification->btn_1_url) {
+            $actions[] = [
+                'action' => 'btn1',
+                'title'  => $notification->btn_1_title,
+                'url'    => $notification->btn_1_url,
+            ];
+        }
+
+        // Button 2
+        if ($notification->btn_title_2 && $notification->btn_url_2) {
+            $actions[] = [
+                'action' => 'btn2',
+                'title'  => $notification->btn_title_2,
+                'url'    => $notification->btn_url_2,
+            ];
+        }
+
+        // Always include a Close action if fewer than two real buttons
+        if (count($actions) < 2) {
+            $actions[] = [
+                'action' => 'close',
+                'title'  => 'Close',
+            ];
+        }
+
+        // 3) Attach actions into payload
+        $payload['actions'] = $actions;
 
         $webPushData = [
             'data'    => $payload,
