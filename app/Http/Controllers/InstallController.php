@@ -279,8 +279,6 @@ class InstallController extends Controller
                 $escapedValue = $this->escapeEnvValue($raw);
             }
 
-            $escapedValue = $this->escapeEnvValue($raw);
-
             // Safely escape key for regex
             $quotedKey = preg_quote($key, '/');
             $pattern    = "/^{$quotedKey}=.*/m";
