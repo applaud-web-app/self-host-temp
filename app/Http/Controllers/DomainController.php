@@ -201,7 +201,11 @@ class DomainController extends Controller
                 return redirect()->route('domain.view')->with('error', 'Domain not found or inactive.');
             }
 
-            $cfg = PushConfig::first()->web_app_config;
+            $cfg = PushConfig::first();
+            if(! $cfg){
+                return redirect()->route('domain.view')->with('error', 'Failed to download domain.');
+            }
+            $cfg = $cfg->web_app_config;
             $js = view('domain.sw-template', ['config' => $cfg, 'domain' => $domain->name])->render();
 
             // Set headers for download
