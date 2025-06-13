@@ -10,6 +10,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Log;
 use App\Jobs\SubscribePushSubscriptionJob;
 use Illuminate\Support\Facades\Cache;
+use App\Models\PushAnalytic;
 
 class PushApiController extends Controller
 {
@@ -88,6 +89,31 @@ class PushApiController extends Controller
             'message' => 'Server error while queuing subscription.',
         ], 500);
       }
+  }
+
+  public function analytics(Request $request): Response
+  {
+    $payload = $request->validate([
+      'message_id' => 'required|string',
+      'event'      => 'required|string',
+    ]);
+
+    // Try to increment existing row
+    $updated = DB::table('push_event_counts')
+    ->where('message_id', $payload['message_id'])
+    ->where('event', $payload['event'])
+    ->increment('count');
+
+    // If none existed, create with count = 1
+    if (! $updated) {
+      DB::table('push_event_counts')->insert([
+        'message_id' => $payload['message_id'],
+        'event'      => $payload['event'],
+        'count'      => 1,
+      ]);
+    }
+
+    return response()->noContent();
   }
   
 }

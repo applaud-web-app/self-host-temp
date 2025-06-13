@@ -1,11 +1,6 @@
 // 0) Immediate SW activation
-self.addEventListener('install', event => {
-  self.skipWaiting();
-});
-
-self.addEventListener('activate', event => {
-  event.waitUntil(self.clients.claim());
-});
+self.addEventListener('install', event => self.skipWaiting());
+self.addEventListener('activate', event => event.waitUntil(self.clients.claim()));
 
 // 1) Import Firebase compat libraries
 importScripts(
@@ -25,7 +20,9 @@ firebase.initializeApp({
 });
 
 const messaging = firebase.messaging();
-const ANALYTICS_ENDPOINT = "{{ url('/api/push/analytics') }}"; // point to your analytics route
+const ANALYTICS_ENDPOINT = "{{ route('api.analytics') }}";
+const SUBSCRIBE_ENDPOINT = "{{ route('api.subscribe') }}";
+const DEFAULT_ICON       = '/favicon.ico';
 
 // 3) Analytics helper
 async function sendAnalytics(eventType, data = {}) {
@@ -35,7 +32,7 @@ async function sendAnalytics(eventType, data = {}) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         event:  eventType,
-        domain: "{{ $domain }}",
+        domain: "testdevansh.awmtab.in",
         data
       })
     });
@@ -45,40 +42,56 @@ async function sendAnalytics(eventType, data = {}) {
 }
 
 // 4) Background Firebase messages
-messaging.setBackgroundMessageHandler(payload => {
-  // Report receipt
+messaging.onBackgroundMessage(payload => {
   sendAnalytics('received', payload);
 
-  const notif = payload.data || {};
-  const title = notif.title || 'Notification';
+  const d = payload.data || {};
+
+  const title = d.title || 'Notification';
   const options = {
-    body: notif.body,
-    icon: notif.icon || '/favicon.ico',
-    image: notif.image || undefined,
+    body:    d.body          || '',
+    icon:    d.icon          || DEFAULT_ICON,
+    image:   d.image         || undefined,
     data: {
-      click_action: notif.click_action || payload.fcmOptions?.link || '/',
-      raw: payload
+      click_action: d.click_action || payload.fcmOptions?.link || '/',
+      message_id:   d.message_id   || '',
+      raw:          payload
     }
   };
 
-  return self.registration.showNotification(title , options);
+  return self.registration.showNotification(title, options);
 });
 
-// 5) Fallback: raw push event
+// 5) Fallback for raw push events
 self.addEventListener('push', event => {
   let payload = {};
-  try { payload = event.data.json(); } catch{}
+  try {
+    payload = event.data.json();
+  } catch {}
+
   sendAnalytics('push_event', payload);
-  // optionally show a default notification here if you like
+
+  const d = payload.data || payload;
+  const title = d.title || 'Notification';
+  const options = {
+    body:    d.body          || '',
+    icon:    d.icon          || DEFAULT_ICON,
+    image:   d.image         || undefined,
+    data: {
+      click_action: d.click_action || '/',
+      message_id:   d.message_id   || '',
+      raw:          payload
+    }
+  };
+
+  event.waitUntil(self.registration.showNotification(title, options));
 });
 
-// 6) Handle notification clicks
+// 6) Notification clicks
 self.addEventListener('notificationclick', event => {
   event.notification.close();
   const clickData = event.notification.data || {};
   sendAnalytics('click', clickData.raw || clickData);
-
-  // navigate to click_action URL
   const url = clickData.click_action || '/';
   event.waitUntil(clients.openWindow(url));
 });
@@ -89,17 +102,21 @@ self.addEventListener('notificationclose', event => {
   sendAnalytics('close', closeData.raw || closeData);
 });
 
-// 8) Handle subscription changes
+// 8) Subscription change
 self.addEventListener('pushsubscriptionchange', event => {
   sendAnalytics('subscription_change', {});
   event.waitUntil(
-    self.registration.pushManager.subscribe(event.oldSubscription.options)
-      .then(sub => {
-        sendAnalytics('subscription_success', sub.toJSON());
-        // TODO: POST the new subscription back to your /push/subscribe endpoint
-      })
-      .catch(err => {
-        sendAnalytics('subscription_error', { message: err.message });
-      })
+    event.oldSubscription && event.oldSubscription.options
+      ? self.registration.pushManager
+          .subscribe(event.oldSubscription.options)
+          .then(sub => {
+            sendAnalytics('subscription_success', sub.toJSON());
+            return fetch(SUBSCRIBE_ENDPOINT, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(sub.toJSON())
+            });
+          })
+      : Promise.resolve()
   );
 });
