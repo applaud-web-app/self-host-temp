@@ -212,4 +212,26 @@ class DomainController extends Controller
         }
     }
 
+    public function domainList(Request $request)
+    {
+        try {
+            $domains = Domain::where('status', 1)
+                ->orderBy('name')
+                ->get(['name as domain_name']);
+
+            return response()->json([
+                'status' => true,
+                'data'   => $domains,
+            ], 200);
+
+        } catch (\Exception $e) {
+            Log::error('DomainController : ' . $e->getMessage());
+
+            return response()->json([
+                'status'  => false,
+                'message' => 'Unable to fetch domains at this time.',
+            ], 500);
+        }
+    }
+
 }

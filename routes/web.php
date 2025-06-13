@@ -8,8 +8,7 @@ use App\Http\Controllers\PushConfigController;
 use App\Http\Controllers\DomainController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\SettingsController;
-
-
+use App\Http\Controllers\DashboardController;
 
 Route::prefix('install')->group(function () {
     // welcome
@@ -49,7 +48,7 @@ Route::controller(AuthController::class)->group(function () {
 });
 
 // Optional: Home page (static)
-Route::get('/dashboard', [Controller::class, 'dashboard'])->name('dashboard');
+Route::get('/dashboard', [DashboardController::class, 'dashboard'])->name('dashboard');
 
 Route::middleware(['auth','ensure_push_config'])->group(function() {
 
@@ -66,6 +65,7 @@ Route::middleware(['auth','ensure_push_config'])->group(function() {
         Route::post('check', 'check')->name('check');
         Route::post('/update-status', 'updateStatus')->name('update-status');
         Route::get('/integrate', 'integrate')->name('integrate');
+        Route::get('/domain-list', 'domainList')->name('domain-list');
         Route::get('/download-sw', 'downloadSW')->name('download-sw');
     });
     
