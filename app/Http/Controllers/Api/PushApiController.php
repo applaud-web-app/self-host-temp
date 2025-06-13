@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Log;
 use App\Jobs\SubscribePushSubscriptionJob;
 use Illuminate\Support\Facades\Cache;
 use App\Models\PushAnalytic;
+use Illuminate\Support\Facades\DB;
 
 class PushApiController extends Controller
 {
