@@ -26,18 +26,18 @@ class SendNotificationBatchJob implements ShouldQueue
     protected array   $subscriptionIds;
     protected array   $tokens;
 
-    public function __construct(
+     public function __construct(
         int     $notificationId,
         Factory $factory,
         array   $webPush,
         array   $subscriptionIds,
         array   $tokens
     ) {
-        $this->notificationId   = $notificationId;
-        $this->factory          = $factory;
-        $this->webPush          = $webPush;
-        $this->subscriptionIds  = $subscriptionIds;
-        $this->tokens           = $tokens;
+        $this->notificationId  = $notificationId;
+        $this->factory         = $factory;
+        $this->webPush         = $webPush;
+        $this->subscriptionIds = $subscriptionIds;
+        $this->tokens          = $tokens;
     }
 
     public function handle(): void
@@ -46,26 +46,33 @@ class SendNotificationBatchJob implements ShouldQueue
             return;
         }
 
-        // Predefine shared variables
-        $total     = count($this->tokens);
-        $now       = now();
         $messaging = $this->factory->createMessaging();
         $config    = WebPushConfig::fromArray($this->webPush);
         $message   = CloudMessage::new()->withWebPushConfig($config);
+        $now       = now();
 
         try {
-            $report         = $messaging->sendMulticast($message, $this->tokens);
-            $successCount   = $report->successes()->count();
-            $failCount      = $report->failures()->count();
+            $report       = $messaging->sendMulticast($message, $this->tokens);
+            $successCount = $report->successes()->count();
+            $failures     = $report->failures();
+            $failureItems = $failures->getItems();
 
-            // Extract failure indexes from the report items
-            $failureItems   = $report->failures()->getItems();
-            $failureIndexes = array_keys($failureItems);
+            // log each failure reason
+            foreach ($failureItems as $index => $failure) {
+                $error = method_exists($failure, 'error')
+                    ? $failure->error()->getMessage()
+                    : (string)$failure;
+                Log::error('Push send failed', [
+                    'notification_id'      => $this->notificationId,
+                    'subscription_id'      => $this->subscriptionIds[$index] ?? null,
+                    'token'                => $this->tokens[$index] ?? null,
+                    'error'                => $error,
+                ]);
+            }
 
             $rows = [];
-            foreach ($this->subscriptionIds as $index => $subId) {
-                $ok = ! in_array($index, $failureIndexes, true);
-
+            foreach ($this->subscriptionIds as $i => $subId) {
+                $ok = ! array_key_exists($i, $failureItems);
                 $rows[] = [
                     'notification_id'      => $this->notificationId,
                     'subscription_head_id' => $subId,
@@ -73,29 +80,24 @@ class SendNotificationBatchJob implements ShouldQueue
                     'created_at'           => $now,
                     'updated_at'           => $now,
                 ];
-
                 if (! $ok) {
-                    PushSubscriptionHead::where('id', $subId)->update(['status' => 0]);
+                    PushSubscriptionHead::where('id', $subId)
+                        ->update(['status' => 0]);
                 }
             }
 
-            // Bulk insert results
             DB::table('notification_sends')->insertOrIgnore($rows);
-
-            // Update notification counters
             Notification::where('id', $this->notificationId)
-                        ->increment('active_count', $total);
+                        ->increment('active_count', count($this->tokens));
             Notification::where('id', $this->notificationId)
                         ->increment('success_count', $successCount);
             Notification::where('id', $this->notificationId)
-                        ->increment('failed_count', $failCount);
-        } catch (\Throwable $e) {
-            Log::error("Batch send error [notif={$this->notificationId}]", [
-                'error'            => $e->getMessage(),
-                'subscriber_count' => $total,
-            ]);
+                        ->increment('failed_count', count($failureItems));
 
-            // Record all as failed
+        } catch (\Throwable $e) {
+            Log::error("Batch job permanently failed [notif={$this->notificationId}]: " . $e->getMessage());
+            // Fallback: mark all as failed
+            $now = now();
             $rows = array_map(fn($subId) => [
                 'notification_id'      => $this->notificationId,
                 'subscription_head_id' => $subId,
@@ -103,19 +105,16 @@ class SendNotificationBatchJob implements ShouldQueue
                 'created_at'           => $now,
                 'updated_at'           => $now,
             ], $this->subscriptionIds);
-
             DB::table('notification_sends')->insertOrIgnore($rows);
             PushSubscriptionHead::whereIn('id', $this->subscriptionIds)
                                  ->update(['status' => 0]);
             Notification::where('id', $this->notificationId)
-                        ->increment('failed_count', $total);
+                        ->increment('failed_count', count($this->subscriptionIds));
         }
     }
 
     public function failed(\Throwable $e): void
     {
-        Log::error("Batch job permanently failed [notif={$this->notificationId}]", [
-            'error' => $e->getMessage(),
-        ]);
+        Log::error("Batch job permanently failed [notif={$this->notificationId}]: " . $e->getMessage());
     }
 }

@@ -6,8 +6,8 @@ use Illuminate\Database\Eloquent\Model;
 
 class DomainNotification extends Model
 {
-    protected $fillable = [
-        'notification_id',
-        'domain_id',
-    ];
+    public $incrementing = false;
+    public $timestamps   = false;
+    protected $table     = 'domain_notification';
+    protected $fillable  = ['notification_id', 'domain_id'];
 }
