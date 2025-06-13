@@ -252,7 +252,7 @@ class InstallController extends Controller
         }
     }
 
-   protected function updateEnvFile(array $values)
+    protected function updateEnvFile(array $values)
     {
         $envPath = base_path('.env');
 
@@ -270,6 +270,15 @@ class InstallController extends Controller
         foreach ($values as $key => $value) {
             // Normalize null to empty string
             $raw = $value === null ? '' : (string)$value;
+
+            // Force quoting for DB_PASSWORD, else use normal escaping
+            if ($key === 'DB_PASSWORD') {
+                // escape backslashes and double-quotes, then wrap
+                $escapedValue = '"' . str_replace(['\\', '"'], ['\\\\', '\\"'], $raw) . '"';
+            } else {
+                $escapedValue = $this->escapeEnvValue($raw);
+            }
+
             $escapedValue = $this->escapeEnvValue($raw);
 
             // Safely escape key for regex
