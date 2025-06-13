@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
+use Exception;
 
 class User extends Authenticatable
 {
@@ -51,7 +52,8 @@ class User extends Authenticatable
     {
         static::creating(function ($user) {
             if (static::count() >= 1) {
-                throw new Exception("");
+                // throw new Exception('Too many users');
+                abort(403);
             }
         });
     }
