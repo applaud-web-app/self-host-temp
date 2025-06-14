@@ -150,7 +150,10 @@ class PushApiController extends Controller
       }
     }
 
-    return response()->noContent();
+    return response()->json([
+      'status'  => 'success'
+    ]);
+
   }
   
 }
