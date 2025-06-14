@@ -8,10 +8,14 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class ProcessClickAnalytics implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+
+    public int $tries = 3;
+    public int $timeout = 10;
 
     protected string $messageId;
     protected string $event;
@@ -24,9 +28,27 @@ class ProcessClickAnalytics implements ShouldQueue
 
     public function handle(): void
     {
-        DB::table('push_event_counts')->updateOrInsert(
-            ['message_id' => $this->messageId, 'event' => $this->event],
-            ['count' => DB::raw("count + 1")]
-        );
+        try {
+            DB::table('push_event_counts')->updateOrInsert(
+                ['message_id' => $this->messageId, 'event' => $this->event],
+                ['count' => DB::raw("count + 1")]
+            );
+        } catch (\Throwable $e) {
+            Log::warning('Failed to process click event', [
+                'message_id' => $this->messageId,
+                'event' => $this->event,
+                'error' => $e->getMessage()
+            ]);
+            throw $e;
+        }
+    }
+
+    public function failed(\Throwable $exception): void
+    {
+        Log::error('ProcessClickAnalytics job permanently failed', [
+            'message_id' => $this->messageId,
+            'event'      => $this->event,
+            'error'      => $exception->getMessage(),
+        ]);
     }
 }

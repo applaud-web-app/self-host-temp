@@ -29,30 +29,86 @@ class PushApiController extends Controller
     ])->header('Content-Type', 'application/javascript');
   }
 
+  // public function subscribe(Request $request): JsonResponse
+  // {
+  //     try {
+  //         // 1) Validate incoming payload
+  //         $data = $request->validate([
+  //           'token'    => 'required|string',
+  //           'domain'   => 'required|string|exists:domains,name',
+  //           'old_token' => 'nullable|string',
+  //           'endpoint' => 'required|url',
+  //           'auth'     => 'required|string',
+  //           'p256dh'   => 'required|string',
+  //         ]);
+
+  //         // 2) Enrich with IP & UA
+  //         $data['ip_address'] = $request->header('CF-Connecting-IP') ?? $request->getClientIp();
+  //         $data['user_agent'] = $request->userAgent();
+
+  //         // 3) Dispatch the job
+  //         SubscribePushSubscriptionJob::dispatch($data);
+
+  //         // 4) Immediate success response
+  //         return response()->json([
+  //             'status'  => 'success',
+  //             'message' => 'Subscription queued for processing.',
+  //         ], 202);
+
+  //     } catch (ValidationException $e) {
+  //         return response()->json([
+  //             'status'  => 'error',
+  //             'message' => 'Invalid subscription data.',
+  //             'errors'  => $e->errors(),
+  //         ], 422);
+
+  //     } catch (\Exception $e) {
+  //         Log::error('Failed to dispatch subscription job', [
+  //             'error'   => $e->getMessage(),
+  //             'payload' => $request->all(),
+  //         ]);
+  //         return response()->json([
+  //             'status'  => 'error',
+  //             'message' => 'Server error while queuing subscription.',
+  //         ], 500);
+  //     }
+  // }
+
   public function subscribe(Request $request): JsonResponse
   {
       try {
-          // 1) Validate incoming payload
+          // Step 1: Validate request payload
           $data = $request->validate([
-            'token'    => 'required|string',
-            'domain'   => 'required|string|exists:domains,name',
-            'old_token' => 'nullable|string',
-            'endpoint' => 'required|url',
-            'auth'     => 'required|string',
-            'p256dh'   => 'required|string',
+              'token'     => 'required|string',
+              'domain'    => 'required|string|exists:domains,name',
+              'old_token' => 'nullable|string',
+              'endpoint'  => 'required|url',
+              'auth'      => 'required|string',
+              'p256dh'    => 'required|string',
           ]);
 
-          // 2) Enrich with IP & UA
+          // Step 2: Enrich data with IP & User Agent
           $data['ip_address'] = $request->header('CF-Connecting-IP') ?? $request->getClientIp();
           $data['user_agent'] = $request->userAgent();
+          $data['timestamp']  = now()->timestamp;
 
-          // 3) Dispatch the job
-          SubscribePushSubscriptionJob::dispatch($data);
+          // Step 3: Try pushing to Redis
+          try {
+              Redis::rpush('buffer:push_subscriptions', json_encode($data));
+          } catch (\Throwable $e) {
+            Log::warning('Redis unavailable, falling back to queue for subscribe()', [
+                'error' => $e->getMessage(),
+                'data'  => $data,
+            ]);
 
-          // 4) Immediate success response
+            // Fallback: push directly to queue
+            SubscribePushSubscriptionJob::dispatch($data);
+          }
+
+          // Step 4: Respond quickly
           return response()->json([
               'status'  => 'success',
-              'message' => 'Subscription queued for processing.',
+              'message' => 'Subscription received and processing queued.',
           ], 202);
 
       } catch (ValidationException $e) {
@@ -63,10 +119,11 @@ class PushApiController extends Controller
           ], 422);
 
       } catch (\Exception $e) {
-          Log::error('Failed to dispatch subscription job', [
+          Log::error('Subscription dispatch error', [
               'error'   => $e->getMessage(),
               'payload' => $request->all(),
           ]);
+
           return response()->json([
               'status'  => 'error',
               'message' => 'Server error while queuing subscription.',

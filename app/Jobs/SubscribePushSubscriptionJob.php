@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
+use Illuminate\Queue\SerializesModels;
 use Illuminate\Queue\InteractsWithQueue;
 use Jenssegers\Agent\Agent;
 use Stevebauman\Location\Facades\Location;
@@ -18,41 +19,39 @@ use Illuminate\Support\Facades\Cache;
 
 class SubscribePushSubscriptionJob implements ShouldQueue
 {
-    use Dispatchable, InteractsWithQueue, Queueable;
+    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    /** @var array */
-    protected $data;
+    public int $tries = 3; // safe retry
+    public array $backoff = [60, 300, 600]; // retry spacing (1 min, 5 min, 10 min)
+    public int $timeout = 30; // fail fast to avoid blocking queue
 
-    /**
-     * Create a new job instance.
-     */
+    protected array $data;
+
     public function __construct(array $data)
     {
         $this->data = $data;
-        $this->tries = 3;
-        $this->backoff = [60, 300, 600];
     }
 
-    public function handle(): void
+   public function handle(): void
     {
-        DB::transaction(function() {
-            $newToken = $this->data['token'];
-            $domain   = $this->data['domain'];
-            $oldToken = $this->data['old_token'] ?? null;
+        $newToken = $this->data['token'];
+        $domain   = $this->data['domain'];
+        $oldToken = $this->data['old_token'] ?? null;
 
-            Log::error('old Token : ', [
-                'oldToken'   => $oldToken,
-                'newToken' => $newToken,
-            ]);
+        $filterToken = $oldToken ?: $newToken;
+        $head = null;
 
-            // 1) HEAD — get existing by oldToken or by newToken
-            $filterToken = $oldToken ?: $newToken;
+        DB::beginTransaction();
+
+        try {
+
+            // STEP 1: Head
             $head = PushSubscriptionHead::firstOrNew(['token' => $filterToken]);
             $head->token  = $newToken;
             $head->domain = $domain;
             $head->save();
 
-            // 2) PAYLOAD
+            // STEP 2: Payload
             PushSubscriptionPayload::updateOrCreate(
                 ['head_id' => $head->id],
                 [
@@ -62,42 +61,61 @@ class SubscribePushSubscriptionJob implements ShouldQueue
                 ]
             );
 
-            // 3) META (same as before)
-            $agent = new Agent();
-            $agent->setUserAgent($this->data['user_agent'] ?? '');
+            DB::commit();
+        } catch (Throwable $e) {
+            DB::rollBack();
 
-            $ip = $this->data['ip_address'];
-            $position = Cache::remember("geoip:{$ip}", now()->addHours(6), function() use ($ip) {
-                try {
-                    return Location::get($ip);
-                } catch (\Exception $e) {
-                    Log::warning("Location lookup failed for {$ip}: ".$e->getMessage());
-                    return null;
-                }
-            });
+            Log::error('SubscribePushSubscriptionJob DB error', [
+                'error'   => $e->getMessage(),
+                'trace'   => $e->getTraceAsString(),
+                'payload' => $this->data,
+            ]);
 
-            PushSubscriptionMeta::updateOrCreate(
-                ['head_id' => $head->id],
-                [
-                    'ip_address' => $ip,
-                    'country'    => $position->countryName ?? null,
-                    'state'      => $position->regionName  ?? null,
-                    'city'       => $position->cityName    ?? null,
-                    'device'     => $agent->device()       ?? null,
-                    'browser'    => $agent->browser()      ?? null,
-                    'platform'   => $agent->platform()     ?? null,
-                ]
-            );
-        });
+            throw $e; // Let Laravel handle retry
+        }
+
+        // STEP 3: Metadata (outside DB transaction)
+        if ($head?->id) {
+            try {
+                $agent = new Agent();
+                $agent->setUserAgent($this->data['user_agent'] ?? '');
+
+                $ip = $this->data['ip_address'];
+                $position = Cache::remember("geoip:{$ip}", now()->addHours(6), function () use ($ip) {
+                    try {
+                        return Location::get($ip);
+                    } catch (Throwable $e) {
+                        Log::warning("GeoIP failed: {$ip} — " . $e->getMessage());
+                        return null;
+                    }
+                });
+
+                PushSubscriptionMeta::updateOrCreate(
+                    ['head_id' => $head->id],
+                    [
+                        'ip_address' => $ip,
+                        'country'    => $position->countryName ?? null,
+                        'state'      => $position->regionName ?? null,
+                        'city'       => $position->cityName ?? null,
+                        'device'     => $agent->device(),
+                        'browser'    => $agent->browser(),
+                        'platform'   => $agent->platform(),
+                    ]
+                );
+            } catch (Throwable $e) {
+                Log::warning('⚠️ Metadata enrichment failed', [
+                    'message' => $e->getMessage(),
+                    'head_id' => $head->id,
+                ]);
+            }
+        }
+
     }
 
-    /**
-     * Handle a job failure.
-     */
-    public function failed(Throwable $exception): void
+    public function failed(Throwable $e): void
     {
-        Log::error('SubscribePushSubscriptionJob failed', [
-            'error'   => $exception->getMessage(),
+        Log::critical("📛 SubscribePushSubscriptionJob permanently failed", [
+            'error'   => $e->getMessage(),
             'payload' => $this->data,
         ]);
     }

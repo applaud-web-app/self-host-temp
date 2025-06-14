@@ -86,13 +86,15 @@ class SendNotificationBatchJob implements ShouldQueue
                 }
             }
 
-            DB::table('notification_sends')->insertOrIgnore($rows);
-            Notification::where('id', $this->notificationId)
-                        ->increment('active_count', count($this->tokens));
-            Notification::where('id', $this->notificationId)
-                        ->increment('success_count', $successCount);
-            Notification::where('id', $this->notificationId)
-                        ->increment('failed_count', count($failureItems));
+            foreach (array_chunk($rows, 500) as $chunk) {
+                DB::table('notification_sends')->insertOrIgnore($chunk);
+            }
+            Notification::where('id', $this->notificationId)->update([
+                'active_count'  => DB::raw("active_count + " . count($this->tokens)),
+                'success_count' => DB::raw("success_count + {$successCount}"),
+                'failed_count'  => DB::raw("failed_count + " . count($failureItems)),
+            ]);
+
 
         } catch (\Throwable $e) {
             Log::error("Batch job permanently failed [notif={$this->notificationId}]: " . $e->getMessage());
@@ -106,10 +108,8 @@ class SendNotificationBatchJob implements ShouldQueue
                 'updated_at'           => $now,
             ], $this->subscriptionIds);
             DB::table('notification_sends')->insertOrIgnore($rows);
-            PushSubscriptionHead::whereIn('id', $this->subscriptionIds)
-                                 ->update(['status' => 0]);
-            Notification::where('id', $this->notificationId)
-                        ->increment('failed_count', count($this->subscriptionIds));
+            PushSubscriptionHead::whereIn('id', $this->subscriptionIds)->update(['status' => 0]);
+            Notification::where('id', $this->notificationId)->increment('failed_count', count($this->subscriptionIds));
         }
     }
 

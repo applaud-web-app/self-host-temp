@@ -13,6 +13,7 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Support\Facades\Log;
 use Kreait\Firebase\Factory;
+use Throwable;
 
 class SendNotificationJob implements ShouldQueue
 {
@@ -30,84 +31,90 @@ class SendNotificationJob implements ShouldQueue
 
     public function handle(): void
     {
-        // ONLY SEND TO SELECT DOMAIN SUBSCRIBER NOT TO THE ALL -- PLEASE ADD THIS LOGIC
-        $notification = Notification::with('domains')->findOrFail($this->notificationId);
+        try {
+            // ONLY SEND TO SELECT DOMAIN SUBSCRIBER NOT TO THE ALL -- PLEASE ADD THIS LOGIC
+            $notification = Notification::with('domains')->findOrFail($this->notificationId);
 
-        if (! $cfg = PushConfig::first()) {
-            Log::error('FCM config missing in DB');
-            return;
-        }
+            if (! $cfg = PushConfig::first()) {
+                Log::error('FCM config missing in DB');
+                return;
+            }
 
-        $factory = (new Factory())->withServiceAccount($cfg->credentials);
+            $factory = (new Factory())->withServiceAccount($cfg->credentials);
 
-        $payload = [
-            'title'        => $notification->title,
-            'body'         => $notification->description,
-            'icon'         => $notification->banner_icon ?? '',
-            'image'        => $notification->banner_image ?? '',
-            'click_action' => $notification->target_url,
-            'message_id'   => (string) $notification->message_id,
-        ];
-        
-        $payload = array_map(fn($v) => (string) $v, $payload);
-
-        $actions = [];
-
-        // Button 1
-        if ($notification->btn_1_title && $notification->btn_1_url) {
-            $actions[] = [
-                'action' => 'btn1',
-                'title'  => $notification->btn_1_title,
-                'url'    => $notification->btn_1_url,
+            $payload = [
+                'title'        => $notification->title,
+                'body'         => $notification->description,
+                'icon'         => $notification->banner_icon ?? '',
+                'image'        => $notification->banner_image ?? '',
+                'click_action' => $notification->target_url,
+                'message_id'   => (string) $notification->message_id,
             ];
-        }
+            
+            $payload = array_map(fn($v) => (string) $v, $payload);
 
-        // Button 2
-        if ($notification->btn_title_2 && $notification->btn_url_2) {
-            $actions[] = [
-                'action' => 'btn2',
-                'title'  => $notification->btn_title_2,
-                'url'    => $notification->btn_url_2,
+            $actions = [];
+
+            // Build actions
+            $actions = [];
+            if ($notification->btn_1_title && $notification->btn_1_url) {
+                $actions[] = ['action' => 'btn1', 'title' => $notification->btn_1_title, 'url' => $notification->btn_1_url];
+            }
+            if ($notification->btn_title_2 && $notification->btn_url_2) {
+                $actions[] = ['action' => 'btn2', 'title' => $notification->btn_title_2, 'url' => $notification->btn_url_2];
+            }
+            if (count($actions) < 2) {
+                $actions[] = ['action' => 'close', 'title' => 'Close'];
+            }
+
+            // 3) Attach actions into payload
+            $payload['actions'] = json_encode($actions);
+
+            $webPushData = [
+                'data'    => $payload,
+                'headers' => ['Urgency' => 'high'],
             ];
+
+            $domains = $notification->domains->pluck('name')->all();
+            if (empty($domains)) {
+                Log::warning("⚠️ Notification {$this->notificationId} has no target domains.");
+                return;
+            }
+            
+            PushSubscriptionHead::where('status', 1)
+            ->whereIn('domain', $domains)
+            ->select(['id','token'])
+            ->orderBy('id')
+            ->chunkById(500, function ($subs) use ($factory, $webPushData) {
+                try {
+                    $ids    = $subs->pluck('id')->all();
+                    $tokens = $subs->pluck('token')->all();
+
+                    if (empty($ids) || empty($tokens)) {
+                        Log::info("✅ Skipped empty token batch.");
+                        return;
+                    }
+
+                    SendNotificationBatchJob::dispatch(
+                        $this->notificationId,
+                        $factory,
+                        $webPushData,
+                        $ids,
+                        $tokens
+                    );
+                } catch (Throwable $e) {
+                    Log::error("⚠️ Chunk dispatch failed: " . $e->getMessage());
+                }
+            });
+
+        } catch (Throwable $e) {
+            Log::error("❌ SendNotificationJob crashed [notif={$this->notificationId}]: " . $e->getMessage());
+            throw $e;
         }
-
-        // Always include a Close action if fewer than two real buttons
-        if (count($actions) < 2) {
-            $actions[] = [
-                'action' => 'close',
-                'title'  => 'Close',
-            ];
-        }
-
-        // 3) Attach actions into payload
-        $payload['actions'] = json_encode($actions);
-
-        $webPushData = [
-            'data'    => $payload,
-            'headers' => ['Urgency' => 'high'],
-        ];
-
-        $domainName = $notification->domains->pluck('name')->all();
-        
-        PushSubscriptionHead::where('status', 1)
-        ->whereIn('domain', $domainName)
-        ->select(['id','token'])
-        ->orderBy('id')
-        ->chunkById(500, function ($subs) use ($factory, $webPushData) {
-            $ids    = $subs->pluck('id')->all();
-            $tokens = $subs->pluck('token')->all();
-            SendNotificationBatchJob::dispatch(
-                $this->notificationId,
-                $factory,
-                $webPushData,
-                $ids,
-                $tokens
-            );
-        });
     }
 
-    public function failed(\Throwable $e): void
+    public function failed(Throwable $e): void
     {
-        Log::error("Master send failed [notif={$this->notificationId}]: " . $e->getMessage());
+        Log::critical("🔥 Notification master job failed permanently [notif={$this->notificationId}]: " . $e->getMessage());
     }
 }
