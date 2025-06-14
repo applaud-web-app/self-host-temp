@@ -145,7 +145,7 @@ class PushApiController extends Controller
       try {
         Redis::sadd('processed:push_analytics', $hash);
         Redis::expire('processed:push_analytics', 3600);
-      } catch (\Throwable $th) {
+      } catch (\Throwable $inner) {
         Log::warning('Failed to record processed analytics in Redis', ['error' => $inner->getMessage(),]);
       }
     }
