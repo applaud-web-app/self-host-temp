@@ -65,9 +65,8 @@ class PushApiController extends Controller
               Redis::sadd('processed:push_subscriptions', $hash);
               Redis::expire('processed:push_subscriptions', 3600); // Keep for 1 day
             } catch (\Throwable $inner) {
-              Log::warning('Failed to record processed analytics in Redis', ['error' => $inner->getMessage(),
-            ]);
-        }
+              Log::warning('Failed to record processed analytics in Redis', ['error' => $inner->getMessage(),]);
+            }
           }
 
           // Step 4: Respond quickly
@@ -143,8 +142,12 @@ class PushApiController extends Controller
 
       // ✅ Record this event hash so flush won't double-count later
       $hash = "{$event['event']}|{$event['message_id']}";
-      Redis::sadd('processed:push_analytics', $hash);
-      Redis::expire('processed:push_analytics', 3600); // Keep 1 hour
+      try {
+        Redis::sadd('processed:push_analytics', $hash);
+        Redis::expire('processed:push_analytics', 3600);
+      } catch (\Throwable $th) {
+        Log::warning('Failed to record processed analytics in Redis', ['error' => $inner->getMessage(),]);
+      }
     }
 
     return response()->noContent();
