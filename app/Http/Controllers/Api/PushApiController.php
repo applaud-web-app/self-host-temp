@@ -29,51 +29,6 @@ class PushApiController extends Controller
     ])->header('Content-Type', 'application/javascript');
   }
 
-  // public function subscribe(Request $request): JsonResponse
-  // {
-  //     try {
-  //         // 1) Validate incoming payload
-  //         $data = $request->validate([
-  //           'token'    => 'required|string',
-  //           'domain'   => 'required|string|exists:domains,name',
-  //           'old_token' => 'nullable|string',
-  //           'endpoint' => 'required|url',
-  //           'auth'     => 'required|string',
-  //           'p256dh'   => 'required|string',
-  //         ]);
-
-  //         // 2) Enrich with IP & UA
-  //         $data['ip_address'] = $request->header('CF-Connecting-IP') ?? $request->getClientIp();
-  //         $data['user_agent'] = $request->userAgent();
-
-  //         // 3) Dispatch the job
-  //         SubscribePushSubscriptionJob::dispatch($data);
-
-  //         // 4) Immediate success response
-  //         return response()->json([
-  //             'status'  => 'success',
-  //             'message' => 'Subscription queued for processing.',
-  //         ], 202);
-
-  //     } catch (ValidationException $e) {
-  //         return response()->json([
-  //             'status'  => 'error',
-  //             'message' => 'Invalid subscription data.',
-  //             'errors'  => $e->errors(),
-  //         ], 422);
-
-  //     } catch (\Exception $e) {
-  //         Log::error('Failed to dispatch subscription job', [
-  //             'error'   => $e->getMessage(),
-  //             'payload' => $request->all(),
-  //         ]);
-  //         return response()->json([
-  //             'status'  => 'error',
-  //             'message' => 'Server error while queuing subscription.',
-  //         ], 500);
-  //     }
-  // }
-
   public function subscribe(Request $request): JsonResponse
   {
       try {
@@ -97,8 +52,7 @@ class PushApiController extends Controller
               Redis::rpush('buffer:push_subscriptions', json_encode($data));
           } catch (\Throwable $e) {
             Log::warning('Redis unavailable, falling back to queue for subscribe()', [
-                'error' => $e->getMessage(),
-                'data'  => $data,
+              'error' => $e->getMessage()
             ]);
 
             // Fallback: push directly to queue
@@ -120,8 +74,7 @@ class PushApiController extends Controller
 
       } catch (\Exception $e) {
           Log::error('Subscription dispatch error', [
-              'error'   => $e->getMessage(),
-              'payload' => $request->all(),
+              'error'   => $e->getMessage()
           ]);
 
           return response()->json([
@@ -152,20 +105,6 @@ class PushApiController extends Controller
       }
   }
 
-  // public function analytics(Request $request): Response
-  // {
-  //   $payload = $request->validate([
-  //       'message_id' => 'required|string',
-  //       'event'      => 'required|string',
-  //   ]);
-
-  //   // Dispatch background job
-  //   ProcessPushAnalytics::dispatch($payload['message_id'], $payload['event']);
-
-  //   // Respond immediately
-  //   return response()->noContent();
-  // }
-
   public function analytics(Request $request): Response
   {
     $payload = $request->validate([
@@ -185,8 +124,7 @@ class PushApiController extends Controller
       Redis::rpush('buffer:push_events', json_encode($event));
     } catch (\Throwable $e) {
       Log::warning('Redis unavailable, falling back to queue', [
-        'error' => $e->getMessage(),
-        'event' => $event,
+        'error' => $e->getMessage()
       ]);
 
       // ✅ Fallback to queue

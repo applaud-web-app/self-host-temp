@@ -16,7 +16,6 @@ return new class extends Migration
             $table->string('message_id');
             $table->string('event'); // click, close, received
             $table->unsignedBigInteger('count')->default(0);
-            $table->timestamps();
             $table->unique(['message_id', 'event']);
         });
     }

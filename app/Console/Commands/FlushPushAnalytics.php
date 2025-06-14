@@ -62,8 +62,7 @@ class FlushPushAnalytics extends Command
             }
         } catch (\Throwable $e) {
             Log::error('analytics:flush crashed', [
-                'message' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
+                'message' => $e->getMessage()
             ]);
             $this->error("Flush terminated due to error: " . $e->getMessage());
         }

@@ -63,9 +63,6 @@ class SendNotificationBatchJob implements ShouldQueue
                     ? $failure->error()->getMessage()
                     : (string)$failure;
                 Log::error('Push send failed', [
-                    'notification_id'      => $this->notificationId,
-                    'subscription_id'      => $this->subscriptionIds[$index] ?? null,
-                    'token'                => $this->tokens[$index] ?? null,
                     'error'                => $error,
                 ]);
             }

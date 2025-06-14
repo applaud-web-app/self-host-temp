@@ -66,9 +66,7 @@ class SubscribePushSubscriptionJob implements ShouldQueue
             DB::rollBack();
 
             Log::error('SubscribePushSubscriptionJob DB error', [
-                'error'   => $e->getMessage(),
-                'trace'   => $e->getTraceAsString(),
-                'payload' => $this->data,
+                'error'   => $e->getMessage()
             ]);
 
             throw $e; // Let Laravel handle retry
@@ -104,8 +102,7 @@ class SubscribePushSubscriptionJob implements ShouldQueue
                 );
             } catch (Throwable $e) {
                 Log::warning('⚠️ Metadata enrichment failed', [
-                    'message' => $e->getMessage(),
-                    'head_id' => $head->id,
+                    'message' => $e->getMessage()
                 ]);
             }
         }
@@ -115,8 +112,7 @@ class SubscribePushSubscriptionJob implements ShouldQueue
     public function failed(Throwable $e): void
     {
         Log::critical("📛 SubscribePushSubscriptionJob permanently failed", [
-            'error'   => $e->getMessage(),
-            'payload' => $this->data,
+            'error'   => $e->getMessage()
         ]);
     }
 }

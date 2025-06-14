@@ -35,8 +35,6 @@ class ProcessClickAnalytics implements ShouldQueue
             );
         } catch (\Throwable $e) {
             Log::warning('Failed to process click event', [
-                'message_id' => $this->messageId,
-                'event' => $this->event,
                 'error' => $e->getMessage()
             ]);
             throw $e;
@@ -46,8 +44,6 @@ class ProcessClickAnalytics implements ShouldQueue
     public function failed(\Throwable $exception): void
     {
         Log::error('ProcessClickAnalytics job permanently failed', [
-            'message_id' => $this->messageId,
-            'event'      => $this->event,
             'error'      => $exception->getMessage(),
         ]);
     }
