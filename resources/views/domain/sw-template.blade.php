@@ -50,7 +50,11 @@ messaging.onBackgroundMessage(payload => {
   sendAnalytics('received', messageId);
 
   let actions = [];
-  try { actions = JSON.parse(d.actions || '[]'); } catch {}
+  try {
+    actions = JSON.parse(d.actions || '[]');
+  } catch (e) {
+    console.warn('Invalid actions JSON:', e);
+  }
 
   const title = d.title || 'Notification';
   const options = {
@@ -87,7 +91,11 @@ self.addEventListener('push', event => {
   sendAnalytics('received', messageId);
 
   let actions = [];
-  try { actions = JSON.parse(d.actions || '[]'); } catch {}
+  try {
+    actions = JSON.parse(d.actions || '[]');
+  } catch (e) {
+    console.warn('Invalid actions JSON in raw push:', e);
+  }
 
   const title = d.title || 'Notification';
   const options = {
@@ -99,7 +107,10 @@ self.addEventListener('push', event => {
       message_id: messageId,
       actions: actions
     },
-    actions: actions.map(a => ({ action: a.action, title: a.title }))
+    actions: actions.map(a => ({
+      action: a.action,
+      title: a.title
+    }))
   };
 
   event.waitUntil(self.registration.showNotification(title, options));
@@ -109,16 +120,14 @@ self.addEventListener('push', event => {
 self.addEventListener('notificationclick', event => {
   event.notification.close();
 
-  const md = event.notification.data?.message_id || '';
-  sendAnalytics('click', md);
+  const data = event.notification.data || {};
+  const messageId = data.message_id || '';
+  sendAnalytics('click', messageId);
 
-  // Default URL if user taps the body
-  let url = event.notification.data?.click_action || '/';
+  let url = data.click_action || '/';
 
-  // If they clicked a specific action button, find its URL
   if (event.action) {
-    const acts = event.notification.data?.actions || [];
-    const match = acts.find(a => a.action === event.action);
+    const match = (data.actions || []).find(a => a.action === event.action);
     if (match && match.url) {
       url = match.url;
     }
@@ -129,8 +138,8 @@ self.addEventListener('notificationclick', event => {
 
 // 7) Handle dismissals
 self.addEventListener('notificationclose', event => {
-  const md = event.notification.data?.message_id || '';
-  sendAnalytics('close', md);
+  const messageId = event.notification.data?.message_id || '';
+  sendAnalytics('close', messageId);
 });
 
 // 8) Subscription change
