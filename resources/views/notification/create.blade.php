@@ -840,118 +840,6 @@
     </script>
 
     <script>
-        $(function() {
-            // — GET META DATA —
-            $('#getData').on('click', function() {
-                var url = $.trim($('#target_url').val());
-                if (!url) {
-                    iziToast.error({
-                        title: 'Warning!',
-                        message: 'Please enter a URL first.',
-                        position: 'topRight'
-                    });
-                    return;
-                }
-
-                var $btn = $(this)
-                    .prop('disabled', true)
-                    .html('<span class="spinner-border spinner-border-sm me-2"></span>Fetching...');
-
-                $.ajax({
-                        url: "{{ route('notification.fetchMeta') }}",
-                        type: 'POST',
-                        data: {
-                            _token: '{{ csrf_token() }}',
-                            target_url: url
-                        }
-                    })
-                    .done(function(res) {
-                        if (res.success) {
-                            if (res.data.title) {
-                                $('#title').val(res.data.title).trigger('keyup');
-                            }
-                            if (res.data.description) {
-                                $('#description').val(res.data.description).trigger('keyup');
-                            }
-                            if (res.data.image) {
-                                $('#image_input').val(res.data.image);
-                                changeBanner(res.data.image);
-                            }
-                            iziToast.success({
-                                title: 'Success',
-                                message: 'Metadata loaded.',
-                                position: 'topRight'
-                            });
-                        } else {
-                            iziToast.error({
-                                title: 'Error',
-                                message: res.message,
-                                position: 'topRight'
-                            });
-                        }
-                    })
-                    .fail(function() {
-                        iziToast.error({
-                            title: 'Error',
-                            message: 'Failed to fetch metadata.',
-                            position: 'topRight'
-                        });
-                    })
-                    .always(function() {
-                        $btn.prop('disabled', false)
-                            .html('<i class="far fa-wand"></i> Get Data');
-                    });
-            });
-
-            // — FORM VALIDATION —
-            // $("#notificationform").validate({
-            //     errorElement: 'div',
-            //     errorClass: 'invalid-feedback',
-            //     ignore: [], // so unchecked checkboxes get validated
-            //     rules: {
-            //         target_url: {
-            //             required: true,
-            //             url: true
-            //         },
-            //         campaign_name: 'required',
-            //         title: 'required',
-            //         description: 'required',
-
-            //         // scheduling rules omitted for brevity…
-
-            //         'domain_name[]': {
-            //             required: true
-            //         }
-            //     },
-            //     messages: {
-            //         target_url: 'Please enter a valid URL.',
-            //         title: 'Title is required.',
-            //         description: 'Notification Message is required.',
-            //         'domain_name[]': 'Please select at least one domain.'
-            //     },
-            //     errorPlacement: function(error, element) {
-            //         if (element.attr('name') === 'domain_name[]') {
-            //             error.appendTo('#domain-error-span');
-            //         } else {
-            //             error.insertAfter(element);
-            //         }
-            //     },
-            //     highlight: function(el) {
-            //         $(el).addClass('is-invalid');
-            //     },
-            //     unhighlight: function(el) {
-            //         $(el).removeClass('is-invalid');
-            //     },
-            //     submitHandler: function(form) {
-            //         var $btn = $('#sendNotification');
-            //         $btn.prop('disabled', true)
-            //             .html('<i class="fas fa-spinner fa-spin me-2"></i> Processing...');
-            //         form.submit();
-            //     }
-            // });
-        });
-
-
         (function(){
             let injected=false;
             $('#staticBackdrop').on('show.bs.modal',function(){
@@ -968,7 +856,6 @@
                 injected=true;
             });
         })();
-
     </script>
 <script>
   $(function() {

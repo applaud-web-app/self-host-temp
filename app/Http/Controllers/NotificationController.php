@@ -112,6 +112,13 @@ class NotificationController extends Controller
             ]);
         }
 
+        if (! $response->ok()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'URL returned HTTP ' . $response->status(),
+            ]);
+        }
+
         // 2) Parse metadata via regex
         $html = $response->body();
         $meta = $this->parseMetaRegex($html);
@@ -135,9 +142,14 @@ class NotificationController extends Controller
      */
     protected function parseMetaRegex(string $html): array
     {
+        // helper to trim + decode
+        $clean = function(string $value): string {
+            return html_entity_decode(trim($value), ENT_QUOTES | ENT_HTML5, 'UTF-8');
+        };
+
         // Title
         if (preg_match('/<title>(.*?)<\/title>/is', $html, $m)) {
-            $title = trim($m[1]);
+            $title = $clean($m[1]);
         } else {
             $title = '';
         }
@@ -148,7 +160,7 @@ class NotificationController extends Controller
             $html,
             $m2
         )) {
-            $description = trim($m2[1]);
+            $description = $clean($m2[1]);
         } else {
             $description = '';
         }
@@ -159,7 +171,7 @@ class NotificationController extends Controller
             $html,
             $m3
         )) {
-            $image = trim($m3[1]);
+            $image = $clean($m3[1]);
         }
         // fallback to <link rel="image_src">
         elseif (preg_match(
@@ -167,7 +179,7 @@ class NotificationController extends Controller
             $html,
             $m4
         )) {
-            $image = trim($m4[1]);
+            $image = $clean($m4[1]);
         } else {
             $image = '';
         }
