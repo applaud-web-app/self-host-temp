@@ -21,6 +21,12 @@ class FlushPushAnalytics extends Command
         $this->info("Starting Redis analytics flush...");
 
         try {
+            
+            // Safety check: Is Redis alive?
+            if (! Redis::ping()) {
+                throw new \Exception('Push Analytics : Redis not available or connection refused.');
+            }
+
             for ($i = 0; $i < $maxBatches; $i++) {
                 // Step 1: Read batch
                 $batch = Redis::lrange($key, 0, $batchSize - 1);
@@ -52,6 +58,13 @@ class FlushPushAnalytics extends Command
                 foreach ($counts as $key => $count) {
                     [$event, $messageId] = explode('|', $key, 2);
 
+                    // ✅ Skip if already processed by fallback
+                    if (Redis::sismember('processed:push_analytics', $key)) {
+                        Log::info("Skipping already processed analytics event", ['event' => $event, 'message_id' => $messageId]);
+                        continue;
+                    }
+
+                    // ✅ Update DB and mark as processed
                     DB::table('push_event_counts')->updateOrInsert(
                         ['message_id' => $messageId, 'event' => $event],
                         ['count' => DB::raw("count + {$count}")]
@@ -59,6 +72,8 @@ class FlushPushAnalytics extends Command
                 }
 
                 $this->info("Processed batch of " . count($batch) . " entries.");
+                Redis::sadd('processed:push_analytics', $key);
+                Redis::expire('processed:push_analytics', 3600);
             }
         } catch (\Throwable $e) {
             Log::error('analytics:flush crashed', [

@@ -15,12 +15,19 @@ class FlushPushSubscriptions extends Command
     public function handle(): void
     {
         $key = 'buffer:push_subscriptions';
+        $processedKey = 'processed:push_subscriptions';
         $batchSize = 200;
         $maxBatches = 10;
 
         $this->info("Starting Redis subscription flush...");
 
         try {
+
+            // Safety check: Is Redis alive?
+            if (! Redis::ping()) {
+                throw new \Exception('Push Subscriber : Redis not available or connection refused.');
+            }
+
             for ($i = 0; $i < $maxBatches; $i++) {
                 // Step 1: Read batch
                 $batch = Redis::lrange($key, 0, $batchSize - 1);
@@ -42,7 +49,17 @@ class FlushPushSubscriptions extends Command
                         continue;
                     }
 
+                    $hash = $data['subscription_hash'] ?? md5($data['token'] . $data['domain'] . $data['endpoint']);
+
+                    // ✅ Check if already processed
+                    if (Redis::sismember($processedKey, $hash)) {
+                        Log::info('Skipping already processed subscription', ['hash' => $hash]);
+                        continue;
+                    }
+
                     SubscribePushSubscriptionJob::dispatch($data);
+                    Redis::sadd($processedKey, $hash);
+                    Redis::expire($processedKey, 3600);
                 }
 
                 $this->info("Dispatched batch of " . count($batch) . " subscriptions.");

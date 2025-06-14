@@ -47,6 +47,10 @@ class PushApiController extends Controller
           $data['user_agent'] = $request->userAgent();
           $data['timestamp']  = now()->timestamp;
 
+          // Step 3: Generate subscription hash
+          $hash = md5($data['token'] . $data['domain'] . $data['endpoint']);
+          $data['subscription_hash'] = $hash;
+
           // Step 3: Try pushing to Redis
           try {
               Redis::rpush('buffer:push_subscriptions', json_encode($data));
@@ -57,6 +61,8 @@ class PushApiController extends Controller
 
             // Fallback: push directly to queue
             SubscribePushSubscriptionJob::dispatch($data);
+            Redis::sadd('processed:push_subscriptions', $hash);
+            Redis::expire('processed:push_subscriptions', 3600); // Keep for 1 day
           }
 
           // Step 4: Respond quickly
@@ -129,6 +135,11 @@ class PushApiController extends Controller
 
       // ✅ Fallback to queue
       ProcessClickAnalytics::dispatch($event['message_id'], $event['event']);
+
+      // ✅ Record this event hash so flush won't double-count later
+      $hash = "{$event['event']}|{$event['message_id']}";
+      Redis::sadd('processed:push_analytics', $hash);
+      Redis::expire('processed:push_analytics', 3600); // Keep 1 hour
     }
 
     return response()->noContent();
