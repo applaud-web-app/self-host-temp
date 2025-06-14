@@ -13,9 +13,10 @@ return new class extends Migration
     {
         Schema::create('push_event_counts', function (Blueprint $table) {
             $table->id();
-            $table->string('message_id')->index();
-            $table->string('event')->index();
+            $table->string('message_id');
+            $table->string('event'); // click, close, received
             $table->unsignedBigInteger('count')->default(0);
+            $table->timestamps();
             $table->unique(['message_id', 'event']);
         });
     }

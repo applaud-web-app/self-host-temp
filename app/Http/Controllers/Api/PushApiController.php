@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use App\Models\PushConfig;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Http\JsonResponse;
@@ -12,6 +13,8 @@ use App\Jobs\SubscribePushSubscriptionJob;
 use Illuminate\Support\Facades\Cache;
 use App\Models\PushAnalytic;
 use Illuminate\Support\Facades\DB;
+use App\Jobs\ProcessPushAnalytics;
+use Illuminate\Support\Facades\Redis;
 
 class PushApiController extends Controller
 {
@@ -92,26 +95,45 @@ class PushApiController extends Controller
       }
   }
 
+  // public function analytics(Request $request): Response
+  // {
+  //   $payload = $request->validate([
+  //       'message_id' => 'required|string',
+  //       'event'      => 'required|string',
+  //   ]);
+
+  //   // Dispatch background job
+  //   ProcessPushAnalytics::dispatch($payload['message_id'], $payload['event']);
+
+  //   // Respond immediately
+  //   return response()->noContent();
+  // }
+
   public function analytics(Request $request): Response
   {
     $payload = $request->validate([
       'message_id' => 'required|string',
-      'event'      => 'required|string',
+      'event'      => 'required|in:click,close,received',
     ]);
 
-    // Try to increment existing row
-    $updated = DB::table('push_event_counts')
-    ->where('message_id', $payload['message_id'])
-    ->where('event', $payload['event'])
-    ->increment('count');
+    // Add timestamp if needed for future trace/debug
+    $event = [
+      'message_id' => $payload['message_id'],
+      'event'      => $payload['event'],
+      'timestamp'  => now()->timestamp,
+    ];
 
-    // If none existed, create with count = 1
-    if (! $updated) {
-      DB::table('push_event_counts')->insert([
-        'message_id' => $payload['message_id'],
-        'event'      => $payload['event'],
-        'count'      => 1,
+    // Push to Redis buffer
+    try {
+      Redis::rpush('buffer:push_events', json_encode($event));
+    } catch (\Throwable $e) {
+      Log::warning('Redis unavailable, falling back to queue', [
+        'error' => $e->getMessage(),
+        'event' => $event,
       ]);
+
+      // ✅ Fallback to queue
+      ProcessClickAnalytics::dispatch($event['message_id'], $event['event']);
     }
 
     return response()->noContent();
