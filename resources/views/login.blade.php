@@ -26,7 +26,6 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="{{ asset('css/iziToast.css') }}">
 
-    {{-- Inline tweaks (keep short) --}}
     <style>
         .password-toggle { position:absolute; right:10px; top:50%; transform:translateY(-50%); cursor:pointer; }
         .password-wrapper { position:relative; }
@@ -36,11 +35,11 @@
 <div class="container-fluid h-100">
     <div class="row h-100 align-items-center justify-content-center">
 
-        {{-- ==== Login Card ==== --}}
+        {{-- Login Card --}}
         <div class="col-xl-4 col-lg-5 col-md-8 col-sm-10">
             <div class="card p-3 p-md-5">
 
-                {{-- Brand / Header --}}
+                {{-- Header --}}
                 <div class="text-center mb-4">
                     <a href="{{ url('/') }}">
                         <img src="{{ asset('images/logo-full.png') }}" alt="Aplu Push" class="img-fluid" style="height:72px;">
@@ -49,20 +48,15 @@
                     <p class="text-muted">Sign in to continue to your Aplu Push account</p>
                 </div>
 
-                {{-- ==== FORM ==== --}}
+                {{-- Form --}}
                 <form id="login" method="POST" action="{{ route('login.doLogin') }}">
                     @csrf
 
                     {{-- Email --}}
                     <div class="mb-3">
                         <label for="email" class="form-label">Email Address</label>
-                        <input type="email"
-                               id="email"
-                               name="email"
-                               class="form-control @error('email') is-invalid @enderror"
-                               value="{{ old('email') }}"
-                               placeholder="you@example.com"
-                               required>
+                        <input type="email" id="email" name="email" class="form-control @error('email') is-invalid @enderror"
+                               value="{{ old('email') }}" placeholder="you@example.com" required>
                         @error('email')
                             <div class="invalid-feedback">{{ $message }}</div>
                         @enderror
@@ -72,29 +66,20 @@
                     <div class="mb-3">
                         <label for="password" class="form-label">Password</label>
                         <div class="password-wrapper">
-                            <input type="password"
-                                   id="password"
-                                   name="password"
+                            <input type="password" id="password" name="password"
                                    class="form-control @error('password') is-invalid @enderror"
-                                   placeholder="********"
-                                   required>
-                            <span class="password-toggle" id="togglePassword">
-                                <i class="far fa-eye"></i>
-                            </span>
+                                   placeholder="********" required>
+                            <span class="password-toggle" id="togglePassword"><i class="far fa-eye"></i></span>
                             @error('password')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
                         </div>
                     </div>
 
-                    {{-- Remember + forgot --}}
+                    {{-- Remember me & forgot --}}
                     <div class="d-flex align-items-center justify-content-between mb-3">
                         <div class="form-check">
-                            <input type="checkbox"
-                                   class="form-check-input"
-                                   id="remember_check"
-                                   name="remember_me"
-                                   value="1"
+                            <input type="checkbox" class="form-check-input" id="remember_check" name="remember_me" value="1"
                                    {{ old('remember_me', true) ? 'checked' : '' }}>
                             <label for="remember_check" class="form-check-label">Remember me</label>
                         </div>
@@ -103,8 +88,9 @@
 
                     {{-- Submit --}}
                     <div class="d-grid gap-2 mb-3">
-                        <button type="submit" class="btn btn-primary">
+                        <button type="submit" class="btn btn-primary" id="loginBtn">
                             <span class="sign-in-text">Sign In</span>
+                            <span id="loginSpinner" class="spinner-border spinner-border-sm d-none ms-2" role="status" aria-hidden="true"></span>
                         </button>
                     </div>
                 </form>
@@ -115,16 +101,15 @@
                 <p class="text-muted mb-0">
                     &copy; {{ now()->year }} Aplu Push.
                     <a href="https://aplu.io/terms-conditions/" target="_blank">Terms</a> |
-                    <a href="https://aplu.io/privacy-policy/"   target="_blank">Privacy</a>
+                    <a href="https://aplu.io/privacy-policy/" target="_blank">Privacy</a>
                 </p>
             </div>
         </div>
 
-        {{-- ==== Illustration / Marketing side ==== --}}
+        {{-- Illustration --}}
         <div class="col-xl-7 col-lg-6 d-none d-lg-block">
             <div class="p-5 text-center">
-                <img src="https://aplu.io/assets/images/aplu-image-1.png"
-                     alt="Login illustration"
+                <img src="https://aplu.io/assets/images/aplu-image-1.png" alt="Login illustration"
                      class="img-fluid" style="max-height:460px; animation:float 6s ease-in-out infinite;">
                 <h3 class="mt-4">Powerful Push Notifications</h3>
                 <p class="text-muted">Engage your users with real-time notifications delivered through our reliable platform.</p>
@@ -151,7 +136,7 @@
     </div>
 </div>
 
-{{-- ==== Scripts ==== --}}
+{{-- Scripts --}}
 <script src="{{ asset('vendor/global/global.min.js') }}"></script>
 <script src="{{ asset('js/custom.min.js') }}"></script>
 <script src="{{ asset('js/deznav-init.js') }}"></script>
@@ -159,49 +144,54 @@
 <script src="{{ asset('js/iziToast.js') }}"></script>
 
 <script>
-    // Show/hide password
+    // Toggle password visibility
     document.getElementById('togglePassword').addEventListener('click', function () {
         const input = document.getElementById('password');
-        const eye   = this.querySelector('i');
-        input.type  = (input.type === 'password') ? 'text' : 'password';
+        const eye = this.querySelector('i');
+        input.type = input.type === 'password' ? 'text' : 'password';
         eye.classList.toggle('fa-eye');
         eye.classList.toggle('fa-eye-slash');
     });
 
-    // Client-side validation
+    // Validate and show spinner
     $('#login').validate({
         rules: {
-            email:    { required:true, email:true },
-            password: { required:true, minlength:6 }
+            email: { required: true, email: true },
+            password: { required: true, minlength: 6 }
         },
         messages: {
-            email:    { required:'Email is required',    email:'Enter a valid email' },
-            password: { required:'Password is required', minlength:'Min 6 characters' }
+            email: { required: 'Email is required', email: 'Enter a valid email' },
+            password: { required: 'Password is required', minlength: 'Min 6 characters' }
         },
-        errorElement:'div',
-        errorPlacement:(error, el)=> error.addClass('invalid-feedback').insertAfter(el),
-        highlight:(el)=>$(el).addClass('is-invalid'),
-        unhighlight:(el)=>$(el).removeClass('is-invalid')
+        errorElement: 'div',
+        errorPlacement: function (error, el) {
+            error.addClass('invalid-feedback').insertAfter(el);
+        },
+        highlight: function (el) {
+            $(el).addClass('is-invalid');
+        },
+        unhighlight: function (el) {
+            $(el).removeClass('is-invalid');
+        },
+        submitHandler: function (form) {
+            document.getElementById('loginBtn').disabled = true;
+            document.getElementById('loginSpinner').classList.remove('d-none');
+            form.submit();
+        }
     });
 </script>
 
-{{-- ==== Izitoast flash messages ==== --}}
+{{-- Flash Messages --}}
 @if (Session::has('success'))
-    <script>
-        iziToast.success({ title:'Success', message:'{{ Session::get('success') }}', position:'topRight' });
-    </script>
+    <script> iziToast.success({ title:'Success', message:'{{ Session::get('success') }}', position:'topRight' }); </script>
 @endif
 
 @if (Session::has('error'))
-    <script>
-        iziToast.error({ title:'Error', message:'{{ Session::get('error') }}', position:'topRight' });
-    </script>
+    <script> iziToast.error({ title:'Error', message:'{{ Session::get('error') }}', position:'topRight' }); </script>
 @endif
 
 @if (Session::has('warning'))
-    <script>
-        iziToast.warning({ title:'Warning', message:'{{ Session::get('warning') }}', position:'topRight' });
-    </script>
+    <script> iziToast.warning({ title:'Warning', message:'{{ Session::get('warning') }}', position:'topRight' }); </script>
 @endif
 
 @if ($errors->any())
