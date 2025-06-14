@@ -109,29 +109,45 @@
                                     <span class="badge light text-white bg-primary rounded-circle" id="unReadCount">0</span>
                                 </a>
                             </li> --}}
-                            <li class="nav-item dropdown header-profile">
-                                <a class="nav-link" href="javascript:void(0);" role="button" data-bs-toggle="dropdown">
-                                    <img src="{{ asset('images/user.png') }}" width="56" alt="" />
-                                </a>
-                                <div class="dropdown-menu dropdown-menu-end">
-                                    <a href="{{ route('profile') }}" class="dropdown-item ai-icon">
-                                        <i class="far fa-user text-primary"></i>
-                                        <span class="ms-1">Profile</span>
-                                    </a>
-                                  <a href="#"
-                                    class="dropdown-item ai-icon text-danger"
-                                    onclick="event.preventDefault();
-                                                document.getElementById('logout-form').submit();">
-                                        <i class="far fa-sign-out text-danger"></i>
-                                        <span class="ms-1">Logout</span>
-                                    </a>
+                           @php
+    $defaultAvatar = asset('images/user.png');
+    $userAvatar = Auth::user() && Auth::user()->image
+        ? asset(Auth::user()->image)
+        : $defaultAvatar;
+    // If the file exists, use its modified time to bust cache:
+    $timestamp = (Auth::user() && Auth::user()->image && file_exists(public_path(Auth::user()->image)))
+        ? filemtime(public_path(Auth::user()->image))
+        : now()->timestamp;
+@endphp
 
-                                    <form id="logout-form" action="{{ route('logout') }}"
-                                        method="POST" class="d-none">
-                                        @csrf
-                                    </form>
-                                </div>
-                            </li>
+<li class="nav-item dropdown header-profile">
+    <a class="nav-link" href="#" role="button" data-bs-toggle="dropdown">
+        <img
+          src="{{ $userAvatar }}?v={{ $timestamp }}"
+          width="56"
+          alt="User Avatar"
+          class="rounded-circle"
+        />
+    </a>
+    <div class="dropdown-menu dropdown-menu-end">
+        <a href="{{ route('user.profile') }}" class="dropdown-item ai-icon">
+            <i class="far fa-user text-primary"></i>
+            <span class="ms-1">Profile</span>
+        </a>
+        <a 
+          class="dropdown-item ai-icon text-danger" 
+          href="#" 
+          onclick="event.preventDefault(); document.getElementById('logout-form').submit();"
+        >
+            <i class="far fa-sign-out text-danger"></i>
+            <span class="ms-1">Logout</span>
+        </a>
+        <form id="logout-form" action="{{ route('logout') }}" method="POST" class="d-none">
+            @csrf
+        </form>
+    </div>
+</li>
+
                         </ul>
                     </div>
                 </nav>

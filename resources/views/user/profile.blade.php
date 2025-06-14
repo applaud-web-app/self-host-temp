@@ -1,5 +1,4 @@
 @extends('layouts.master')
-
 @section('content')
 <section class="content-body">
   <div class="container-fluid">
@@ -11,12 +10,15 @@
             <h4 class="card-title fs-20 mb-0">Profile Details</h4>
           </div>
           <div class="card-body">
+
+            <form action="{{ route('user.update') }}" method="POST" enctype="multipart/form-data" id="profileForm" novalidate>
+              @csrf
             {{-- Avatar Upload --}}
             <div class="row justify-content-center mb-4">
               <div class="col-auto">
                 <div class="position-relative avatar-wrapper">
                   <img
-                    src="https://img.freepik.com/premium-vector/vector-flat-illustration-grayscale-avatar-user-profile-person-icon-gender-neutral-silhouette-profile-picture-suitable-social-media-profiles-icons-screensavers-as-templatex9xa_719432-875.jpg?semt=ais_hybrid&w=740"
+                    src="{{ asset(Auth::user()->image ?? 'https://img.freepik.com/premium-vector/vector-flat-illustration-grayscale-avatar-user-profile-person-icon-gender-neutral-silhouette-profile-picture-suitable-social-media-profiles-icons-screensavers-as-templatex9xa_719432-875.jpg') }}"
                     alt="User Avatar"
                     id="avatarPreview"
                     class="rounded-circle avatar-img"
@@ -35,9 +37,6 @@
                 </div>
               </div>
             </div>
-
-            <form action="#" method="POST" enctype="multipart/form-data" id="profileForm" novalidate>
-              @csrf
               <div class="row">
                 <!-- User Name -->
                 <div class="col-md-12 mb-3">
@@ -46,13 +45,13 @@
                   </label>
                   <input
                     type="text"
-                    class="form-control"
+                    class="form-control @error('fname') is-invalid @enderror"
                     name="fname"
                     id="fname"
-                    value="{{ old('fname', 'John') }}"
+                    value="{{ old('fname', Auth::user()->name) }}"
                     required
                   >
-                  <div class="invalid-feedback">Please enter your first name.</div>
+                  @error('fname')<div class="invalid-feedback">{{ $message }}</div>@else<div class="invalid-feedback">Please enter your first name.</div>@enderror
                 </div>
 
                 <!-- Email Address -->
@@ -62,13 +61,13 @@
                   </label>
                   <input
                     type="email"
-                    class="form-control"
+                    class="form-control @error('email') is-invalid @enderror"
                     name="email"
                     id="email"
-                    value="{{ old('email', 'john.doe@example.com') }}"
+                    value="{{ old('email', Auth::user()->email) }}"
                     required
                   >
-                  <div class="invalid-feedback">Please enter a valid email address.</div>
+                  @error('email')<div class="invalid-feedback">{{ $message }}</div>@else<div class="invalid-feedback">Please enter a valid email address.</div>@enderror
                 </div>
 
                 <!-- Phone Number + Country Code -->
@@ -81,16 +80,17 @@
                       class="form-select form-control"
                       style="max-width:120px;"
                     >
-                      <option value="" selected>+91</option>
+                      <option value="{{ Auth::user()->country_code ?? '91' }}" selected>+{{ Auth::user()->country_code ?? '91' }}</option>
                     </select>
                     <input
                       type="text"
-                      class="form-control"
+                      class="form-control @error('phone') is-invalid @enderror"
                       name="phone"
                       id="phone"
-                      value="{{ old('phone', '555 123 4567') }}"
+                      value="{{ old('phone', Auth::user()->phone) }}"
                       placeholder="Phone Number"
                     >
+                    @error('phone')<div class="invalid-feedback">{{ $message }}</div>@enderror
                   </div>
                 </div>
               </div>
@@ -111,7 +111,7 @@
             <h4 class="card-title fs-20 mb-0">Change Password</h4>
           </div>
           <div class="card-body">
-            <form action="#" method="POST" id="passwordForm" novalidate>
+            <form action="{{ route('user.update-password') }}" method="POST" id="passwordForm" novalidate>
               @csrf
 
               <!-- Current Password -->
@@ -131,13 +131,11 @@
                   <span
                     class="toggle-password"
                     onclick="togglePassword('current_password', this)"
-                    style="cursor: pointer; position: absolute; top: 50%; right: 10px; transform: translateY(-50%);"
+                    style="cursor: pointer;"
                   >
                     <i class="fas fa-eye"></i>
                   </span>
-                  <div class="invalid-feedback">
-                    Please enter your current password.
-                  </div>
+                  @error('current_password')<div class="invalid-feedback">{{ $message }}</div>@else<div class="invalid-feedback">Please enter your current password.</div>@enderror
                 </div>
               </div>
 
@@ -158,13 +156,11 @@
                   <span
                     class="toggle-password"
                     onclick="togglePassword('new_password', this)"
-                    style="cursor: pointer; position: absolute; top: 50%; right: 10px; transform: translateY(-50%);"
+                    style="cursor: pointer;"
                   >
                     <i class="fas fa-eye"></i>
                   </span>
-                  <div class="invalid-feedback">
-                    Please enter a new password.
-                  </div>
+                  @error('new_password')<div class="invalid-feedback">{{ $message }}</div>@else<div class="invalid-feedback">Please enter a new password.</div>@enderror
                 </div>
               </div>
 
@@ -185,13 +181,11 @@
                   <span
                     class="toggle-password"
                     onclick="togglePassword('new_password_confirmation', this)"
-                    style="cursor: pointer; position: absolute; top: 50%; right: 10px; transform: translateY(-50%);"
+                    style="cursor: pointer;"
                   >
                     <i class="fas fa-eye"></i>
                   </span>
-                  <div class="invalid-feedback">
-                    Passwords do not match.
-                  </div>
+                  @error('new_password_confirmation')<div class="invalid-feedback">{{ $message }}</div>@else<div class="invalid-feedback">Passwords do not match.</div>@enderror
                 </div>
               </div>
 
@@ -206,8 +200,9 @@
     </div>
   </div>
 </section>
-
-{{-- Custom Styles --}}
+@endsection
+{{-- Custom Styles & Scripts --}}
+@push('styles')
 <style>
   .avatar-wrapper {
     width: 140px;
@@ -242,11 +237,11 @@
     font-size: 16px;
   }
 </style>
+@endpush
 
-{{-- Custom Scripts --}}
+@push('scripts')
 <script>
-  (function () {
-    'use strict';
+  document.addEventListener('DOMContentLoaded', function () {
     const profileForm = document.getElementById('profileForm');
     const passwordForm = document.getElementById('passwordForm');
 
@@ -259,34 +254,10 @@
         form.classList.add('was-validated');
       }, false);
     });
-  })();
 
-  // Universal togglePassword helper
-  function togglePassword(fieldId, toggleBtn) {
-    const input = document.getElementById(fieldId);
-    const icon  = toggleBtn.querySelector('i');
-    if (input.type === 'password') {
-      input.type = 'text';
-      icon.classList.replace('fa-eye', 'fa-eye-slash');
-    } else {
-      input.type = 'password';
-      icon.classList.replace('fa-eye-slash', 'fa-eye');
-    }
-  }
-
-  // Preview avatar
-  function previewAvatar(input) {
-    if (input.files && input.files[0]) {
-      const reader = new FileReader();
-      reader.onload = e => document.getElementById('avatarPreview').src = e.target.result;
-      reader.readAsDataURL(input.files[0]);
-    }
-  }
-
-  // Load country codes into phone select
-  document.addEventListener('DOMContentLoaded', function () {
+    // Load country codes
     const countryCodeSelect = document.getElementById('country_code');
-    fetch('countries_data.json')
+    fetch('/countries_data.json')
       .then(res => res.json())
       .then(list => {
         list.forEach(({ country_code }) => {
@@ -298,5 +269,27 @@
       })
       .catch(console.error);
   });
+
+  // Preview avatar
+  function previewAvatar(input) {
+    if (input.files && input.files[0]) {
+      const reader = new FileReader();
+      reader.onload = e => document.getElementById('avatarPreview').src = e.target.result;
+      reader.readAsDataURL(input.files[0]);
+    }
+  }
+
+  // Toggle password visibility
+  function togglePassword(fieldId, toggleBtn) {
+    const input = document.getElementById(fieldId);
+    const icon  = toggleBtn.querySelector('i');
+    if (input.type === 'password') {
+      input.type = 'text';
+      icon.classList.replace('fa-eye', 'fa-eye-slash');
+    } else {
+      input.type = 'password';
+      icon.classList.replace('fa-eye-slash', 'fa-eye');
+    }
+  }
 </script>
-@endsection
+@endpush
