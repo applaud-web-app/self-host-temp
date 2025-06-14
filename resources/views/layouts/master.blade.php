@@ -92,12 +92,12 @@
                         </div>
                         <ul class="navbar-nav header-right">
                             <li class="nav-item recipe">
-                                <a href="#" class="btn btn-secondary btn-rounded">
+                                <a href="{{route('domain.view')}}" class="btn btn-secondary btn-rounded">
                                     <i class="fas fa-plus pe-2"></i>Domain
                                 </a>
                             </li>
                             <li class="nav-item recipe">
-                                <a href="#" class="btn btn-primary btn-rounded">
+                                <a href="{{route('notification.create')}}" class="btn btn-primary btn-rounded">
                                     <i class="fas fa-paper-plane pe-2"></i>Send
                                 </a>
                             </li>
@@ -136,7 +136,7 @@
         </a>
         <a 
           class="dropdown-item ai-icon text-danger" 
-          href="#" 
+          href="" 
           onclick="event.preventDefault(); document.getElementById('logout-form').submit();"
         >
             <i class="far fa-sign-out text-danger"></i>

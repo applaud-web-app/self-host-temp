@@ -14,14 +14,11 @@ return new class extends Migration
         Schema::create('domain_notification', function (Blueprint $table) {
             $table->unsignedBigInteger('notification_id');
             $table->unsignedBigInteger('domain_id');
+            $table->enum('status', ['pending', 'queued', 'sent', 'failed'])->default('pending')->index();
+            $table->timestamp('sent_at')->nullable();
 
-            $table->foreign('notification_id')
-                  ->references('id')->on('notifications')
-                  ->onDelete('cascade');
-
-            $table->foreign('domain_id')
-                  ->references('id')->on('domains')
-                  ->onDelete('cascade');
+            $table->foreign('notification_id')->references('id')->on('notifications')->onDelete('cascade');
+            $table->foreign('domain_id')->references('id')->on('domains')->onDelete('cascade');
 
             $table->primary(['notification_id', 'domain_id']);
         });
