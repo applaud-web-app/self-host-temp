@@ -52,7 +52,8 @@ class SendNotificationJob implements ShouldQueue
         $payload = array_map(fn($v) => (string) $v, $payload);
 
         $actions = [];
-         // Button 1
+
+        // Button 1
         if ($notification->btn_1_title && $notification->btn_1_url) {
             $actions[] = [
                 'action' => 'btn1',
@@ -79,7 +80,7 @@ class SendNotificationJob implements ShouldQueue
         }
 
         // 3) Attach actions into payload
-        $payload['actions'] = $actions;
+        $payload['actions'] = json_encode($actions);
 
         $webPushData = [
             'data'    => $payload,
@@ -89,20 +90,20 @@ class SendNotificationJob implements ShouldQueue
         $domainName = $notification->domains->pluck('name')->all();
         
         PushSubscriptionHead::where('status', 1)
-            ->whereIn('domain', $domainName)
-            ->select(['id','token'])
-            ->orderBy('id')
-            ->chunkById(500, function ($subs) use ($factory, $webPushData) {
-                $ids    = $subs->pluck('id')->all();
-                $tokens = $subs->pluck('token')->all();
-                SendNotificationBatchJob::dispatch(
-                    $this->notificationId,
-                    $factory,
-                    $webPushData,
-                    $ids,
-                    $tokens
-                );
-            });
+        ->whereIn('domain', $domainName)
+        ->select(['id','token'])
+        ->orderBy('id')
+        ->chunkById(500, function ($subs) use ($factory, $webPushData) {
+            $ids    = $subs->pluck('id')->all();
+            $tokens = $subs->pluck('token')->all();
+            SendNotificationBatchJob::dispatch(
+                $this->notificationId,
+                $factory,
+                $webPushData,
+                $ids,
+                $tokens
+            );
+        });
     }
 
     public function failed(\Throwable $e): void
