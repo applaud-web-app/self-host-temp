@@ -177,6 +177,10 @@ class NotificationController extends Controller
 
     public function store(Request $request)
     {
+        if (! $request->has('cta_enabled')) {
+            $request->merge(['cta_enabled' => 0]);
+        }
+        // dd($request->all());
         // 1) Validate
         $data = $request->validate([
             'target_url'           => 'required|url',
@@ -190,11 +194,11 @@ class NotificationController extends Controller
             'domain_name.*'        => 'required|string|exists:domains,name',
 
             // our new CTA checkbox
-            'cta_enabled'       => 'sometimes|boolean',
+            'cta_enabled'       => 'required|in:0,1',
 
             // button 1 required only if CTA enabled
-            'btn_1_title'       => 'required_if:cta_enabled,1|string|max:255',
-            'btn_1_url'         => 'required_if:cta_enabled,1|url',
+            'btn_1_title'       => 'nullable|required_if:cta_enabled,1|string|max:255',
+            'btn_1_url'         => 'nullable|required_if:cta_enabled,1|url',
 
             // button 2 only required if one of its pair is present
             'btn_title_2'       => 'nullable|required_with:btn_url_2|string|max:255',

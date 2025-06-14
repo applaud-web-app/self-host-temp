@@ -142,8 +142,8 @@
 
                                <div class="card-footer">
                                 <div class="form-check mb-2">
-                                    <input type="checkbox" class="form-check-input" id="ctaCheckbox"
-                                        onchange="createCard()" value="">
+                                    <input type="checkbox" class="form-check-input" id="ctaCheckbox" name="cta_enabled"
+                                        onchange="createCard()" value="1">
                                     <label class="form-check-label" for="ctaCheckbox">Enable CTA's Section</label>
                                 </div>
                                 <div id="cardContainer" class="cardContainer" style="display: none">
@@ -585,6 +585,13 @@
 
         // Change Send button text based on schedule type
         $(document).ready(function() {
+
+            // initial state
+            $('#cardContainer, #second_btn, .btn_prv, .btn2_prv').hide();
+
+            // toggle CTA section
+            $('#ctaCheckbox').on('change', toggleCTASection);
+
             $('input[name="schedule_type"]').change(function() {
                 if ($('#sendnow').is(':checked')) {
                     $('.send_btn').html('<i class="far fa-check-square pe-2"></i>Send Now');
@@ -792,13 +799,16 @@
                     btn_url_2: "Please enter a valid URL for Button 2."
                 },
                 errorPlacement: function(err, el) {
-                    // put CTA errors right after their inputs
-                    if (element.attr('name') === 'btn_1_title' || element.attr('name') === 'btn_1_url' ||
-                        element.attr('name') === 'btn_title_2' || element.attr('name') === 'btn_url_2') {
+                    const n = element.attr('name');
+                    if (n === 'btn_1_title' || n === 'btn_1_url' ||
+                        n === 'btn_title_2' || n === 'btn_url_2') {
+                        // put CTA errors right after their inputs
                         error.insertAfter(element);
-                    } else if (element.attr('name') === 'domain_name[]') {
+                    }
+                    else if (n === 'domain_name[]') {
                         error.appendTo('#domain-error-span');
-                    } else {
+                    }
+                    else {
                         error.insertAfter(element);
                     }
                 },
@@ -883,51 +893,51 @@
             });
 
             // — FORM VALIDATION —
-            $("#notificationform").validate({
-                errorElement: 'div',
-                errorClass: 'invalid-feedback',
-                ignore: [], // so unchecked checkboxes get validated
-                rules: {
-                    target_url: {
-                        required: true,
-                        url: true
-                    },
-                    campaign_name: 'required',
-                    title: 'required',
-                    description: 'required',
+            // $("#notificationform").validate({
+            //     errorElement: 'div',
+            //     errorClass: 'invalid-feedback',
+            //     ignore: [], // so unchecked checkboxes get validated
+            //     rules: {
+            //         target_url: {
+            //             required: true,
+            //             url: true
+            //         },
+            //         campaign_name: 'required',
+            //         title: 'required',
+            //         description: 'required',
 
-                    // scheduling rules omitted for brevity…
+            //         // scheduling rules omitted for brevity…
 
-                    'domain_name[]': {
-                        required: true
-                    }
-                },
-                messages: {
-                    target_url: 'Please enter a valid URL.',
-                    title: 'Title is required.',
-                    description: 'Notification Message is required.',
-                    'domain_name[]': 'Please select at least one domain.'
-                },
-                errorPlacement: function(error, element) {
-                    if (element.attr('name') === 'domain_name[]') {
-                        error.appendTo('#domain-error-span');
-                    } else {
-                        error.insertAfter(element);
-                    }
-                },
-                highlight: function(el) {
-                    $(el).addClass('is-invalid');
-                },
-                unhighlight: function(el) {
-                    $(el).removeClass('is-invalid');
-                },
-                submitHandler: function(form) {
-                    var $btn = $('#sendNotification');
-                    $btn.prop('disabled', true)
-                        .html('<i class="fas fa-spinner fa-spin me-2"></i> Processing...');
-                    form.submit();
-                }
-            });
+            //         'domain_name[]': {
+            //             required: true
+            //         }
+            //     },
+            //     messages: {
+            //         target_url: 'Please enter a valid URL.',
+            //         title: 'Title is required.',
+            //         description: 'Notification Message is required.',
+            //         'domain_name[]': 'Please select at least one domain.'
+            //     },
+            //     errorPlacement: function(error, element) {
+            //         if (element.attr('name') === 'domain_name[]') {
+            //             error.appendTo('#domain-error-span');
+            //         } else {
+            //             error.insertAfter(element);
+            //         }
+            //     },
+            //     highlight: function(el) {
+            //         $(el).addClass('is-invalid');
+            //     },
+            //     unhighlight: function(el) {
+            //         $(el).removeClass('is-invalid');
+            //     },
+            //     submitHandler: function(form) {
+            //         var $btn = $('#sendNotification');
+            //         $btn.prop('disabled', true)
+            //             .html('<i class="fas fa-spinner fa-spin me-2"></i> Processing...');
+            //         form.submit();
+            //     }
+            // });
         });
 
 
@@ -997,19 +1007,17 @@
 
     // Show/hide CTA section
     function toggleCTASection() {
-      if ($ctaCheckbox.is(':checked')) {
-        $cardContainer.slideDown(200, function() {
-          updateFirstPreview($titleInput1.val());
-          updateSecondPreview($btn2Input.val());
-        });
-      } else {
-        $cardContainer.slideUp(200, function() {
-          clearSecondFields();
-          setAddBtnDefault();
-        });
-        updateFirstPreview('');
-        updateSecondPreview('');
-      }
+        const $allCTAinputs = $('#first_btn input, #second_btn input');
+        if ($('#ctaCheckbox').is(':checked')) {
+            $allCTAinputs.prop('disabled', false);
+            $('#cardContainer').slideDown(200);
+        } else {
+            // hide the whole UI, clear + disable inputs
+            $('#second_btn').hide();
+            $allCTAinputs.prop('disabled', true).val('');
+            $('#btn_prv, .btn2_prv').hide();
+            $('#cardContainer').slideUp(200);
+        }
     }
 
     // Toggle second CTA on/off
