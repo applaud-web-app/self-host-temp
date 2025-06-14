@@ -138,8 +138,9 @@ self.addEventListener('notificationclick', event => {
 
 // 7) Handle dismissals
 self.addEventListener('notificationclose', event => {
-  const messageId = event.notification.data?.message_id || '';
-  sendAnalytics('close', messageId);
+  const data = event.notification.data || {};
+  const messageId = data.message_id || '';
+  {{-- sendAnalytics('close', messageId); --}}
 });
 
 // 8) Subscription change

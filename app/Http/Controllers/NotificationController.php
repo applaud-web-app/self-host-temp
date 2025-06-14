@@ -180,12 +180,12 @@ class NotificationController extends Controller
         if (! $request->has('cta_enabled')) {
             $request->merge(['cta_enabled' => 0]);
         }
-        // dd($request->all());
+
         // 1) Validate
         $data = $request->validate([
             'target_url'           => 'required|url',
-            'title'                => 'required|string|max:255',
-            'description'          => 'required|string',
+            'title'                => 'required|string|max:100',
+            'description'          => 'required|string|max:200',
             'banner_image'         => 'nullable|url',
             'banner_icon'          => 'nullable|url',
             'schedule_type'        => 'required|in:Instant,Schedule',

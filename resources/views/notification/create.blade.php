@@ -142,8 +142,7 @@
 
                                <div class="card-footer">
                                 <div class="form-check mb-2">
-                                    <input type="checkbox" class="form-check-input" id="ctaCheckbox" name="cta_enabled"
-                                        onchange="createCard()" value="1">
+                                    <input type="checkbox" class="form-check-input" id="ctaCheckbox" name="cta_enabled" value="1">
                                     <label class="form-check-label" for="ctaCheckbox">Enable CTA's Section</label>
                                 </div>
                                 <div id="cardContainer" class="cardContainer" style="display: none">
@@ -729,8 +728,14 @@
                         required: true,
                         campformat: true
                     },
-                    title: 'required',
-                    description: 'required',
+                    title: {
+                        required: true,
+                        maxlength: 100
+                    },
+                    description: {
+                        required: true,
+                        maxlength: 200 
+                    },
                     'domain_name[]': {
                         required: true
                     },
@@ -785,8 +790,14 @@
                 messages: {
                     target_url: 'Please enter a valid URL.',
                     campaign_name: 'Campaign Name is required and must match CAMP#1234.',
-                    title: 'Title is required.',
-                    description: 'Notification Message is required.',
+                    title: {
+                        required: 'Title is required.',
+                        maxlength: 'Title cannot exceed 100 characters.'
+                    },
+                    description: {
+                        required: 'Notification Message is required.',
+                        maxlength: 'Description cannot exceed 200 characters.'
+                    },
                     'domain_name[]': 'Please select at least one domain.',
                     one_time_datetime: 'Start Date & Time is required when scheduling.',
                     recurring_start_date: 'Recurring Start Date is required.',
@@ -798,7 +809,7 @@
                     btn_title_2: "Please enter a title for Button 2.",
                     btn_url_2: "Please enter a valid URL for Button 2."
                 },
-                errorPlacement: function(err, el) {
+                errorPlacement: function(error, element) {
                     const n = element.attr('name');
                     if (n === 'btn_1_title' || n === 'btn_1_url' ||
                         n === 'btn_title_2' || n === 'btn_url_2') {
