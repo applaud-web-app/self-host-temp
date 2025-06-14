@@ -10,39 +10,34 @@
             <h4 class="card-title fs-20 mb-0">Profile Details</h4>
           </div>
           <div class="card-body">
-
             <form action="{{ route('user.update') }}" method="POST" enctype="multipart/form-data" id="profileForm" novalidate>
               @csrf
-            {{-- Avatar Upload --}}
-            <div class="row justify-content-center mb-4">
-              <div class="col-auto">
-                <div class="position-relative avatar-wrapper">
-                  <img
-                    src="{{ asset(Auth::user()->image ?? 'https://img.freepik.com/premium-vector/vector-flat-illustration-grayscale-avatar-user-profile-person-icon-gender-neutral-silhouette-profile-picture-suitable-social-media-profiles-icons-screensavers-as-templatex9xa_719432-875.jpg') }}"
-                    alt="User Avatar"
-                    id="avatarPreview"
-                    class="rounded-circle avatar-img"
-                  >
-                  <label for="avatar" class="avatar-edit-icon">
-                    <i class="fas fa-camera"></i>
-                  </label>
-                  <input
-                    type="file"
-                    class="d-none"
-                    name="avatar"
-                    id="avatar"
-                    accept="image/*"
-                    onchange="previewAvatar(this)"
-                  >
+              <div class="row justify-content-center mb-4">
+                <div class="col-auto">
+                  <div class="position-relative avatar-wrapper">
+                    <img
+                      src="{{ asset(Auth::user()->image ?? 'https://img.freepik.com/premium-vector/vector-flat-illustration-grayscale-avatar-user-profile-person-icon-gender-neutral-silhouette-profile-picture-suitable-social-media-profiles-icons-screensavers-as-templatex9xa_719432-875.jpg') }}"
+                      alt="User Avatar"
+                      id="avatarPreview"
+                      class="rounded-circle avatar-img"
+                    >
+                    <label for="avatar" class="avatar-edit-icon">
+                      <i class="fas fa-camera"></i>
+                    </label>
+                    <input
+                      type="file"
+                      class="d-none"
+                      name="avatar"
+                      id="avatar"
+                      accept="image/*"
+                      onchange="previewAvatar(this)"
+                    >
+                  </div>
                 </div>
               </div>
-            </div>
               <div class="row">
-                <!-- User Name -->
                 <div class="col-md-12 mb-3">
-                  <label for="fname" class="form-label">
-                    User Name <span class="text-danger">*</span>
-                  </label>
+                  <label for="fname" class="form-label">User Name <span class="text-danger">*</span></label>
                   <input
                     type="text"
                     class="form-control @error('fname') is-invalid @enderror"
@@ -51,14 +46,15 @@
                     value="{{ old('fname', Auth::user()->name) }}"
                     required
                   >
-                  @error('fname')<div class="invalid-feedback">{{ $message }}</div>@else<div class="invalid-feedback">Please enter your first name.</div>@enderror
+                  @error('fname')
+                    <div class="invalid-feedback">{{ $message }}</div>
+                  @else
+                    <div class="invalid-feedback">Please enter your first name.</div>
+                  @enderror
                 </div>
 
-                <!-- Email Address -->
                 <div class="col-md-12 mb-3">
-                  <label for="email" class="form-label">
-                    Email Address <span class="text-danger">*</span>
-                  </label>
+                  <label for="email" class="form-label">Email Address <span class="text-danger">*</span></label>
                   <input
                     type="email"
                     class="form-control @error('email') is-invalid @enderror"
@@ -67,10 +63,13 @@
                     value="{{ old('email', Auth::user()->email) }}"
                     required
                   >
-                  @error('email')<div class="invalid-feedback">{{ $message }}</div>@else<div class="invalid-feedback">Please enter a valid email address.</div>@enderror
+                  @error('email')
+                    <div class="invalid-feedback">{{ $message }}</div>
+                  @else
+                    <div class="invalid-feedback">Please enter a valid email address.</div>
+                  @enderror
                 </div>
 
-                <!-- Phone Number + Country Code -->
                 <div class="col-md-12 mb-3">
                   <label for="phone" class="form-label">Phone Number</label>
                   <div class="input-group">
@@ -90,7 +89,9 @@
                       value="{{ old('phone', Auth::user()->phone) }}"
                       placeholder="Phone Number"
                     >
-                    @error('phone')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                    @error('phone')
+                      <div class="invalid-feedback">{{ $message }}</div>
+                    @enderror
                   </div>
                 </div>
               </div>
@@ -114,31 +115,6 @@
             <form action="{{ route('user.update-password') }}" method="POST" id="passwordForm" novalidate>
               @csrf
 
-              <!-- Current Password -->
-              <div class="form-group mb-3">
-                <label for="current_password" class="form-label">
-                  Current Password <span class="text-danger">*</span>
-                </label>
-                <div class="position-relative">
-                  <input
-                    type="password"
-                    class="form-control @error('current_password') is-invalid @enderror"
-                    name="current_password"
-                    id="current_password"
-                    placeholder="••••••••"
-                    required
-                  >
-                  <span
-                    class="toggle-password"
-                    onclick="togglePassword('current_password', this)"
-                    style="cursor: pointer;"
-                  >
-                    <i class="fas fa-eye"></i>
-                  </span>
-                  @error('current_password')<div class="invalid-feedback">{{ $message }}</div>@else<div class="invalid-feedback">Please enter your current password.</div>@enderror
-                </div>
-              </div>
-
               <!-- New Password -->
               <div class="form-group mb-3">
                 <label for="new_password" class="form-label">
@@ -160,7 +136,11 @@
                   >
                     <i class="fas fa-eye"></i>
                   </span>
-                  @error('new_password')<div class="invalid-feedback">{{ $message }}</div>@else<div class="invalid-feedback">Please enter a new password.</div>@enderror
+                  @error('new_password')
+                    <div class="invalid-feedback">{{ $message }}</div>
+                  @else
+                    <div class="invalid-feedback">Please enter a new password.</div>
+                  @enderror
                 </div>
               </div>
 
@@ -185,7 +165,11 @@
                   >
                     <i class="fas fa-eye"></i>
                   </span>
-                  @error('new_password_confirmation')<div class="invalid-feedback">{{ $message }}</div>@else<div class="invalid-feedback">Passwords do not match.</div>@enderror
+                  @error('new_password_confirmation')
+                    <div class="invalid-feedback">{{ $message }}</div>
+                  @else
+                    <div class="invalid-feedback">Passwords do not match.</div>
+                  @enderror
                 </div>
               </div>
 
@@ -201,7 +185,7 @@
   </div>
 </section>
 @endsection
-{{-- Custom Styles & Scripts --}}
+
 @push('styles')
 <style>
   .avatar-wrapper {
@@ -262,7 +246,7 @@
       .then(list => {
         list.forEach(({ country_code }) => {
           const opt = document.createElement('option');
-          opt.value    = country_code;
+          opt.value = country_code;
           opt.textContent = `+${country_code}`;
           countryCodeSelect.appendChild(opt);
         });
