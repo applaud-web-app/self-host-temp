@@ -13,7 +13,7 @@ use App\Jobs\SubscribePushSubscriptionJob;
 use Illuminate\Support\Facades\Cache;
 use App\Models\PushAnalytic;
 use Illuminate\Support\Facades\DB;
-use App\Jobs\ProcessPushAnalytics;
+use App\Jobs\ProcessClickAnalytics;
 use Illuminate\Support\Facades\Redis;
 
 class PushApiController extends Controller
