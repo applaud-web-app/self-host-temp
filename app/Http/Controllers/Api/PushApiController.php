@@ -53,7 +53,7 @@ class PushApiController extends Controller
 
           // Step 3: Try pushing to Redis
           try {
-              Redis::rpush('buffer:push_subscriptions', json_encode($data));
+            Redis::rpush('buffer:push_subscriptions', json_encode($data));
           } catch (\Throwable $e) {
             Log::warning('Redis unavailable, falling back to queue for subscribe()', [
               'error' => $e->getMessage()
@@ -61,8 +61,13 @@ class PushApiController extends Controller
 
             // Fallback: push directly to queue
             SubscribePushSubscriptionJob::dispatch($data);
-            Redis::sadd('processed:push_subscriptions', $hash);
-            Redis::expire('processed:push_subscriptions', 3600); // Keep for 1 day
+            try {
+              Redis::sadd('processed:push_subscriptions', $hash);
+              Redis::expire('processed:push_subscriptions', 3600); // Keep for 1 day
+            } catch (\Throwable $inner) {
+              Log::warning('Failed to record processed analytics in Redis', ['error' => $inner->getMessage(),
+            ]);
+        }
           }
 
           // Step 4: Respond quickly
