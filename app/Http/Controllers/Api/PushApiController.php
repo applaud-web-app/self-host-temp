@@ -115,7 +115,7 @@ class PushApiController extends Controller
       }
   }
 
-  public function analytics(Request $request): Response
+  public function analytics(Request $request): JsonResponse
   {
     $payload = $request->validate([
       'message_id' => 'required|string',
