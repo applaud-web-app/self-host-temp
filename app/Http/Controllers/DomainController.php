@@ -43,7 +43,8 @@ class DomainController extends Controller
                     $param = ['domain' => $row->name];
                     $integrateEncryptUrl = encryptUrl($integrateUrl, $param);
 
-                    return '<a href="'.$integrateEncryptUrl.'" class="btn btn-sm btn-success me-1">Integrate <i class="fas fa-arrow-right"></i></a>';
+                    return '<a href="'.$integrateEncryptUrl.'" class="btn btn-sm btn-secondary">
+                        <i class="fas fa-plug me-1"></i> Integrate </a>';
                 })
                 ->rawColumns(['actions','status'])
                 ->make(true);
