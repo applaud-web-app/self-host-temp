@@ -11,4 +11,4 @@ use Illuminate\Support\Facades\Schedule;
 // STOP DUE TO REDIS NOT AVAILABEL
 // Schedule::command('analytics:flush')->everyMinute();
 // Schedule::command('subscriptions:flush')->everyMinute();
-Schedule::command('notifications:dispatch-scheduled')->everyMinute();
+// Schedule::command('notifications:dispatch-scheduled')->everyMinute();
