@@ -54,7 +54,7 @@ Route::get('/dashboard', [DashboardController::class, 'dashboard'])->name('dashb
 
 Route::middleware(['auth','ensure_push_config'])->group(function() {
       
-   Route::prefix('user')->controller(UserController::class)->name('user.')->group(function () {
+   Route::controller(UserController::class)->name('user.')->group(function () {
         Route::get('profile', 'profile')->name('profile');
         Route::post('update', 'updateProfile')->name('update');
         Route::post('update-password', 'updatePassword')->name('update-password');
