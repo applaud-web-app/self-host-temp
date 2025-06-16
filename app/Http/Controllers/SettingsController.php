@@ -101,10 +101,11 @@ class SettingsController extends Controller
  
 
     
-    /* ───────────────────────── Server Info page ───────────────────────── */
+    /* --------------------------------------------------------------------- */
+    /*  Server Info & Metrics                                                */
+    /* --------------------------------------------------------------------- */
     public function serverInfo()
     {
-        /* basic app/server data */
         $info = [
             'php_version'        => phpversion(),
             'laravel_version'    => app()->version(),
@@ -115,95 +116,63 @@ class SettingsController extends Controller
             'os'                 => php_uname('s').' '.php_uname('r'),
         ];
 
-        /* disk snapshot */
         $totalDisk   = (float) disk_total_space(base_path());
         $freeDisk    = (float) disk_free_space(base_path());
         $usedDisk    = $totalDisk - $freeDisk;
         $diskPercent = $totalDisk > 0 ? round($usedDisk / $totalDisk * 100, 1) : 0;
 
-        /* PHP extensions list */
         $extensions = get_loaded_extensions();
         sort($extensions, SORT_STRING);
 
-        /* ─ Supervisor status ─ */
-        $supervisorRunning = false;
-        $supervisorMsg     = 'Unavailable';
-
-        if (function_exists('shell_exec')) {
-            $ctl = trim(shell_exec('command -v supervisorctl 2>/dev/null'));
-            if ($ctl) {
-                $out = shell_exec('supervisorctl status 2>&1');
-                if ($out !== null) {
-                    $supervisorRunning = true;
-                    $supervisorMsg     = 'Running';
-                } else {
-                    $supervisorMsg = 'Installed, query failed';
-                }
-            } else {
-                $supervisorMsg = 'Not installed';
-            }
-        }
-
-        /* ─ Redis status ─ */
-        $redisExtLoaded = extension_loaded('redis');
-        $redisServerUp  = false;
-        if ($redisExtLoaded) {
-            try {
-                $redis = new \Redis();
-                $redis->connect(
-                    env('REDIS_HOST', '127.0.0.1'),
-                    env('REDIS_PORT', 6379),
-                    0.2
-                );
-                $redisServerUp = $redis->ping() === '+PONG';
-            } catch (\Throwable $e) {
-                $redisServerUp = false;
-            }
-        }
-
         return view('settings.server-info', compact(
-            'info','totalDisk','freeDisk','usedDisk','diskPercent',
-            'extensions', 'supervisorRunning', 'supervisorMsg',
-            'redisExtLoaded', 'redisServerUp'
+            'info', 'totalDisk', 'freeDisk', 'usedDisk', 'diskPercent', 'extensions'
         ));
     }
 
     /**
-     * Live CPU & memory percentages (safe if shell_exec is disabled)
+     * JSON endpoint for live CPU / memory percentages.
+     * Always returns valid numbers even when `shell_exec()` is disabled.
      */
     public function serverMetrics()
     {
-        /* CPU% */
+        /* ---------------- CPU % ---------------- */
         $load  = sys_getloadavg()[0] ?? 0;
         $cores = 1;
 
-        if (PHP_OS_FAMILY === 'Linux' && is_readable('/proc/cpuinfo')) {
-            preg_match_all('/^processor\s*:/m', file_get_contents('/proc/cpuinfo'), $m);
-            $cores = max(1, count($m[0]));
-        } elseif (PHP_OS_FAMILY === 'Darwin' && function_exists('shell_exec')) {
-            $cores = (int) trim(shell_exec('sysctl -n hw.ncpu') ?: 1);
+        if (PHP_OS_FAMILY === 'Linux') {
+            // Count processors without shell_exec
+            if (is_readable('/proc/cpuinfo')) {
+                preg_match_all('/^processor\s*:/m', file_get_contents('/proc/cpuinfo'), $m);
+                $cores = max(1, count($m[0]));
+            }
+        } elseif (PHP_OS_FAMILY === 'Darwin') {
+            if (function_exists('shell_exec')) {
+                $cores = (int) trim(shell_exec('sysctl -n hw.ncpu') ?: 1);
+            }
         } elseif (PHP_OS_FAMILY === 'Windows') {
-            $cores = (int) getenv('NUMBER_OF_PROCESSORS') ?: 1;
+            $cores = (int) (getenv('NUMBER_OF_PROCESSORS') ?: 1);
         }
 
         $cpu = min(100, ($cores ? $load / $cores : $load) * 100);
 
-        /* Memory% */
+        /* ---------------- Memory % ------------- */
         $memory = 0;
 
-        if (is_readable('/proc/meminfo')) {
+        if (is_readable('/proc/meminfo')) {                   // Linux
             $mem = file_get_contents('/proc/meminfo');
             preg_match('/MemTotal:\s+(\d+)/',     $mem, $tot);
             preg_match('/MemAvailable:\s+(\d+)/', $mem, $avail);
             $total = (int) ($tot[1] ?? 0) * 1024;
             $free  = (int) ($avail[1] ?? 0) * 1024;
             $memory = $total ? (($total - $free) / $total) * 100 : 0;
-        } elseif (PHP_OS_FAMILY === 'Darwin' && function_exists('shell_exec')) {
+
+        } elseif (PHP_OS_FAMILY === 'Darwin' && function_exists('shell_exec')) { // macOS
             $total = (int) trim(shell_exec('sysctl -n hw.memsize') ?: 0);
             $vm    = shell_exec('vm_stat');
             preg_match('/Pages free:\s+(\d+)/', $vm, $f);
             $free  = ((int) ($f[1] ?? 0)) * 4096;
             $memory = $total ? (($total - $free) / $total) * 100 : 0;
+
         } elseif (PHP_OS_FAMILY === 'Windows' && function_exists('shell_exec')) {
             $out = shell_exec('wmic OS get FreePhysicalMemory,TotalVisibleMemorySize /Value');
             preg_match('/TotalVisibleMemorySize=(\d+)/', $out, $tot);
