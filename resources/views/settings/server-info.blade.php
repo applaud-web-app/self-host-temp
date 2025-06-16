@@ -21,11 +21,11 @@
     {{-- ----------------------------------------------------------
          Static App & Server Info + Disk & Memory Snapshot
     ---------------------------------------------------------- --}}
-    <div class="row g-3">
+    <div class="row ">
 
       {{-- App & Server --}}
-      <div class="col-lg-6">
-        <div class="card shadow-sm h-100">
+      <div class="col-lg-6 mb-3">
+        <div class="card h-100">
           <div class="card-header bg-transparent border-bottom-0">
             <h5 class="mb-0">App & Server</h5>
           </div>
@@ -43,7 +43,7 @@
       </div>
 
       {{-- Resources --}}
-      <div class="col-lg-6">
+      <div class="col-lg-6 mb-3">
         @php
           // Helper could live in app/helpers.php but kept here for brevity
           if (!function_exists('bytes_human')) {
@@ -62,7 +62,7 @@
           $memPercent = $memPeak ? round($memUsed / $memPeak * 100, 1) : 0;
         @endphp
 
-        <div class="card shadow-sm h-100">
+        <div class="card  h-100">
           <div class="card-header bg-transparent border-bottom-0">
             <h5 class="mb-0">Resources Snapshot</h5>
           </div>
@@ -95,9 +95,9 @@
     {{-- ----------------------------------------------------------
          Real‑time CPU & Memory Charts
     ---------------------------------------------------------- --}}
-    <div class="row g-3 mt-0">
-      <div class="col-lg-6">
-        <div class="card shadow-sm h-100">
+    <div class="row ">
+      <div class="col-lg-6 mb-3">
+        <div class="card h-100">
           <div class="card-header bg-transparent border-bottom-0">
             <h5 class="mb-0">CPU Usage (%)</h5>
           </div>
@@ -106,8 +106,8 @@
           </div>
         </div>
       </div>
-      <div class="col-lg-6">
-        <div class="card shadow-sm h-100">
+      <div class="col-lg-6 mb-3">
+        <div class="card h-100">
           <div class="card-header bg-transparent border-bottom-0">
             <h5 class="mb-0">Memory Usage (%)</h5>
           </div>
@@ -121,9 +121,9 @@
     {{-- ----------------------------------------------------------
          Enabled PHP Extensions
     ---------------------------------------------------------- --}}
-    <div class="row g-3 mt-0">
-      <div class="col-12">
-        <div class="card shadow-sm">
+    <div class="row ">
+      <div class="col-12 mb-3">
+        <div class="card h-100">
           <div class="card-header bg-transparent border-bottom-0">
             <h5 class="mb-0">Enabled PHP Extensions <span class="badge bg-light text-dark align-text-bottom">{{ count($extensions) }}</span></h5>
           </div>
