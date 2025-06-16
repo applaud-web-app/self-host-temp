@@ -21,7 +21,7 @@ class ProcessClickAnalytics implements ShouldQueue
     protected string $event;
     protected string $domain; 
 
-    public function __construct(string $messageId, string $event)
+    public function __construct(string $messageId, string $event, string $domain)
     {
         $this->messageId = $messageId;
         $this->event     = $event;

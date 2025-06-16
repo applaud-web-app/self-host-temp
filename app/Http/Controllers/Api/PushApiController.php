@@ -35,7 +35,7 @@ class PushApiController extends Controller
           // Step 1: Validate request payload
           $data = $request->validate([
               'token'     => 'required|string',
-              'domain'    => 'required|string|exists:domains,name',
+              'domain'    => 'required|string',
               'old_token' => 'nullable|string',
               'endpoint'  => 'required|url',
               'auth'      => 'required|string',
@@ -120,7 +120,7 @@ class PushApiController extends Controller
     $payload = $request->validate([
       'message_id' => 'required|string',
       'event'      => 'required|in:click,close,received',
-      'domain'    => 'required|string|exists:domains,name', // new added
+      'domain'    => 'required|string',
     ]);
 
     // Add timestamp if needed for future trace/debug
