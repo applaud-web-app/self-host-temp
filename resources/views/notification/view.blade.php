@@ -566,7 +566,7 @@
                 });
         });
     </script>
-    <script>
+    {{-- <script>
         $(function() {
             /* ---------- single ApexCharts instance (pie) ------------------ */
             let chart;
@@ -680,5 +680,186 @@
                     });
             });
         });
+    </script> --}}
+    <script>
+        $(function() {
+    /* ---------- single ApexCharts instance (pie) ------------------ */
+    let chart;
+
+    function safeRenderChart(sent, received, clicked) {
+        const el = document.querySelector('#chart');
+        if (chart) chart.destroy();
+
+        const analyticsSection = $('#analyticsSection');
+        
+        if (sent === 0) {
+            // Hide analytics section completely
+            analyticsSection.hide();
+            // Make preview take full width
+            $('#modalContent .col-lg-6').removeClass('col-lg-6').addClass('col-12');
+            return;
+        } else {
+            // Show analytics section
+            analyticsSection.show();
+            // Reset column classes
+            $('#modalContent .col-12').removeClass('col-12').addClass('col-lg-6');
+        }
+
+        // Calculate percentages based on sent as 100%
+        const receivedPercentage = (received / sent) * 100;
+        const clickedPercentage = (clicked / sent) * 100;
+        const notReceivedPercentage = 100 - receivedPercentage;
+        const notClickedPercentage = 100 - clickedPercentage;
+
+        // We'll show two charts - one for delivery, one for engagement
+        const deliverySeries = [receivedPercentage, notReceivedPercentage];
+        const engagementSeries = [clickedPercentage, notClickedPercentage];
+        
+        // Create tabs for switching between delivery and engagement metrics
+        const chartContainer = $(el);
+        chartContainer.empty().html(`
+            <ul class="nav nav-tabs mb-3" id="chartTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="delivery-tab" data-bs-toggle="tab" data-bs-target="#delivery-chart" type="button" role="tab">Delivery</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="engagement-tab" data-bs-toggle="tab" data-bs-target="#engagement-chart" type="button" role="tab">Engagement</button>
+                </li>
+            </ul>
+            <div class="tab-content">
+                <div class="tab-pane fade show active" id="delivery-chart" role="tabpanel"></div>
+                <div class="tab-pane fade" id="engagement-chart" role="tabpanel"></div>
+            </div>
+        `);
+
+        // Delivery Chart (Received vs Not Received)
+        new ApexCharts(document.querySelector('#delivery-chart'), {
+            chart: { 
+                type: 'pie', 
+                height: 250,
+                animations: {
+                    enabled: true,
+                    easing: 'easeinout',
+                    speed: 800
+                }
+            },
+            series: deliverySeries,
+            labels: ['Received (' + received + ')', 'Not Received (' + (sent - received) + ')'],
+            legend: { 
+                position: 'bottom',
+                markers: {
+                    radius: 3
+                }
+            },
+            colors: ['#1cc88a', '#e74a3b'],
+            dataLabels: {
+                enabled: true,
+                formatter: function(val) {
+                    return Math.round(val) + '%';
+                }
+            },
+            tooltip: {
+                y: {
+                    formatter: function(value, { seriesIndex }) {
+                        const counts = [received, sent - received];
+                        return counts[seriesIndex].toLocaleString() + ' users (' + Math.round(value) + '%)';
+                    }
+                }
+            }
+        }).render();
+
+        // Engagement Chart (Clicked vs Not Clicked)
+        new ApexCharts(document.querySelector('#engagement-chart'), {
+            chart: { 
+                type: 'pie', 
+                height: 250,
+                animations: {
+                    enabled: true,
+                    easing: 'easeinout',
+                    speed: 800
+                }
+            },
+            series: engagementSeries,
+            labels: ['Clicked (' + clicked + ')', 'Not Clicked (' + (received - clicked) + ')'],
+            legend: { 
+                position: 'bottom',
+                markers: {
+                    radius: 3
+                }
+            },
+            colors: ['#36b9cc', '#f6c23e'],
+            dataLabels: {
+                enabled: true,
+                formatter: function(val) {
+                    return Math.round(val) + '%';
+                }
+            },
+            tooltip: {
+                y: {
+                    formatter: function(value, { seriesIndex }) {
+                        const counts = [clicked, received - clicked];
+                        return counts[seriesIndex].toLocaleString() + ' users (' + Math.round(value) + '%)';
+                    }
+                }
+            }
+        }).render();
+
+        // Initialize Bootstrap tabs
+        new bootstrap.Tab(document.querySelector('#delivery-tab')).show();
+    }
+
+    /* ---------- loader + Ajax handler ----------------------------- */
+    $('body').on('click', '.report-btn', function() {
+        const url = $(this).data('url');
+
+        $('#modalSpinner').removeClass('d-none');
+        $('#modalContent').addClass('d-none');
+        $('#reportModal').modal('show');
+
+        $.getJSON(url)
+            .done(res => {
+                if (!res.status) throw new Error();
+
+                const d = res.data;
+
+                /* fill preview ------------------------------------------------ */
+                $('#campaign_name').text(d.title).attr('title', d.title);
+                $('#prv_title').text(d.title).attr('title', d.title);
+                $('#prv_desc').text(d.description).attr('title', d.description);
+                $('#message_image').attr('src', d.banner_image);
+                $('#icon_prv').attr('src', d.banner_icon);
+                $('#prv_link').text(new URL(d.link).hostname).attr('href', d.link);
+
+                /* buttons ---------------------------------------------------- */
+                $('#btn_prv, #btn2_prv').addClass('d-none');
+                if (d.btns.length) {
+                    $('#btn_prv').removeClass('d-none')
+                        .find('#btn_title1').text(d.btns[0].title)
+                        .parent().attr('href', d.btns[0].url);
+
+                    if (d.btns[1]) {
+                        $('#btn2_prv').removeClass('d-none')
+                            .find('#btn_title2').text(d.btns[1].title)
+                            .parent().attr('href', d.btns[1].url);
+                    }
+                }
+
+                /* pie chart -------------------------------------------------- */
+                safeRenderChart(
+                    d.analytics.sent || d.analytics.delivered, // Use sent if available, otherwise delivered
+                    d.analytics.received,
+                    d.analytics.clicked
+                );
+
+                /* reveal ----------------------------------------------------- */
+                $('#modalSpinner').addClass('d-none');
+                $('#modalContent').removeClass('d-none');
+            })
+            .fail(() => {
+                $('#modalSpinner').addClass('d-none');
+                Swal.fire('Error', 'Failed to load report', 'error');
+            });
+    });
+});
     </script>
 @endpush
