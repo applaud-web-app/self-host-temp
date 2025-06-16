@@ -101,19 +101,36 @@ class SettingsController extends Controller
  
 
     
-    /* --------------------------------------------------------------------- */
-    /*  Server Info & Metrics                                                */
-    /* --------------------------------------------------------------------- */
+    /*───────────────────────────────────────────────────────────────
+    |  Server Info (static)  +  Live Metrics JSON
+    ───────────────────────────────────────────────────────────────*/
     public function serverInfo()
     {
         $info = [
-            'php_version'        => phpversion(),
-            'laravel_version'    => app()->version(),
-            'environment'        => app()->environment(),
-            'memory_limit'       => ini_get('memory_limit'),
-            'max_execution_time' => ini_get('max_execution_time'),
-            'server_software'    => $_SERVER['SERVER_SOFTWARE'] ?? 'N/A',
-            'os'                 => php_uname('s').' '.php_uname('r'),
+            // PHP / Laravel --------------------------------------------------
+            'php_version'         => phpversion(),
+            'laravel_version'     => app()->version(),
+            'environment'         => app()->environment(),
+            // PHP ini --------------------------------------------------------
+            'memory_limit'        => ini_get('memory_limit'),
+            'max_execution_time'  => ini_get('max_execution_time'),
+            'upload_max_filesize' => ini_get('upload_max_filesize'),
+            // OS / server ----------------------------------------------------
+            'timezone'            => config('app.timezone'),
+            'server_ip'           => request()->server('SERVER_ADDR') ??
+                                     gethostbyname(gethostname()),
+            'os'                  => php_uname('s') . ' ' . php_uname('r'),
+            'cpu_model'           => $this->cpuModel(),
+            'cpu_cores'           => $this->cpuCores(),
+            'load_average'        => implode(', ',
+                                   array_map(fn($v)=>number_format($v,2),
+                                             sys_getloadavg())),
+            'uptime'              => $this->uptimeString(),
+            // Database -------------------------------------------------------
+            'db_driver'           => DB::getDriverName(),
+            'db_version'          => DB::connection()
+                                      ->getPdo()
+                                      ->getAttribute(\PDO::ATTR_SERVER_VERSION),
         ];
 
         $totalDisk   = (float) disk_total_space(base_path());
@@ -130,53 +147,40 @@ class SettingsController extends Controller
     }
 
     /**
-     * JSON endpoint for live CPU / memory percentages.
-     * Always returns valid numbers even when `shell_exec()` is disabled.
+     * JSON: { cpu: float, memory: float }
+     * Safe even when shell_exec/exec are disabled.
      */
     public function serverMetrics()
     {
-        /* ---------------- CPU % ---------------- */
+        /* CPU % ----------------------------------------------------------- */
         $load  = sys_getloadavg()[0] ?? 0;
-        $cores = 1;
+        $cores = $this->cpuCores();
+        $cpu   = min(100, ($cores ? $load / $cores : $load) * 100);
 
-        if (PHP_OS_FAMILY === 'Linux') {
-            // Count processors without shell_exec
-            if (is_readable('/proc/cpuinfo')) {
-                preg_match_all('/^processor\s*:/m', file_get_contents('/proc/cpuinfo'), $m);
-                $cores = max(1, count($m[0]));
-            }
-        } elseif (PHP_OS_FAMILY === 'Darwin') {
-            if (function_exists('shell_exec')) {
-                $cores = (int) trim(shell_exec('sysctl -n hw.ncpu') ?: 1);
-            }
-        } elseif (PHP_OS_FAMILY === 'Windows') {
-            $cores = (int) (getenv('NUMBER_OF_PROCESSORS') ?: 1);
-        }
-
-        $cpu = min(100, ($cores ? $load / $cores : $load) * 100);
-
-        /* ---------------- Memory % ------------- */
+        /* Memory % -------------------------------------------------------- */
         $memory = 0;
 
-        if (is_readable('/proc/meminfo')) {                   // Linux
+        if (is_readable('/proc/meminfo')) {             // Linux
             $mem = file_get_contents('/proc/meminfo');
-            preg_match('/MemTotal:\s+(\d+)/',     $mem, $tot);
+            preg_match('/MemTotal:\s+(\d+)/', $mem, $tot);
             preg_match('/MemAvailable:\s+(\d+)/', $mem, $avail);
             $total = (int) ($tot[1] ?? 0) * 1024;
             $free  = (int) ($avail[1] ?? 0) * 1024;
             $memory = $total ? (($total - $free) / $total) * 100 : 0;
 
-        } elseif (PHP_OS_FAMILY === 'Darwin' && function_exists('shell_exec')) { // macOS
+        } elseif (PHP_OS_FAMILY === 'Darwin' && function_exists('shell_exec')) {
             $total = (int) trim(shell_exec('sysctl -n hw.memsize') ?: 0);
             $vm    = shell_exec('vm_stat');
-            preg_match('/Pages free:\s+(\d+)/', $vm, $f);
-            $free  = ((int) ($f[1] ?? 0)) * 4096;
-            $memory = $total ? (($total - $free) / $total) * 100 : 0;
+            preg_match('/Pages free:\s+(\d+)/', $vm, $free);
+            $freeB = ((int) ($free[1] ?? 0)) * 4096;
+            $memory = $total ? (($total - $freeB) / $total) * 100 : 0;
 
         } elseif (PHP_OS_FAMILY === 'Windows' && function_exists('shell_exec')) {
-            $out = shell_exec('wmic OS get FreePhysicalMemory,TotalVisibleMemorySize /Value');
+            $out = shell_exec(
+                'wmic OS get FreePhysicalMemory,TotalVisibleMemorySize /Value'
+            );
             preg_match('/TotalVisibleMemorySize=(\d+)/', $out, $tot);
-            preg_match('/FreePhysicalMemory=(\d+)/',     $out, $free);
+            preg_match('/FreePhysicalMemory=(\d+)/', $out, $free);
             $total = (float) ($tot[1] ?? 0);
             $avail = (float) ($free[1] ?? 0);
             $memory = $total ? (($total - $avail) / $total) * 100 : 0;
