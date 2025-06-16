@@ -12,75 +12,233 @@ use Yajra\DataTables\Facades\DataTables;
 use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\DB;
+use App\Models\PushEventCount;
 
 class NotificationController extends Controller
 {
+    // public function view(Request $request)
+    // {
+    //     // AJAX request? return JSON for DataTables
+    //     if ($request->ajax()) {
+    //         $query = Notification::with('domains')->select('notifications.*');
+
+    //         // 1) filter by campaign name
+    //         if ($request->filled('campaign_name')) {
+    //             $query->where('campaign_name','like','%'.$request->campaign_name.'%');
+    //         }
+
+    //         // 2) filter by status (assumes you have a `status` column)
+    //         if ($request->filled('status')) {
+    //             $query->where('status', $request->status);
+    //         }
+
+    //         // 3) filter by domain URL
+    //         if ($request->filled('site_web')) {
+    //             $query->whereHas('domains', function($q) use($request){
+    //                 $q->where('domain_url','like','%'.$request->site_web.'%');
+    //             });
+    //         }
+
+    //         // 4) date-range on “sent time” (one_time_datetime)
+    //         if ($request->filled('last_send')) {
+    //             [$start, $end] = explode(' - ', $request->last_send);
+    //             $start = Carbon::createFromFormat('m/d/Y', $start)->startOfDay();
+    //             $end   = Carbon::createFromFormat('m/d/Y', $end)->endOfDay();
+    //             $query->whereBetween('one_time_datetime', [$start, $end]);
+    //         }
+
+    //         // 5) campaign type radio
+    //         if ($request->filled('campaign_type') && $request->campaign_type!=='all') {
+    //             $query->where('schedule_type',$request->campaign_type);
+    //         }
+
+    //         return DataTables::of($query)
+    //             ->addIndexColumn()
+
+    //             // flatten domains into a comma list
+    //             ->addColumn('domain', fn($row) => 
+    //                 $row->domains->pluck('domain_url')->implode(', ')
+    //             )
+
+    //             // choose the right “sent time” col (one-time vs recurring)
+    //             ->addColumn('sent_time', function($row){
+    //                 return $row->one_time_datetime
+    //                     ? $row->one_time_datetime->format('Y-m-d H:i')
+    //                     : ($row->recurring_start_date
+    //                         ? $row->recurring_start_date->format('Y-m-d')
+    //                         : '');
+    //             })
+    //             ->addColumn('clicks', fn($row) => $row->clicks_count ?? 0)
+
+    //             // actions column
+    //             ->addColumn('action', fn($row) =>
+    //                 '<a href="'.route('notification.view',$row->id)
+    //                 .'" class="btn btn-sm btn-primary">View</a>'
+    //             )
+    //             ->rawColumns(['action'])
+    //             ->make(true);
+    //     }
+
+    //     // initial page load: pass domain list for the dropdown
+    //     $domains = Domain::pluck('name')->sortBy('name');
+    //     return view('notification.view', compact('domains'));
+    // }
+
+    /**
+     * List + filter notifications (DataTables-AJAX).
+     */
     public function view(Request $request)
     {
-        // AJAX request? return JSON for DataTables
-        if ($request->ajax()) {
-            $query = Notification::with('domains')->select('notifications.*');
-
-            // 1) filter by campaign name
-            if ($request->filled('campaign_name')) {
-                $query->where('campaign_name','like','%'.$request->campaign_name.'%');
-            }
-
-            // 2) filter by status (assumes you have a `status` column)
-            if ($request->filled('status')) {
-                $query->where('status', $request->status);
-            }
-
-            // 3) filter by domain URL
-            if ($request->filled('site_web')) {
-                $query->whereHas('domains', function($q) use($request){
-                    $q->where('domain_url','like','%'.$request->site_web.'%');
-                });
-            }
-
-            // 4) date-range on “sent time” (one_time_datetime)
-            if ($request->filled('last_send')) {
-                [$start, $end] = explode(' - ', $request->last_send);
-                $start = Carbon::createFromFormat('m/d/Y', $start)->startOfDay();
-                $end   = Carbon::createFromFormat('m/d/Y', $end)->endOfDay();
-                $query->whereBetween('one_time_datetime', [$start, $end]);
-            }
-
-            // 5) campaign type radio
-            if ($request->filled('campaign_type') && $request->campaign_type!=='all') {
-                $query->where('schedule_type',$request->campaign_type);
-            }
-
-            return DataTables::of($query)
-                ->addIndexColumn()
-
-                // flatten domains into a comma list
-                ->addColumn('domain', fn($row) => 
-                    $row->domains->pluck('domain_url')->implode(', ')
-                )
-
-                // choose the right “sent time” col (one-time vs recurring)
-                ->addColumn('sent_time', function($row){
-                    return $row->one_time_datetime
-                        ? $row->one_time_datetime->format('Y-m-d H:i')
-                        : ($row->recurring_start_date
-                            ? $row->recurring_start_date->format('Y-m-d')
-                            : '');
-                })
-                ->addColumn('clicks', fn($row) => $row->clicks_count ?? 0)
-
-                // actions column
-                ->addColumn('action', fn($row) =>
-                    '<a href="'.route('notification.view',$row->id)
-                    .'" class="btn btn-sm btn-primary">View</a>'
-                )
-                ->rawColumns(['action'])
-                ->make(true);
+        // regular page load
+        if (! $request->ajax()) {
+            return view('notification.view');
         }
 
-        // initial page load: pass domain list for the dropdown
-        $domains = Domain::pluck('name')->sortBy('name');
-        return view('notification.view', compact('domains'));
+        /* --------------------------------------------------------------------
+         |  Base query
+         * ------------------------------------------------------------------ */
+        $query = DB::table('notifications as n')
+            ->leftJoin('domain_notification as dn', 'n.id', '=', 'dn.notification_id')
+            ->leftJoin('domains as d', 'd.id', '=', 'dn.domain_id')
+            ->leftJoin('push_event_counts as pec', function ($join) {
+                $join->on('pec.message_id', '=', 'n.message_id')
+                     ->on('pec.domain',      '=', 'd.name')
+                     ->where('pec.event', 'click');
+            })
+            ->select([
+                'n.id',
+                'n.campaign_name',
+                'n.title',
+                'd.name as domain',
+                'dn.status',
+                'n.one_time_datetime as sent_time',
+                DB::raw('COALESCE(SUM(pec.count),0) as clicks'),
+            ])
+            // group so every row is unique and clicks are aggregated
+            ->groupBy(
+                'n.id',
+                'n.campaign_name',
+                'n.title',
+                'd.name',
+                'dn.status',
+                'n.one_time_datetime'
+            );
+
+        /* --------------------------------------------------------------------
+         |  Dynamic filters
+         * ------------------------------------------------------------------ */
+        $query->when($request->filled('status'),
+                fn ($q) => $q->where('dn.status', $request->status))
+               ->when($request->filled('search_term'), function ($q) use ($request) {
+                    $term = "%{$request->search_term}%";
+                    $q->where(function ($sub) use ($term) {
+                        $sub->where('n.campaign_name', 'like', $term)
+                            ->orWhere('n.title',        'like', $term);
+                    });
+                })
+                ->when($request->filled('campaign_type') && $request->campaign_type !== 'all',
+                fn ($q) => $q->where('n.schedule_type', $request->campaign_type))
+                ->when($request->filled('site_web'),
+                fn ($q) => $q->where('d.name', $request->site_web))
+                ->when($request->filled('last_send'), function ($q) use ($request) {
+                    [$start, $end] = explode(' - ', $request->last_send);
+                    $q->whereBetween('n.one_time_datetime', [
+                        Carbon::createFromFormat('m/d/Y', $start)->startOfDay(),
+                        Carbon::createFromFormat('m/d/Y', $end)->endOfDay(),
+                    ]);
+              });
+
+        /* --------------------------------------------------------------------
+         |  Return DataTables JSON
+         * ------------------------------------------------------------------ */
+        return DataTables::of($query)
+            ->addIndexColumn()
+            ->addColumn('campaign_name', function ($row) {
+                $truncated = Str::limit($row->title, 60, '…');
+                return '<div>'.e($row->campaign_name).'<br><small>'.e($truncated).'</small></div>';
+            })
+            ->addColumn('status', function ($row) {
+                $map = [
+                    'pending'   => ['badge-warning',   'Pending'],
+                    'queued'    => ['badge-info',      'Processing'],
+                    'sent'      => ['badge-success',   'Sent'],
+                    'failed'    => ['badge-danger',    'Failed'],
+                    'cancelled' => ['badge-secondary', 'Cancelled'],
+                ];
+                [$class, $label] = $map[$row->status] ?? ['badge-secondary', ucfirst($row->status)];
+                return "<span class=\"badge {$class}\">{$label}</span>";
+            })
+            ->addColumn('sent_time', fn ($row) => optional($row->sent_time)->format('Y-m-d H:i') ?? '—')
+            ->addColumn('clicks',    fn ($row) => $row->clicks)
+            ->addColumn('action', function ($row) {
+                $notifyDetailsUrl = route('notification.details');
+                $param = ['notification' => $row->id,'domain'=>$row->domain];
+                $otifyDetailsEncryptUrl = encryptUrl($notifyDetailsUrl, $param);
+                return '<button type="button" class="btn btn-primary light btn-sm report-btn rounded-pill"
+                        data-bs-toggle="modal" data-bs-target="#reportModal" data-url="'.$otifyDetailsEncryptUrl.'">
+                    <i class="fas fa-analytics"></i>
+                 </button>';
+            }
+                
+            )
+            ->rawColumns(['campaign_name', 'status', 'action'])
+            ->make(true);
+    }
+
+    public function details(Request $request)
+    {
+        try {
+            $request->validate(['eq' => 'required|string']);
+
+            // decryptUrl() returns ['notification' => …, 'domain' => …]
+            $payload = decryptUrl($request->eq);
+            $domain  = $payload['domain'];
+            $id      = $payload['notification'];
+
+            $notification = Notification::where('id', $id)->firstOrFail();
+
+            // counts ------------------------------------------------------------
+            $counts = PushEventCount::where('message_id', $notification->message_id)
+                        ->where('domain', $domain)
+                        ->whereIn('event', ['received', 'click'])
+                        ->pluck('count', 'event');
+
+            $received = (int) $counts->get('received', 0);
+            $clicked  = (int) $counts->get('click', 0);
+            $delivered = (int) $notification->success_count;   // total sent/delivered
+
+            // buttons -----------------------------------------------------------
+            $btns = [];
+            if ($notification->btn_1_title && $notification->btn_1_url) {
+                $btns[] = ['title' => $notification->btn_1_title,
+                        'url'   => $notification->btn_1_url];
+            }
+            if ($notification->btn_title_2 && $notification->btn_url_2) {
+                $btns[] = ['title' => $notification->btn_title_2,
+                        'url'   => $notification->btn_url_2];
+            }
+
+            return response()->json([
+                'status' => true,
+                'data'   => [
+                    'title'        => $notification->title,
+                    'description'  => $notification->description,
+                    'banner_image' => $notification->banner_image ?: asset('images/default.png'),
+                    'banner_icon'  => $notification->banner_icon  ?: asset('images/push/icons/alarm-1.png'),
+                    'link'         => $notification->target_url,
+                    'btns'         => $btns,                       // may be empty
+                    'analytics'    => [
+                        'delivered' => $delivered,
+                        'received'  => $received,
+                        'clicked'   => $clicked,
+                    ],
+                ],
+            ]);
+        } catch (\Throwable $e) {
+            \Log::error('Report-modal failed: '.$e->getMessage());
+            return response()->json(['status' => false], 422);
+        }
     }
 
     public function create()

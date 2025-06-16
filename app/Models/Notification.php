@@ -38,6 +38,12 @@ class Notification extends Model
         return $this->belongsToMany(Domain::class, 'domain_notification')->withPivot('status','sent_at');;
     }
 
+    public function eventCounts()
+    {
+        // link message_id (not id) to push_event_counts.message_id
+        return $this->hasMany(PushEventCount::class, 'message_id', 'message_id');
+    }
+
     /**
      * Send records of this notification.
      */

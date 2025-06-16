@@ -75,7 +75,6 @@ Route::middleware(['auth','ensure_push_config'])->group(function() {
     // Domain routes
     Route::controller(DomainController::class)->prefix('domain')->name('domain.')->group(function () {
         Route::get('/', 'view')->name('view');
-        Route::post('/{id}/preview', 'preview')->name('preview');
         Route::post('/create', 'create')->name('store');
         Route::post('check', 'check')->name('check');
         Route::post('/update-status', 'updateStatus')->name('update-status');
@@ -87,6 +86,7 @@ Route::middleware(['auth','ensure_push_config'])->group(function() {
     // Send Notification routes
     Route::controller(NotificationController::class)->prefix('notification')->name('notification.')->group(function () {
         Route::get('/','view')->name('view');
+        Route::get('details', 'details')->name('details');
         Route::get('/create','create')->name('create');
         Route::post('/send','store')->name('send');
         // Route::get('/{notification}','show')->name('show');
