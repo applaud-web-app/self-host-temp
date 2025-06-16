@@ -35,7 +35,7 @@ class Notification extends Model
      */
     public function domains()
     {
-        return $this->belongsToMany(Domain::class, 'domain_notification');
+        return $this->belongsToMany(Domain::class, 'domain_notification')->withPivot('status','sent_at');;
     }
 
     /**

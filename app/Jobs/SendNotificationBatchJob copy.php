@@ -65,7 +65,9 @@ class SendNotificationBatchJob implements ShouldQueue
                 $error = method_exists($failure, 'error')
                     ? $failure->error()->getMessage()
                     : (string)$failure;
-                Log::error('Push send failed', ['error' => $error]);
+                Log::error('Push send failed', [
+                    'error'                => $error,
+                ]);
             }
 
             $rows = [];

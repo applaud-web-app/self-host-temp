@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('domain_notification', function (Blueprint $table) {
             $table->unsignedBigInteger('notification_id');
             $table->unsignedBigInteger('domain_id');
-            $table->enum('status', ['pending', 'queued', 'sent', 'failed'])->default('pending')->index();
+            $table->enum('status', ['pending', 'queued', 'sent', 'failed','cancelled'])->default('pending')->index();
             $table->timestamp('sent_at')->nullable();
 
             $table->foreign('notification_id')->references('id')->on('notifications')->onDelete('cascade');

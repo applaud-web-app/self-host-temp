@@ -248,13 +248,14 @@ class NotificationController extends Controller
             ]);
 
             // 4) Attach domains
-            $ids = Domain::whereIn('name', $data['domain_name'])->pluck('id');
-            $notification->domains()->sync($ids);
+            // $ids = Domain::whereIn('name', $data['domain_name'])->pluck('id');
+            // $notification->domains()->sync($ids);
+
+            $domainIds = Domain::whereIn('name', $data['domain_name'])->pluck('id')->all();
+            $notification->domains()->sync($domainIds);
 
             // 5) Dispatch send job (immediately for Instant, or you could delay for Schedule)
-            if ($notification->schedule_type === 'schedule' && $notification->one_time_datetime) {
-                // SendNotificationJob::dispatch($notification->id)->delay(Carbon::parse($notification->one_time_datetime));
-            } else {
+            if ($notification->schedule_type === 'instant') {
                 SendNotificationJob::dispatch($notification->id);
             }
 
