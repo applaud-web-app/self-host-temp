@@ -19,80 +19,74 @@ class SendNotificationJob implements ShouldQueue
     public int $tries   = 1;
     public int $timeout = 3600;
 
-    protected int $notificationId;
-
-    public function __construct(int $notificationId)
-    {
-        $this->notificationId = $notificationId;
-    }
+    public function __construct(protected int $notificationId) {}
 
     public function handle(): void
     {
         try {
-            // 1) Load notification data minimal via DB
+            // 1) Load notification in one DB call
             $row = DB::table('notifications')
-                ->select([
-                    'title', 'description', 'banner_icon', 'banner_image',
-                    'target_url', 'message_id',
-                    'btn_1_title', 'btn_1_url',
-                    'btn_title_2', 'btn_url_2'
-                ])
-                ->where('id', $this->notificationId)
-                ->first();
+                ->where('id',$this->notificationId)
+                ->first([
+                    'title','description','banner_icon','banner_image',
+                    'target_url','message_id',
+                    'btn_1_title','btn_1_url',
+                    'btn_title_2','btn_url_2',
+                ]);
 
-            if (! $row) {
+            if (!$row) {
                 Log::error("Notification {$this->notificationId} not found");
                 return;
             }
 
-            // 2) Load FCM config once
+            // 2) Setup FCM
             $cfg = PushConfig::first();
-            if (! $cfg) {
+            if (!$cfg) {
                 Log::error("FCM config missing");
                 return;
             }
             $factory = (new Factory())->withServiceAccount($cfg->credentials);
 
-            // 3) Build payload array
-            $webPushData = $this->buildWebPush($row);
+            // 3) Build payload
+            $webPush = $this->buildWebPush($row);
 
-            // 4) Atomically fetch pending domains with names, and mark queued
-            $pending = DB::transaction(function () {
-                $pending = DB::table('domain_notification as dn')
-                    ->join('domains as d', 'dn.domain_id', '=', 'd.id')
-                    ->where('dn.notification_id', $this->notificationId)
-                    ->where('dn.status', 'pending')
+            // 4) In one transaction, fetch & mark all PENDING domains queued
+            $pending = DB::transaction(function() {
+                $list = DB::table('domain_notification as dn')
+                    ->join('domains as d','dn.domain_id','=','d.id')
+                    ->where('dn.notification_id',$this->notificationId)
+                    ->where('dn.status','pending')
                     ->lockForUpdate()
-                    ->select('dn.domain_id', 'd.name as domain_name')
+                    ->select('dn.domain_id','d.name as domain_name')
                     ->get();
-                if ($pending->isNotEmpty()) {
-                    $ids = $pending->pluck('domain_id')->all();
+
+                if ($list->isNotEmpty()) {
+                    $ids = $list->pluck('domain_id')->all();
                     DB::table('domain_notification')
-                        ->where('notification_id', $this->notificationId)
-                        ->whereIn('domain_id', $ids)
-                        ->update(['status' => 'queued', 'sent_at' => null]);
+                        ->where('notification_id',$this->notificationId)
+                        ->whereIn('domain_id',$ids)
+                        ->update(['status'=>'queued','sent_at'=>null]);
                 }
-                return $pending;
+
+                return $list;
             });
 
             if ($pending->isEmpty()) {
-                return; // nothing to dispatch
+                return; // nothing to do
             }
 
-            // 5) Dispatch domain jobs without N+1 queries
-            $map = $pending->pluck('domain_name', 'domain_id');
-            foreach ($map as $domainId => $domainName) {
+            // 5) Dispatch one domain job per-domain
+            foreach ($pending as $row) {
                 SendNotificationDomainJob::dispatch(
                     $this->notificationId,
                     $factory,
-                    $webPushData,
-                    $domainId,
-                    $domainName
+                    $webPush,
+                    $row->domain_id,
+                    $row->domain_name
                 );
             }
-
         } catch (Throwable $e) {
-            Log::error("SendNotificationJob error [notif={$this->notificationId}]: {$e->getMessage()}");
+            Log::error("SendNotificationJob failed [{$this->notificationId}]: {$e->getMessage()}");
             throw $e;
         }
     }
@@ -102,29 +96,26 @@ class SendNotificationJob implements ShouldQueue
         $base = [
             'title'        => $row->title,
             'body'         => $row->description,
-            'icon'         => $row->banner_icon ?? '',
+            'icon'         => $row->banner_icon  ?? '',
             'image'        => $row->banner_image ?? '',
             'click_action' => $row->target_url,
-            'message_id'   => (string) $row->message_id,
+            'message_id'   => (string)$row->message_id,
         ];
 
         $actions = [];
         if ($row->btn_1_title && $row->btn_1_url) {
-            $actions[] = ['action' => 'btn1', 'title' => $row->btn_1_title, 'url' => $row->btn_1_url];
+            $actions[] = ['action'=>'btn1','title'=>$row->btn_1_title,'url'=>$row->btn_1_url];
         }
         if ($row->btn_title_2 && $row->btn_url_2) {
-            $actions[] = ['action' => 'btn2', 'title' => $row->btn_title_2, 'url' => $row->btn_url_2];
+            $actions[] = ['action'=>'btn2','title'=>$row->btn_title_2,'url'=>$row->btn_url_2];
         }
-        if (count($actions) < 2) {
-            $actions[] = ['action' => 'close', 'title' => 'Close'];
+        if (count($actions)<2) {
+            $actions[] = ['action'=>'close','title'=>'Close'];
         }
 
         return [
-            'data'    => array_merge(
-                array_map('strval', $base),
-                ['actions' => json_encode($actions)]
-            ),
-            'headers' => ['Urgency' => 'high'],
+            'data'    => array_merge(array_map('strval',$base), ['actions'=>json_encode($actions)]),
+            'headers' => ['Urgency'=>'high'],
         ];
     }
 }

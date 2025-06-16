@@ -39,7 +39,7 @@
             <div class="d-flex flex-wrap align-items-center text-head">
                 <h2 class="mb-3 me-auto">Add Notifications</h2>
             </div>
-            <form action="{{ route('notification.send') }}" method="post" id="notificationform" enctype="multipart/form-data">
+            <form action="{{ route('notification.send') }}" method="post" id="notificationform" enctype="multipart/form-data" novalidate>
                 @csrf
                 <div class="row">
                     <!-- LEFT COLUMN: Form Inputs -->
@@ -233,12 +233,12 @@
                                 <div class="justify-content-start">
                                     <label class="mb-3 me-3 w-auto d-inline-block" for="sendnow">
                                         <input class="radio-option" type="radio" name="schedule_type" id="sendnow"
-                                            value="Instant" onchange="hideorshow(event)" checked>
+                                            value="Instant" checked>
                                         <span>Instant Notification</span>
                                     </label>
                                     <label class="mb-3 me-3 w-auto d-inline-block" for="Schedule">
                                         <input class="radio-option" type="radio" name="schedule_type" id="Schedule"
-                                            value="Schedule" onchange="hideorshow(event)">
+                                            value="Schedule">
                                         <span>Schedule Notification</span>
                                     </label>
                                 </div>
@@ -479,34 +479,45 @@
      <script>
         const ICON_URLS = {!! $iconUrls !!};
     </script>
-
     <script>
-        // Show or hide schedule fields
-        function hideorshow(e) {
-            const scheduleOptions = document.getElementById("schedule_options");
-            const oneTimeDateInput = document.getElementById("one_time_start_date");
-            const recurringStartDateInput = document.getElementById("recurring_start_date");
-            const recurringEndDateInput = document.getElementById("recurring_end_date");
-            const occurrenceSelect = document.getElementById("occurrence");
-            const recurringStartTimeInput = document.getElementById("recurring_start_time");
+        // unified show/hide + required toggling
+        function hideOrShow() {
+            const isSchedule = $('#Schedule').is(':checked');
+            console.log('[hideOrShow] isSchedule =', isSchedule);
 
-            if (e.target.value === 'Instant') {
-                scheduleOptions.style.display = 'none';
-                oneTimeDateInput.removeAttribute('required');
-                recurringStartDateInput.removeAttribute('required');
-                recurringEndDateInput.removeAttribute('required');
-                occurrenceSelect.removeAttribute('required');
-                recurringStartTimeInput.removeAttribute('required');
-            } else if (e.target.value === 'Schedule') {
-                scheduleOptions.style.display = 'block';
-                oneTimeDateInput.setAttribute('required', true);
-                recurringStartDateInput.setAttribute('required', true);
-                recurringEndDateInput.setAttribute('required', true);
-                occurrenceSelect.setAttribute('required', true);
-                recurringStartTimeInput.setAttribute('required', true);
+            $('#schedule_options').toggle(isSchedule);
+            $('#one_time_start_date, #recurring_start_date, #recurring_end_date, #occurrence, #recurring_start_time')
+                .prop('required', isSchedule);
+
+            $('.send_btn').html(
+                isSchedule
+                ? '<i class="far fa-check-square pe-2"></i>Schedule Now'
+                : '<i class="far fa-check-square pe-2"></i>Send Now'
+            );
+        }
+
+        // Show/hide CTA section
+        function toggleCTASection() {
+            const $allCTAinputs = $('#first_btn input, #second_btn input');
+            if ($('#ctaCheckbox').is(':checked')) {
+                $allCTAinputs.prop('disabled', false);
+                $('#cardContainer').slideDown(200);
+            } else {
+                // hide the whole UI, clear + disable inputs
+                $('#second_btn').hide();
+                $allCTAinputs.prop('disabled', true).val('');
+                $('#btn_prv, .btn2_prv').hide();
+                $('#cardContainer').slideUp(200);
             }
         }
 
+        $('input[name="schedule_type"]').on('change', function() {
+            console.log('[radio change] now checked =', this.id);
+            hideOrShow();
+        });
+    </script>
+
+    <script>
         // Preview functions
         function prv_icons(url) {
             var defaultImageSrc = "{{ asset('images/push/icons/alarm-1.png') }}";
@@ -718,15 +729,11 @@
             $("#notificationform").validate({
                 errorElement: 'div',
                 errorClass: 'invalid-feedback',
-                ignore: [], // include checkboxes
+                ignore      : ':hidden',
                 rules: {
                     target_url: {
                         required: true,
                         url: true
-                    },
-                    campaign_name: {
-                        required: true,
-                        campformat: true
                     },
                     title: {
                         required: true,
@@ -744,26 +751,26 @@
                             return $('#Schedule').is(':checked');
                         }
                     },
-                    recurring_start_date: {
-                        required: function() {
-                            return $('#Schedule').is(':checked');
-                        }
-                    },
-                    recurring_end_date: {
-                        required: function() {
-                            return $('#Schedule').is(':checked') && !$('#end_date').is(':checked');
-                        }
-                    },
+                    // recurring_start_date: {
+                    //     required: function() {
+                    //         return $('#Schedule').is(':checked');
+                    //     }
+                    // },
+                    // recurring_end_date: {
+                    //     required: function() {
+                    //         return $('#Schedule').is(':checked') && !$('#end_date').is(':checked');
+                    //     }
+                    // },
                     occurrence: {
                         required: function() {
                             return $('#Schedule').is(':checked');
                         }
                     },
-                    recurring_start_time: {
-                        required: function() {
-                            return $('#Schedule').is(':checked');
-                        }
-                    },
+                    // recurring_start_time: {
+                    //     required: function() {
+                    //         return $('#Schedule').is(':checked');
+                    //     }
+                    // },
                     btn_1_title: {
                         required: function() {
                             return $('#ctaCheckbox').is(':checked');
@@ -800,10 +807,10 @@
                     },
                     'domain_name[]': 'Please select at least one domain.',
                     one_time_datetime: 'Start Date & Time is required when scheduling.',
-                    recurring_start_date: 'Recurring Start Date is required.',
-                    recurring_end_date: 'Recurring End Date is required unless “Never Ends” is checked.',
+                    // recurring_start_date: 'Recurring Start Date is required.',
+                    // recurring_end_date: 'Recurring End Date is required unless “Never Ends” is checked.',
                     occurrence: 'Please select a repeat interval.',
-                    recurring_start_time: 'Recurring Start Time is required.',
+                    // recurring_start_time: 'Recurring Start Time is required.',
                     btn_1_title: "Please enter a title for Button 1.",
                     btn_1_url: "Please enter a valid URL for Button 1.",
                     btn_title_2: "Please enter a title for Button 2.",
@@ -901,21 +908,6 @@
     // Clear second-CTA inputs
     function clearSecondFields() {
       $secondBtn.find('input').val('');
-    }
-
-    // Show/hide CTA section
-    function toggleCTASection() {
-        const $allCTAinputs = $('#first_btn input, #second_btn input');
-        if ($('#ctaCheckbox').is(':checked')) {
-            $allCTAinputs.prop('disabled', false);
-            $('#cardContainer').slideDown(200);
-        } else {
-            // hide the whole UI, clear + disable inputs
-            $('#second_btn').hide();
-            $allCTAinputs.prop('disabled', true).val('');
-            $('#btn_prv, .btn2_prv').hide();
-            $('#cardContainer').slideUp(200);
-        }
     }
 
     // Toggle second CTA on/off

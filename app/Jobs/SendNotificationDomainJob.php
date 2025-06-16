@@ -2,15 +2,17 @@
 
 namespace App\Jobs;
 
+use App\Models\Notification;
+use App\Models\PushSubscriptionHead;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Kreait\Firebase\Factory;
-use Kreait\Firebase\Messaging\WebPushConfig;
 use Kreait\Firebase\Messaging\CloudMessage;
+use Kreait\Firebase\Messaging\WebPushConfig;
+use Kreait\Firebase\Factory;
 use Throwable;
 
 class SendNotificationDomainJob implements ShouldQueue
@@ -36,94 +38,75 @@ class SendNotificationDomainJob implements ShouldQueue
             $message   = CloudMessage::new()->withWebPushConfig($config);
             $now       = now();
 
-            $success = 0;
-            $failed  = 0;
+            $success = $failed = 0;
 
-            // 1) Chunk subscribers for this domain with only needed columns
-            PushSubscriptionHead::where('status', 1)
-                ->where('domain', $this->domainName)
-                ->select('id', 'token')
+            // chunk only id+token for this domain
+            PushSubscriptionHead::where('status',1)
+                ->where('domain',$this->domainName)
+                ->select('id','token')
                 ->orderBy('id')
-                ->chunkById(500, function ($subs) use (
-                    $messaging,
-                    $message,
-                    &$success,
-                    &$failed,
-                    $now
+                ->chunkById(500, function($subs) use (
+                    $messaging, $message, &$success, &$failed, $now
                 ) {
-                    try {
-                        // numeric index mapping
-                        $list = $subs->values()->all();
-                        $tokens = array_column($list, 'token');
+                    $list   = $subs->values()->all();
+                    $tokens = array_column($list, 'token');
+                    if (!$tokens) return;
 
-                        if (empty($tokens)) {
-                            return;
-                        }
+                    $report = $messaging->sendMulticast($message, $tokens);
+                    $s      = $report->successes()->count();
+                    $f      = $report->failures()->count();
+                    $success += $s;
+                    $failed  += $f;
 
-                        $report = $messaging->sendMulticast($message, $tokens);
+                    // deactivate bad tokens
+                    $idxs = array_keys($report->failures()->getItems());
+                    if ($idxs) {
+                        $bad = array_map(fn($i) => $list[$i]->id, $idxs);
+                        DB::table('push_subscriptions_head')
+                          ->whereIn('id',$bad)
+                          ->update(['status'=>0]);
+                    }
 
-                        $s = $report->successes()->count();
-                        $f = $report->failures()->count();
-                        $success += $s;
-                        $failed  += $f;
-
-                        // deactivate failed subscriptions
-                        $failIndexes = array_keys($report->failures()->getItems());
-                        if (!empty($failIndexes)) {
-                            $badIds = [];
-                            foreach ($failIndexes as $i) {
-                                $badIds[] = $list[$i]->id;
-                            }
-                            DB::table('push_subscription_heads')
-                                ->whereIn('id', $badIds)
-                                ->update(['status' => 0]);
-                        }
-
-                        // record delivery results in bulk
-                        $rows = [];
-                        foreach ($list as $idx => $sub) {
-                            $rows[] = [
-                                'notification_id'      => $this->notificationId,
-                                'subscription_head_id' => $sub->id,
-                                'status'               => in_array($idx, $failIndexes) ? 0 : 1,
-                                'created_at'           => $now,
-                                'updated_at'           => $now,
-                            ];
-                        }
-                        foreach (array_chunk($rows, 500) as $chunk) {
-                            DB::table('notification_sends')->insertOrIgnore($chunk);
-                        }
-
-                    } catch (Throwable $e) {
-                        Log::error("Chunk failed for domain {$this->domainName} [notif={$this->notificationId}]: {$e->getMessage()}");
+                    // record each send in bulk
+                    $rows = [];
+                    foreach ($list as $i => $sub) {
+                        $rows[] = [
+                            'notification_id'      => $this->notificationId,
+                            'subscription_head_id' => $sub->id,
+                            'status'               => in_array($i,$idxs) ? 0 : 1,
+                            'created_at'           => $now,
+                            'updated_at'           => $now,
+                        ];
+                    }
+                    foreach (array_chunk($rows,500) as $chunk) {
+                        DB::table('notification_sends')->insertOrIgnore($chunk);
                     }
                 });
 
-            // 2) Update notification counters atomically
+            // bump global counters
             DB::table('notifications')
-                ->where('id', $this->notificationId)
+                ->where('id',$this->notificationId)
                 ->update([
-                    'active_count'  => DB::raw("active_count + " . ($success + $failed)),
+                    'active_count'  => DB::raw("active_count + ".($success+$failed)),
                     'success_count' => DB::raw("success_count + {$success}"),
                     'failed_count'  => DB::raw("failed_count + {$failed}"),
                 ]);
 
-            // 3) Mark domain pivot once
+            // mark this domain pivot
             DB::table('domain_notification')
-                ->where('notification_id', $this->notificationId)
-                ->where('domain_id', $this->domainId)
+                ->where('notification_id',$this->notificationId)
+                ->where('domain_id',$this->domainId)
                 ->update([
                     'status'  => $success > 0 ? 'sent' : 'failed',
                     'sent_at' => $now,
                 ]);
 
         } catch (Throwable $e) {
-            Log::error("SendNotificationDomainJob failed [notif={$this->notificationId}, domain={$this->domainId}]: {$e->getMessage()}");
-            // mark domain as failed
+            Log::error("Domain job failed [notif={$this->notificationId},dom={$this->domainId}]: {$e->getMessage()}");
             DB::table('domain_notification')
-            ->where('notification_id', $this->notificationId)
-            ->where('domain_id', $this->domainId)
-            ->update(['status' => 'failed', 'sent_at' => now()]);
+              ->where('notification_id',$this->notificationId)
+              ->where('domain_id',$this->domainId)
+              ->update(['status'=>'failed','sent_at'=>now()]);
         }
     }
 }

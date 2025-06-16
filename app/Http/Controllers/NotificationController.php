@@ -189,6 +189,7 @@ class NotificationController extends Controller
 
     public function store(Request $request)
     {
+        // Always cast CTA checkbox
         if (! $request->has('cta_enabled')) {
             $request->merge(['cta_enabled' => 0]);
         }
@@ -204,18 +205,11 @@ class NotificationController extends Controller
             'one_time_datetime'    => 'required_if:schedule_type,Schedule|nullable|date',
             'domain_name'          => 'required|array|min:1',
             'domain_name.*'        => 'required|string|exists:domains,name',
-
-            // our new CTA checkbox
             'cta_enabled'       => 'required|in:0,1',
-
-            // button 1 required only if CTA enabled
             'btn_1_title'       => 'nullable|required_if:cta_enabled,1|string|max:255',
             'btn_1_url'         => 'nullable|required_if:cta_enabled,1|url',
-
-            // button 2 only required if one of its pair is present
             'btn_title_2'       => 'nullable|required_with:btn_url_2|string|max:255',
             'btn_url_2'         => 'nullable|required_with:btn_title_2|url',
-            
         ], [], [
             'one_time_datetime' => 'one‐time date & time',
             'btn_1_title'       => 'Button 1 title',
@@ -225,48 +219,38 @@ class NotificationController extends Controller
         ]);
 
         try {
-            // 2) Generate a campaign name
-            $data['campaign_name'] = 'CAMP#' . random_int(1000, 9999);
-
-            // 3) Create Notification
             $notification = Notification::create([
-                'target_url'           => $data['target_url'],
-                'campaign_name'        => $data['campaign_name'],
-                'title'                => $data['title'],
-                'description'          => $data['description'],
-                'banner_image'         => $data['banner_image']  ?? null,
-                'banner_icon'          => $data['banner_icon']   ?? null,
-                'schedule_type'        => strtolower($data['schedule_type']),
-                'one_time_datetime'    => $data['schedule_type']==='Schedule' ? $data['one_time_datetime'] : null,
-                'message_id'           => Str::uuid(),
-                
-                // CTA fields (will be null if not enabled)
-                'btn_1_title'        => $data['btn_1_title']   ?? null,
-                'btn_1_url'          => $data['btn_1_url']     ?? null,
-                'btn_title_2'        => $data['btn_title_2']   ?? null,
-                'btn_url_2'          => $data['btn_url_2']     ?? null,
+                'target_url'        => $data['target_url'],
+                'campaign_name'     => 'CAMP#'.random_int(1000,9999),
+                'title'             => $data['title'],
+                'description'       => $data['description'],
+                'banner_image'      => $data['banner_image'] ?? null,
+                'banner_icon'       => $data['banner_icon']  ?? null,
+                'schedule_type'     => strtolower($data['schedule_type']),
+                'one_time_datetime' => $data['schedule_type'] === 'Schedule'
+                                          ? $data['one_time_datetime']
+                                          : null,
+                'message_id'        => Str::uuid(),
+                'btn_1_title'       => $data['btn_1_title']  ?? null,
+                'btn_1_url'         => $data['btn_1_url']    ?? null,
+                'btn_title_2'       => $data['btn_title_2']  ?? null,
+                'btn_url_2'         => $data['btn_url_2']    ?? null,
             ]);
 
-            // 4) Attach domains
-            // $ids = Domain::whereIn('name', $data['domain_name'])->pluck('id');
-            // $notification->domains()->sync($ids);
+            $ids = Domain::whereIn('name', $data['domain_name'])->pluck('id')->all();
+            $notification->domains()->sync($ids);
 
-            $domainIds = Domain::whereIn('name', $data['domain_name'])->pluck('id')->all();
-            $notification->domains()->sync($domainIds);
-
-            // 5) Dispatch send job (immediately for Instant, or you could delay for Schedule)
+            // Instant: fire off immediately
             if ($notification->schedule_type === 'instant') {
                 SendNotificationJob::dispatch($notification->id);
             }
 
-            // route('notification.view')
-            return redirect()->back()->with('success', "Notification “{$data['campaign_name']}” queued for sending.");
-        } catch (\Throwable $th) {
-            Log::error('Failed to create notification: '.$th->getMessage(), [
-                'data'      => $data,
-                'exception' => $th,
+            return back()->with('success', "Notification {$notification->campaign_name} queued.");
+        } catch (\Throwable $e) {
+            Log::error("Failed to create notification: {$e->getMessage()}", [
+                'data' => $data,
             ]);
-            return back()->withErrors(['general' => 'Failed to create notification. Please try again later.'])->withInput($data);
+            return back()->withErrors(['general'=>'Something went wrong.'])->withInput();
         }
     }
 
