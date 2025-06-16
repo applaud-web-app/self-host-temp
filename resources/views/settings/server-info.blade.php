@@ -1,4 +1,3 @@
-{{-- resources/views/settings/server-info.blade.php --}}
 @extends('layouts.master')
 
 @section('content')
@@ -56,11 +55,9 @@
 
             {{-- Memory (PHP process) --}}
             @php
-              $usedMem      = memory_get_usage(false);
-              $totalMem     = memory_get_usage(true);
-              $memPercent   = $totalMem > 0
-                ? round($usedMem / $totalMem * 100, 1)
-                : 0;
+              $usedMem    = memory_get_usage(false);
+              $totalMem   = memory_get_usage(true);
+              $memPercent = $totalMem > 0 ? round($usedMem / $totalMem * 100, 1) : 0;
             @endphp
 
             <p class="mb-1 small mt-3">Memory Usage</p>
@@ -96,6 +93,24 @@
       </div>
     </div>
 
+    {{-- Enabled PHP Extensions --------------------------------------------------}}
+    <div class="row">
+      <div class="col-12 mb-3">
+        <div class="card h-100">
+          <div class="card-header">
+            <h5>Enabled PHP Extensions ({{ count($extensions) }})</h5>
+          </div>
+          <div class="card-body" style="max-height:240px; overflow:auto;">
+            <div class="d-flex flex-wrap gap-1">
+              @foreach($extensions as $ext)
+                <span class="badge bg-secondary">{{ $ext }}</span>
+              @endforeach
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
   </div>
 </section>
 @endsection
@@ -104,7 +119,6 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', () => {
-  // initialize charts
   function makeLine(ctx, baseColor) {
     return new Chart(ctx, {
       type: 'line',
@@ -132,40 +146,24 @@ document.addEventListener('DOMContentLoaded', () => {
   const cpuChart = makeLine(cpuCtx, 'rgba(13,110,253,1)');
   const memChart = makeLine(memCtx, 'rgba(25,135,84,1)');
 
-  // fetch metrics
   const metricsUrl = '{{ route('settings.server-info.metrics') }}';
+
   function updateMetrics() {
     fetch(metricsUrl)
-      .then(response => {
-        if (!response.ok) throw new Error('Network response was not ok');
-        return response.json();
-      })
-      .then(data => {
+      .then(r => { if (!r.ok) throw new Error('Network'); return r.json(); })
+      .then(({ cpu, memory }) => {
         const now = new Date().toLocaleTimeString();
-        // assume response keys: data.cpu and data.memory
-
-        // ➜ added: ensure numeric values
-        const cpuVal = Number(data.cpu);   // new line
-        const memVal = Number(data.memory); // new line
-
-        // update CPU chart
-        cpuChart.data.labels.push(now);
-        cpuChart.data.labels.shift();
-        cpuChart.data.datasets[0].data.push(cpuVal);   // modified
-        cpuChart.data.datasets[0].data.shift();
+        cpuChart.data.labels.push(now); cpuChart.data.labels.shift();
+        cpuChart.data.datasets[0].data.push(Number(cpu));  cpuChart.data.datasets[0].data.shift();
         cpuChart.update();
 
-        // update Memory chart
-        memChart.data.labels.push(now);
-        memChart.data.labels.shift();
-        memChart.data.datasets[0].data.push(memVal);   // modified
-        memChart.data.datasets[0].data.shift();
+        memChart.data.labels.push(now); memChart.data.labels.shift();
+        memChart.data.datasets[0].data.push(Number(memory)); memChart.data.datasets[0].data.shift();
         memChart.update();
       })
-      .catch(err => console.error('Failed to fetch metrics:', err));
+      .catch(console.error);
   }
 
-  // initial fetch and interval
   updateMetrics();
   setInterval(updateMetrics, 2000);
 });
