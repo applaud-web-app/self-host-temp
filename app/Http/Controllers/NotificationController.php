@@ -259,7 +259,8 @@ class NotificationController extends Controller
                 SendNotificationJob::dispatch($notification->id);
             }
 
-            return redirect()->route('notification.view')->with('success', "Notification “{$data['campaign_name']}” queued for sending.");
+            // route('notification.view')
+            return redirect()->back()->with('success', "Notification “{$data['campaign_name']}” queued for sending.");
         } catch (\Throwable $th) {
             Log::error('Failed to create notification: '.$th->getMessage(), [
                 'data'      => $data,
