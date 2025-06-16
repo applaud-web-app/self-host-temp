@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\DB;
+
 use Illuminate\Support\Str;
 use App\Models\GeneralSetting;
 use App\Models\EmailSetting;
