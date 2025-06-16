@@ -21,10 +21,6 @@ return new class extends Migration
             $table->string('banner_icon')->nullable();
             $table->enum('schedule_type', ['instant', 'schedule'])->default('instant');
             $table->dateTime('one_time_datetime')->nullable();
-            // $table->date('recurring_start_date')->nullable();
-            // $table->date('recurring_end_date')->nullable();
-            // $table->enum('occurrence', ['daily', 'weekly', 'monthly'])->nullable();
-            // $table->time('recurring_start_time')->nullable();
             $table->string('btn_1_title')->nullable();
             $table->string('btn_1_url')->nullable();
             $table->string('btn_title_2')->nullable();
