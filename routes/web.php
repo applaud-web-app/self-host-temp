@@ -54,11 +54,12 @@ Route::get('/dashboard', [DashboardController::class, 'dashboard'])->name('dashb
 
 Route::middleware(['auth','ensure_push_config'])->group(function() {
       
-   Route::controller(UserController::class)->prefix('user')->name('user.')->group(function () {
+    Route::controller(UserController::class)->prefix('user')->name('user.')->group(function () {
         Route::get('profile', 'profile')->name('profile');
         Route::post('update', 'updateProfile')->name('update');
         Route::post('update-password', 'updatePassword')->name('update-password');
     });
+
     // Settings routes
     Route::controller(AuthController::class)->group(function () {
         Route::post('logout', 'logout')->name('logout');
@@ -97,7 +98,7 @@ Route::middleware(['auth','ensure_push_config'])->group(function() {
     Route::get('/subscription', [Controller::class, 'subscription'])->name('subscription');
     Route::get('/send-notification', [Controller::class, 'sendNotification'])->name('send-notification');
     Route::get('/campaign-reports', [Controller::class, 'campaignReports'])->name('campaign-reports');
-    Route::get('/profile', [Controller::class, 'profile'])->name('profile');
+    // Route::get('/profile', [Controller::class, 'profile'])->name('profile');
 
     // Settings routes (using the same Controller)
     // Route::prefix('settings')->group(function () {
