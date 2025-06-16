@@ -381,7 +381,7 @@
                                     <div class="windows_view border rounded p-3 bg-white shadow-sm">
                                         <!-- Banner Image -->
                                         <img id="message_image" class="img-fluid rounded mb-3"
-                                            style="height:300px;width:100%;object-fit:cover" alt="Campaign Image">
+                                            style="height:160px;width:100%;object-fit:cover" alt="Campaign Image">
 
                                         <!-- Notification Content -->
                                         <div class="d-flex">
