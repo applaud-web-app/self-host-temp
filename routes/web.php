@@ -98,7 +98,6 @@ Route::middleware(['auth','ensure_push_config'])->group(function() {
     Route::get('/subscription', [Controller::class, 'subscription'])->name('subscription');
     Route::get('/send-notification', [Controller::class, 'sendNotification'])->name('send-notification');
     Route::get('/campaign-reports', [Controller::class, 'campaignReports'])->name('campaign-reports');
-    // Route::get('/profile', [Controller::class, 'profile'])->name('profile');
 
     // Settings routes (using the same Controller)
     // Route::prefix('settings')->group(function () {
