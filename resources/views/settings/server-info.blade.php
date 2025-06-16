@@ -93,7 +93,7 @@
       </div>
     </div>
 
-    {{-- Enabled PHP Extensions --}}
+    {{-- Enabled PHP Extensions --------------------------------------------------}}
     <div class="row">
       <div class="col-12 mb-3">
         <div class="card h-100">
@@ -154,13 +154,11 @@ document.addEventListener('DOMContentLoaded', () => {
       .then(({ cpu, memory }) => {
         const now = new Date().toLocaleTimeString();
         cpuChart.data.labels.push(now); cpuChart.data.labels.shift();
-        cpuChart.data.datasets[0].data.push(Number(cpu));
-        cpuChart.data.datasets[0].data.shift();
+        cpuChart.data.datasets[0].data.push(Number(cpu));  cpuChart.data.datasets[0].data.shift();
         cpuChart.update();
 
         memChart.data.labels.push(now); memChart.data.labels.shift();
-        memChart.data.datasets[0].data.push(Number(memory));
-        memChart.data.datasets[0].data.shift();
+        memChart.data.datasets[0].data.push(Number(memory)); memChart.data.datasets[0].data.shift();
         memChart.update();
       })
       .catch(console.error);
