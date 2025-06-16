@@ -370,7 +370,7 @@
 
                                 <!-- Notification Preview -->
                                 <div class="col-lg-6">
-                                    <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <div class="d-flex justify-content-between align-items-center mb-1">
                                         <h6 class="mb-0"><i class="fas fa-bell text-primary me-2"></i>Push Preview</h6>
                                          <div class="d-flex align-items-center mb-3">
                                             <img src="{{ asset('images/chrome.png') }}" class="me-1" alt="Browser Icon">
