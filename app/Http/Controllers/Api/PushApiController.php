@@ -35,7 +35,7 @@ class PushApiController extends Controller
           // Step 1: Validate request payload
           $data = $request->validate([
               'token'     => 'required|string',
-              'domain'    => 'required|string|exists:domains,name',
+              'domain'    => 'required|string',
               'old_token' => 'nullable|string',
               'endpoint'  => 'required|url',
               'auth'      => 'required|string',
@@ -120,12 +120,14 @@ class PushApiController extends Controller
     $payload = $request->validate([
       'message_id' => 'required|string',
       'event'      => 'required|in:click,close,received',
+      'domain'    => 'required|string',
     ]);
 
     // Add timestamp if needed for future trace/debug
     $event = [
       'message_id' => $payload['message_id'],
       'event'      => $payload['event'],
+      'domain'     => $payload['domain'],   
       'timestamp'  => now()->timestamp,
     ];
 
@@ -138,10 +140,10 @@ class PushApiController extends Controller
       ]);
 
       // ✅ Fallback to queue
-      ProcessClickAnalytics::dispatch($event['message_id'], $event['event']);
+      ProcessClickAnalytics::dispatch($event['message_id'], $event['event'], $event['domain']);
 
       // ✅ Record this event hash so flush won't double-count later
-      $hash = "{$event['event']}|{$event['message_id']}";
+      $hash = "{$event['event']}|{$event['message_id']}|{$event['domain']}";
       try {
         Redis::sadd('processed:push_analytics', $hash);
         Redis::expire('processed:push_analytics', 3600);
@@ -150,9 +152,7 @@ class PushApiController extends Controller
       }
     }
 
-    return response()->json([
-      'status'  => 'success'
-    ]);
+    return response()->json(['status' => 'success']);
 
   }
   

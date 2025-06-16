@@ -25,19 +25,20 @@ const SUBSCRIBE_ENDPOINT = "{{ route('api.subscribe') }}";
 const DEFAULT_ICON       = '/favicon.ico';
 
 // 3) Analytics helper
-async function sendAnalytics(eventType, messageId) {
-  try {
-    await fetch(ANALYTICS_ENDPOINT, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        message_id: messageId,
-        event: eventType
-      })
-    });
-  } catch (e) {
-    console.error('Analytics error:', e);
-  }
+function sendAnalytics(eventType, messageId) {
+  return fetch(ANALYTICS_ENDPOINT, {
+    method: "POST",
+    credentials: "same-origin",          // keep cookies (e.g. Sanctum) if needed
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      message_id: messageId,
+      event: eventType,
+      domain: self.location.hostname
+    })
+  }).catch(err => {
+    console.error('Analytics error:', err);
+    return null; 
+  });
 }
 
 // 4) Background Firebase messages
@@ -87,8 +88,6 @@ self.addEventListener('push', event => {
 
   const d = payload.data || payload;
   const messageId = d.message_id || '';
-  // ping raw push arrival
-  sendAnalytics('received', messageId);
 
   let actions = [];
   try {
@@ -113,7 +112,13 @@ self.addEventListener('push', event => {
     }))
   };
 
-  event.waitUntil(self.registration.showNotification(title, options));
+  // Single waitUntil with both analytics + showNotification
+  event.waitUntil(
+    Promise.all([
+      sendAnalytics('received', messageId),
+      self.registration.showNotification(title, opts)
+    ])
+  );
 });
 
 // 6) Notification clicks
@@ -122,7 +127,6 @@ self.addEventListener('notificationclick', event => {
 
   const data = event.notification.data || {};
   const messageId = data.message_id || '';
-  sendAnalytics('click', messageId);
 
   let url = data.click_action || '/';
 
@@ -133,14 +137,16 @@ self.addEventListener('notificationclick', event => {
     }
   }
 
-  event.waitUntil(clients.openWindow(url));
+  const analytics  = sendAnalytics('click', messageId);
+  const openTab = clients.openWindow(url);
+  event.waitUntil(Promise.all([analytics, openTab]));
 });
 
 // 7) Handle dismissals
 self.addEventListener('notificationclose', event => {
   const data = event.notification.data || {};
   const messageId = data.message_id || '';
-  {{-- sendAnalytics('close', messageId); --}}
+  event.waitUntil(sendAnalytics('close', messageId));
 });
 
 // 8) Subscription change
