@@ -183,7 +183,13 @@
             <li><a href="{{ route('notification.view') }}">Reports</a></li>
         </ul>
     </li>
-
+ <!-- Segments  ← new -->
+    <li>
+        <a class="ai-icon" href="{{ route('segmentation.index') }}" aria-expanded="false">
+            <i class="fal fa-layer-group"></i>
+            <span class="nav-text">Segmentation</span>
+        </a>
+    </li>
     <!-- Subscriptions -->
     <li>
         <a class="ai-icon" href="{{ route('subscription') }}" aria-expanded="false">
