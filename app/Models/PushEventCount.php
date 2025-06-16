@@ -10,6 +10,7 @@ class PushEventCount extends Model
     public $timestamps = false;
     protected $fillable = [
         'message_id',
+        'domain',
         'event',
         'count',
     ];
