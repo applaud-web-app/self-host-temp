@@ -76,7 +76,7 @@
     {{-- Real-time CPU & Memory Charts --}}
     <div class="row">
       <div class="col-md-6 mb-3">
-        <div class="card">
+        <div class="card h-100">
           <div class="card-header"><h5>CPU Usage (%)</h5></div>
           <div class="card-body">
             <canvas id="cpuChart" height="180"></canvas>
@@ -84,7 +84,7 @@
         </div>
       </div>
       <div class="col-md-6 mb-3">
-        <div class="card">
+        <div class="card h-100">
           <div class="card-header"><h5>Memory Usage (%)</h5></div>
           <div class="card-body">
             <canvas id="memoryChart" height="180"></canvas>
