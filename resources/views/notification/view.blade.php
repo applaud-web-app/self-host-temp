@@ -29,6 +29,39 @@
         .table-responsive {
             margin-top: 1rem;
         }
+
+        /* Modal enhancements */
+        #reportModal .modal-header {
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        #reportModal .modal-footer {
+            border-top: 1px solid #e9ecef;
+        }
+
+        /* Notification preview styling */
+        .windows_view {
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .windows_view:hover {
+            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.1);
+        }
+
+        /* Text truncation */
+        .line-clamp-2 {
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        /* Button styling */
+        .btn-sm {
+            padding: 0.25rem 0.5rem;
+            font-size: 0.75rem;
+        }
     </style>
 @endpush
 
@@ -68,19 +101,18 @@
                                         <select class="form-control form-select" id="filter_status" name="status">
                                             <option value="">Select Status</option>
                                             <option value="sent">Sent</option>
-                                            <option value="ongoing">Ongoing</option>
+                                            <option value="queued">Processing</option>
                                             <option value="pending">Pending</option>
-                                            <option value="cancelled">Cancel</option>
+                                            <option value="failed">Failed</option>
+                                            <option value="cancelled">Cancelled</option>
                                         </select>
                                         <div class="invalid-feedback"></div>
                                     </div>
 
                                     <!-- Domain Filter (takes 3 columns on xl, 6 on md) -->
                                     <div class="col-xl-3 col-md-6">
-                                        <select class="form-select form-control filter_site_web" name="site_web">
-                                            <option value="">Search for Domain…</option>
-                                        </select>
-
+                                        <select class="form-select filter_site_web form-control" id="filter_domain"
+                                            name="site_web"></select>
                                         <div class="invalid-feedback"></div>
                                     </div>
 
@@ -237,9 +269,13 @@
         </div>
 
         <!-- Campaign Modal (Static Preview) -->
-        <div class="modal fade" id="campaign" tabindex="-1" aria-labelledby="campaignModalLabel" aria-hidden="true">
+        {{-- <div class="modal fade" id="campaign" tabindex="-1" aria-labelledby="reportModal" aria-hidden="true">
             <div class="modal-dialog modal-xl">
-                <div class="modal-content">
+                <!-- add just 3 lines -->
+                <div id="modalLoader" class="d-flex justify-content-center align-items-center" style="height:250px;">
+                    <div class="spinner-border text-primary"></div>
+                </div>
+                <div class="modal-content" class="d-none">
                     <div class="modal-header">
                         <h5 class="modal-title"><i class="fas fa-bullhorn"></i> <span id="campaign_name"></span></h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
@@ -296,7 +332,100 @@
                     </div>
                 </div>
             </div>
+        </div> --}}
+
+
+        <!-- Campaign Modal -->
+        <!-- Campaign Modal -->
+        <div class="modal fade" id="reportModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header bg-light">
+                        <h5 class="modal-title d-flex align-items-center">
+                            <i class="fas fa-bullhorn text-primary me-2"></i>
+                            <span id="campaign_name" class="text-truncate" style="max-width: 80%"></span>
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+
+                    <div class="modal-body position-relative p-0">
+                        <!-- Spinner overlay -->
+                        <div id="modalSpinner"
+                            class="position-absolute top-0 bottom-0 start-0 end-0 d-flex justify-content-center align-items-center bg-white bg-opacity-75">
+                            <div class="spinner-border text-primary"></div>
+                        </div>
+
+                        <!-- Content -->
+                        <div id="modalContent" class="d-none p-4">
+                            <div class="row">
+                                <!-- Analytics Section (only shown when there's data) -->
+                                <div id="analyticsSection" class="col-lg-6 mb-4 mb-lg-0">
+                                    <div class="d-flex justify-content-between align-items-center mb-3">
+                                        <h6 class="mb-0"><i class="fas fa-chart-pie text-primary me-2"></i>Performance
+                                            Analytics</h6>
+                                        <div class="badge bg-primary rounded-pill">Live</div>
+                                    </div>
+                                    <div id="chart" class="border rounded p-3 bg-light"></div>
+                                </div>
+
+                                <!-- Notification Preview -->
+                                <div class="col-lg-6">
+                                    <div class="d-flex justify-content-between align-items-center mb-1">
+                                        <h6 class="mb-0"><i class="fas fa-bell text-primary me-2"></i>Push Preview</h6>
+                                         <div class="d-flex align-items-center mb-3">
+                                            <img src="{{ asset('images/chrome.png') }}" class="me-1" alt="Browser Icon">
+                                            <span class="text-muted small">Chrome</span>
+                                        </div>
+                                    </div>
+
+                                    <div class="windows_view border rounded p-3 bg-white shadow-sm">
+                                        <!-- Banner Image -->
+                                        <img id="message_image" class="img-fluid rounded mb-3"
+                                            style="height:160px;width:100%;object-fit:cover" alt="Campaign Image">
+
+                                        <!-- Notification Content -->
+                                        <div class="d-flex">
+                                            <img id="icon_prv" style="height:40px;width:40px;object-fit:cover"
+                                                class="rounded me-3" alt="Icon">
+                                            <div class="flex-grow-1" style="min-width:0">
+                                                <div class="text-truncate fw-bold" id="prv_title" title=""></div>
+                                                <div class="text-muted small mb-2 line-clamp-2" id="prv_desc"
+                                                    style="-webkit-line-clamp:2;display:-webkit-box;-webkit-box-orient:vertical;overflow:hidden">
+                                                </div>
+                                                <a href="#" target="_blank"
+                                                    class="text-primary small text-truncate d-block" id="prv_link"></a>
+                                            </div>
+                                        </div>
+
+                                        <!-- Action Buttons -->
+                                        <div class="row g-2 mt-3">
+                                            <div class="col-6 d-none" id="btn_prv">
+                                                <a target="_blank" class="text-decoration-none">
+                                                    <span id="btn_title1"
+                                                        class="btn btn-sm btn-outline-primary w-100 text-truncate"></span>
+                                                </a>
+                                            </div>
+                                            <div class="col-6 d-none" id="btn2_prv">
+                                                <a target="_blank" class="text-decoration-none">
+                                                    <span id="btn_title2"
+                                                        class="btn btn-sm btn-outline-secondary w-100 text-truncate"></span>
+                                                </a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer bg-light">
+                        <button type="button" class="btn btn-sm btn-outline-secondary py-2" data-bs-dismiss="modal">
+                            <i class="fas fa-times me-1"></i> Close
+                        </button>
+                    </div>
+                </div>
+            </div>
         </div>
+
     </section>
 @endsection
 
@@ -307,6 +436,44 @@
     <script src="{{ asset('vendor/sweetalert2/dist/sweetalert2.min.js') }}"></script>
     <script>
         $(function() {
+            /* ------------------------------------------------- Select2 (domains) */
+            const $domain = $('#filter_domain').select2({
+                placeholder: "Search for Domain...",
+                allowClear: true,
+                minimumInputLength: 0, // <— show list even with empty search
+                ajax: {
+                    url: "{{ route('domain.domain-list') }}",
+                    dataType: 'json',
+                    delay: 250,
+                    data: params => ({
+                        q: params.term || ''
+                    }),
+                    processResults: res => {
+                        if (!res.status) return {
+                            results: []
+                        };
+                        return {
+                            results: res.data.map(item => ({
+                                id: item.domain_name,
+                                text: item.domain_name
+                            }))
+                        };
+                    },
+                    cache: true
+                }
+            });
+
+            // force initial load so opening the dropdown shows everything
+            $domain.on('select2:open', () => {
+                if (!$domain.data('select2').dropdown._dataFetched) {
+                    $domain.data('select2').trigger('query', {
+                        term: ''
+                    });
+                    $domain.data('select2').dropdown._dataFetched = true;
+                }
+            });
+
+            /* ------------------------------------------------- DataTable */
             const table = $('#datatable').DataTable({
                 searching: false,
                 paging: true,
@@ -323,9 +490,9 @@
                 ajax: {
                     url: '{{ route('notification.view') }}',
                     data: d => {
-                        d.campaign_name = $('#filter_campaign_name').val();
+                        d.search_term = $('#filter_campaign_name').val();
                         d.status = $('#filter_status').val();
-                        d.site_web = $('.filter_site_web').val();
+                        d.site_web = $('#filter_domain').val();
                         d.last_send = $('#daterange').val();
                         d.campaign_type = $('input[name="campaign_type"]:checked').val();
                     }
@@ -349,7 +516,7 @@
                     {
                         data: 'status',
                         name: 'status'
-                    }, // pivot-status
+                    },
                     {
                         data: 'sent_time',
                         name: 'sent_time'
@@ -371,111 +538,146 @@
                 lengthMenu: [10, 25, 50]
             });
 
-            // redraw on any filter change
-            $('#filterForm')
-                .on('change', 'input, select', () => table.draw())
+            // redraw when any filter changes
+            $('#filterForm').on('change', 'input, select', () => table.draw())
                 .on('keyup', 'input[name="campaign_name"]', () => table.draw());
 
-            // date-range picker
-            $('#daterange').daterangepicker({
-                autoApply: true,
-                maxDate: new Date(),
-                locale: {
-                    format: 'MM/DD/YYYY'
-                }
-            }, function(start, end) {
-                $('#daterange').val(start.format('MM/DD/YYYY') + ' - ' + end.format('MM/DD/YYYY'));
-                table.draw();
-            }).on('cancel.daterangepicker', function() {
-                $(this).val('');
-                table.draw();
-            });
-
-            // campaign-type radios
             $('input[name="campaign_type"]').on('change', () => table.draw());
+
+            /* ------------------------------------------------- Date-range picker */
+            $('#daterange').daterangepicker({
+                    autoUpdateInput: false, // show "all dates" until user picks
+                    locale: {
+                        format: 'MM/DD/YYYY',
+                        cancelLabel: 'Clear'
+                    },
+                    maxDate: new Date(),
+                    opens: 'left'
+                })
+                .on('apply.daterangepicker', function(ev, picker) {
+                    $(this).val(picker.startDate.format('MM/DD/YYYY') +
+                        ' - ' +
+                        picker.endDate.format('MM/DD/YYYY'));
+                    table.draw();
+                })
+                .on('cancel.daterangepicker', function() {
+                    $(this).val('');
+                    table.draw();
+                });
         });
     </script>
     <script>
         $(function() {
-            // initialize analytics chart
-            var chartOptions = {
-                chart: {
-                    id: 'analytics-chart',
-                    type: 'bar',
-                    height: 250
-                },
-                series: [{
-                        name: 'Delivered',
-                        data: []
-                    },
-                    {
-                        name: 'Clicked',
-                        data: []
-                    },
-                    {
-                        name: 'Failed',
-                        data: []
-                    }
-                ],
-                xaxis: {
-                    categories: []
-                }
-            };
-            window.analyticsChart = new ApexCharts(document.querySelector('#chart'), chartOptions);
-            analyticsChart.render();
+            /* ---------- single ApexCharts instance (pie) ------------------ */
+            let chart;
 
-            // load modal details via AJAX
-            $('body').on('click', '.open-modal', function() {
-                var id = $(this).data('id');
-                $.getJSON('{{ url('notification') }}/' + id + '/details', function(res) {
-                    if (res.status) {
-                        let d = res.data;
-                        $('#campaign_name').text(d.title);
-                        $('#prv_title').text(d.title);
-                        $('#prv_desc').text(d.description);
+            function safeRenderChart(delivered, received, clicked) {
+                const el = document.querySelector('#chart');
+                if (chart) chart.destroy();
+
+                const total = delivered + received + clicked;
+                const analyticsSection = $('#analyticsSection');
+                
+                if (total === 0) {
+                    // Hide analytics section completely
+                    analyticsSection.hide();
+                    // Make preview take full width
+                    $('#modalContent .col-lg-6').removeClass('col-lg-6').addClass('col-12');
+                    return;
+                } else {
+                    // Show analytics section
+                    analyticsSection.show();
+                    // Reset column classes
+                    $('#modalContent .col-12').removeClass('col-12').addClass('col-lg-6');
+                }
+
+                chart = new ApexCharts(el, {
+                    chart: { 
+                        type: 'pie', 
+                        height: 250,
+                        animations: {
+                            enabled: true,
+                            easing: 'easeinout',
+                            speed: 800
+                        }
+                    },
+                    series: [delivered, received, clicked],
+                    labels: ['Delivered', 'Received', 'Clicked'],
+                    legend: { 
+                        position: 'bottom',
+                        markers: {
+                            radius: 3
+                        }
+                    },
+                    colors: ['#4e73df', '#1cc88a', '#36b9cc'],
+                    dataLabels: {
+                        enabled: true,
+                        formatter: function(val) {
+                            return Math.round(val) + '%';
+                        }
+                    },
+                    tooltip: {
+                        y: {
+                            formatter: function(value) {
+                                return value.toLocaleString() + ' users';
+                            }
+                        }
+                    }
+                });
+                chart.render();
+            }
+
+            /* ---------- loader + Ajax handler ----------------------------- */
+            $('body').on('click', '.report-btn', function() {
+                const url = $(this).data('url');
+
+                $('#modalSpinner').removeClass('d-none');
+                $('#modalContent').addClass('d-none');
+                $('#reportModal').modal('show');
+
+                $.getJSON(url)
+                    .done(res => {
+                        if (!res.status) throw new Error();
+
+                        const d = res.data;
+
+                        /* fill preview ------------------------------------------------ */
+                        $('#campaign_name').text(d.title).attr('title', d.title);
+                        $('#prv_title').text(d.title).attr('title', d.title);
+                        $('#prv_desc').text(d.description).attr('title', d.description);
                         $('#message_image').attr('src', d.banner_image);
                         $('#icon_prv').attr('src', d.banner_icon);
-                        $('#prv_link').text(d.link);
+                        $('#prv_link').text(new URL(d.link).hostname).attr('href', d.link);
 
+                        /* buttons ---------------------------------------------------- */
+                        $('#btn_prv, #btn2_prv').addClass('d-none');
                         if (d.btns.length) {
-                            $('#btn_prv').show().find('#btn_title1').text(d.btns[0].title).closest(
-                                'a').attr('href', d.btns[0].url);
+                            $('#btn_prv').removeClass('d-none')
+                                .find('#btn_title1').text(d.btns[0].title)
+                                .parent().attr('href', d.btns[0].url);
+
                             if (d.btns[1]) {
-                                $('#btn2_prv').show().find('#btn_title2').text(d.btns[1].title)
-                                    .closest('a').attr('href', d.btns[1].url);
-                            } else {
-                                $('#btn2_prv').hide();
-                            }
-                        } else {
-                            $('#btn_prv, #btn2_prv').hide();
-                            if (!$('.modal-footer').length) {
-                                $('.modal-content').append(
-                                    '<div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button></div>'
-                                    );
+                                $('#btn2_prv').removeClass('d-none')
+                                    .find('#btn_title2').text(d.btns[1].title)
+                                    .parent().attr('href', d.btns[1].url);
                             }
                         }
 
-                        analyticsChart.updateOptions({
-                            series: [{
-                                    name: 'Delivered',
-                                    data: [d.analytics.delivered]
-                                },
-                                {
-                                    name: 'Clicked',
-                                    data: [d.analytics.clicked]
-                                },
-                                {
-                                    name: 'Failed',
-                                    data: [d.analytics.failed]
-                                }
-                            ],
-                            xaxis: {
-                                categories: ['Total']
-                            }
-                        });
-                        $('#campaign').modal('show');
-                    }
-                });
+                        /* pie chart -------------------------------------------------- */
+                        safeRenderChart(
+                            d.analytics.delivered,
+                            d.analytics.received,
+                            d.analytics.clicked
+                        );
+
+                        /* reveal ----------------------------------------------------- */
+                        $('#modalSpinner').addClass('d-none');
+                        $('#modalContent').removeClass('d-none');
+                    })
+                    .fail(() => {
+                        $('#modalSpinner').addClass('d-none');
+                        Swal.fire('Error', 'Failed to load report', 'error');
+                    });
             });
         });
     </script>
