@@ -13,8 +13,9 @@ class UserController extends Controller
      */
     public function profile()
     {
-        $user = Auth::user();
-        return view('user.profile', compact('user'));
+        return view('user.profile', [
+            'user' => Auth::user(),
+        ]);
     }
 
     /**
@@ -32,31 +33,37 @@ class UserController extends Controller
             'country_code'  => 'nullable|string|max:10',
         ]);
 
-        $user->name         = $request->input('fname');
-        $user->email        = $request->input('email');
-        $user->phone        = $request->input('phone');
+        // Basic fields
+        $user->name  = $request->input('fname');
+        $user->email = $request->input('email');
+
+        // Strip non-digits from subscriber number (just in case)
+        $rawPhone = $request->input('phone');
+        $user->phone = $rawPhone
+            ? preg_replace('/\D+/', '', $rawPhone)
+            : null;
+
         $user->country_code = $request->input('country_code');
 
-        // dd($request->all());
-
+        // Avatar upload
         if ($request->hasFile('avatar')) {
-            // Move file to public/uploads and store path
-            $file = $request->file('avatar');
-            $filename = time() . '_' . preg_replace('/[^a-zA-Z0-9_\.]/', '_', $file->getClientOriginalName());
+            $file     = $request->file('avatar');
+            $filename = time().'_'.preg_replace('/[^a-zA-Z0-9_\.]/', '_', $file->getClientOriginalName());
             $file->move(public_path('uploads'), $filename);
-            $user->image = 'uploads/' . $filename;
+            $user->image = 'uploads/'.$filename;
         }
 
         $user->save();
 
-        return redirect()->route('user.profile')
-                         ->with('success', 'Profile updated successfully.');
+        return redirect()
+            ->route('user.profile')
+            ->with('success', 'Profile updated successfully.');
     }
 
     /**
-     * Handle password update (current_password, new_password).
+     * Handle password update.
      */
-     public function updatePassword(Request $request)
+    public function updatePassword(Request $request)
     {
         $request->validate([
             'new_password' => 'required|min:6|confirmed',
