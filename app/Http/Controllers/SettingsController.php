@@ -98,10 +98,9 @@ class SettingsController extends Controller
             return back()->with('error', 'Something went wrong!');
         }
     }
-
-    /**
-     * Display the Server Info page.
-     */
+ /* -------------------------------------------------------------------------
+     | Server Info
+     *-------------------------------------------------------------------------*/
     public function serverInfo()
     {
         $info = [
@@ -128,26 +127,64 @@ class SettingsController extends Controller
     }
 
     /**
-     * Return real-time CPU & memory metrics as JSON.
+     * Return real-time CPU & memory utilisation as JSON.
+     * Works on Linux, macOS and Windows. Never crashes; falls back to 0 %.
      */
     public function serverMetrics()
     {
-        $load  = sys_getloadavg()[0];
-        $cores = (int) trim(shell_exec('nproc') ?: 1);
-        $cpu   = min(100, ($load / $cores) * 100);
+        /* ---------- CPU % -------------------------------------------------- */
+        $cpu = 0;
 
-        $meminfo    = File::get('/proc/meminfo');
-        preg_match('/MemTotal:\s+(\d+)\skB/',     $meminfo, $tot);
-        preg_match('/MemAvailable:\s+(\d+)\skB/', $meminfo, $avail);
-        $totalBytes = $tot[1] * 1024;
-        $availBytes = $avail[1] * 1024;
-        $memory     = min(100, (($totalBytes - $availBytes) / $totalBytes) * 100);
+        if (PHP_OS_FAMILY === 'Linux' || PHP_OS_FAMILY === 'Darwin') {
+            $load  = sys_getloadavg()[0] ?? 0;
+            $cores = (int) (trim(shell_exec(
+                PHP_OS_FAMILY === 'Linux'
+                    ? 'nproc'
+                    : 'sysctl -n hw.ncpu'
+            )) ?: 1);
+            $cpu = $cores ? min(100, ($load / $cores) * 100) : 0;
+
+        } elseif (PHP_OS_FAMILY === 'Windows') {
+            $wmic = shell_exec('wmic cpu get LoadPercentage /Value');
+            preg_match('/LoadPercentage=(\d+)/', $wmic, $m);
+            $cpu = (float) ($m[1] ?? 0);
+        }
+
+        /* ---------- Memory % ----------------------------------------------- */
+        $memory = 0;
+
+        if (is_readable('/proc/meminfo')) { // Linux
+            $mem = file_get_contents('/proc/meminfo');
+            preg_match('/MemTotal:\s+(\d+)/',     $mem, $tot);
+            preg_match('/MemAvailable:\s+(\d+)/', $mem, $avail);
+            $total = (int) ($tot[1] ?? 0) * 1024;
+            $free  = (int) ($avail[1] ?? 0) * 1024;
+            $memory = $total ? (($total - $free) / $total) * 100 : 0;
+
+        } elseif (PHP_OS_FAMILY === 'Darwin') { // macOS
+            $total = (int) trim(shell_exec('sysctl -n hw.memsize'));
+            $vm    = shell_exec('vm_stat');
+            preg_match('/Pages free:\s+(\d+)/', $vm, $f);
+            $free  = ((int) ($f[1] ?? 0)) * 4096;
+            $memory = $total ? (($total - $free) / $total) * 100 : 0;
+
+        } elseif (PHP_OS_FAMILY === 'Windows') {
+            $out = shell_exec(
+                'wmic OS get FreePhysicalMemory,TotalVisibleMemorySize /Value'
+            );
+            preg_match('/TotalVisibleMemorySize=(\d+)/', $out, $tot);
+            preg_match('/FreePhysicalMemory=(\d+)/',     $out, $free);
+            $total = (float) ($tot[1] ?? 0);
+            $avail = (float) ($free[1] ?? 0);
+            $memory = $total ? (($total - $avail) / $total) * 100 : 0;
+        }
 
         return response()->json([
             'cpu'    => round($cpu, 2),
             'memory' => round($memory, 2),
         ]);
     }
+
 
     /**
      * Display the Utilities page.

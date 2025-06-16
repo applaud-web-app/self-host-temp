@@ -1,3 +1,4 @@
+{{-- resources/views/settings/server-info.blade.php --}}
 @extends('layouts.master')
 
 @section('content')
@@ -75,24 +76,6 @@
       </div>
     </div>
 
-    {{-- PHP Extensions --}}
-    <div class="row">
-      <div class="col-lg-12 mb-3">
-        <div class="card h-100">
-          <div class="card-header"><h5>Enabled PHP Extensions</h5></div>
-          <div class="card-body">
-            <div class="row row-cols-2 row-cols-sm-3 row-cols-md-4 row-cols-lg-6 g-2">
-              @foreach($extensions as $ext)
-                <div class="col">
-                  <span class="badge bg-secondary d-block text-truncate">{{ $ext }}</span>
-                </div>
-              @endforeach
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
     {{-- Real-time CPU & Memory Charts --}}
     <div class="row">
       <div class="col-md-6 mb-3">
@@ -121,18 +104,16 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', () => {
-  const cpuCtx = document.getElementById('cpuChart').getContext('2d');
-  const memCtx = document.getElementById('memoryChart').getContext('2d');
-
-  function makeLine(ctx, color) {
+  // initialize charts
+  function makeLine(ctx, baseColor) {
     return new Chart(ctx, {
       type: 'line',
       data: {
         labels: Array(12).fill(''),
         datasets: [{
           data: Array(12).fill(0),
-          borderColor: color,
-          backgroundColor: color.replace('1)', '0.1)'),
+          borderColor: baseColor,
+          backgroundColor: baseColor.replace(/,\s*1\)/, ', 0.1)'),
           fill: true,
           tension: 0.3,
           pointRadius: 0
@@ -146,34 +127,47 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  const cpuCtx = document.getElementById('cpuChart').getContext('2d');
+  const memCtx = document.getElementById('memoryChart').getContext('2d');
   const cpuChart = makeLine(cpuCtx, 'rgba(13,110,253,1)');
   const memChart = makeLine(memCtx, 'rgba(25,135,84,1)');
 
-  function update() {
-    fetch(@json(route('settings.server-info.metrics')))
-      .then(r => r.json())
-      .then(({cpu, memory}) => {
+  // fetch metrics
+  const metricsUrl = '{{ route('settings.server-info.metrics') }}';
+  function updateMetrics() {
+    fetch(metricsUrl)
+      .then(response => {
+        if (!response.ok) throw new Error('Network response was not ok');
+        return response.json();
+      })
+      .then(data => {
         const now = new Date().toLocaleTimeString();
+        // assume response keys: data.cpu and data.memory
 
-        // push CPU
+        // ➜ added: ensure numeric values
+        const cpuVal = Number(data.cpu);   // new line
+        const memVal = Number(data.memory); // new line
+
+        // update CPU chart
         cpuChart.data.labels.push(now);
         cpuChart.data.labels.shift();
-        cpuChart.data.datasets[0].data.push(cpu);
+        cpuChart.data.datasets[0].data.push(cpuVal);   // modified
         cpuChart.data.datasets[0].data.shift();
         cpuChart.update();
 
-        // push Memory
+        // update Memory chart
         memChart.data.labels.push(now);
         memChart.data.labels.shift();
-        memChart.data.datasets[0].data.push(memory);
+        memChart.data.datasets[0].data.push(memVal);   // modified
         memChart.data.datasets[0].data.shift();
         memChart.update();
       })
-      .catch(console.error);
+      .catch(err => console.error('Failed to fetch metrics:', err));
   }
 
-  update();
-  setInterval(update, 2000);
+  // initial fetch and interval
+  updateMetrics();
+  setInterval(updateMetrics, 2000);
 });
 </script>
 @endpush
