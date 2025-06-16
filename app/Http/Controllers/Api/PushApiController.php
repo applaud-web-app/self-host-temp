@@ -127,6 +127,7 @@ class PushApiController extends Controller
     $event = [
       'message_id' => $payload['message_id'],
       'event'      => $payload['event'],
+      'domain'     => $payload['domain'],   
       'timestamp'  => now()->timestamp,
     ];
 
@@ -139,10 +140,10 @@ class PushApiController extends Controller
       ]);
 
       // ✅ Fallback to queue
-      ProcessClickAnalytics::dispatch($event['message_id'], $event['event']);
+      ProcessClickAnalytics::dispatch($event['message_id'], $event['event'], $event['domain']);
 
       // ✅ Record this event hash so flush won't double-count later
-      $hash = "{$event['event']}|{$event['message_id']}";
+      $hash = "{$event['event']}|{$event['message_id']}|{$event['domain']}";
       try {
         Redis::sadd('processed:push_analytics', $hash);
         Redis::expire('processed:push_analytics', 3600);
@@ -151,9 +152,7 @@ class PushApiController extends Controller
       }
     }
 
-    return response()->json([
-      'status'  => 'success'
-    ]);
+    return response()->json(['status' => 'success']);
 
   }
   
