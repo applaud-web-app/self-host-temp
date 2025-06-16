@@ -14,9 +14,12 @@ return new class extends Migration
         Schema::create('push_event_counts', function (Blueprint $table) {
             $table->id();
             $table->string('message_id');
-            $table->string('event'); // click, close, received
+            $table->string('domain');
+            $table->foreign('domain')->references('name')->on('domains')->onDelete('cascade');
+            $table->string('event');
             $table->unsignedBigInteger('count')->default(0);
-            $table->unique(['message_id', 'event']);
+            $table->unique(['message_id', 'event', 'domain']);
+            $table->index(['domain', 'message_id']);
         });
     }
 

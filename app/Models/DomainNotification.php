@@ -9,5 +9,5 @@ class DomainNotification extends Model
     public $incrementing = false;
     public $timestamps   = false;
     protected $table     = 'domain_notification';
-    protected $fillable  = ['notification_id', 'domain_id'];
+    protected $fillable  = ['notification_id', 'domain_id','status','sent_at'];
 }
