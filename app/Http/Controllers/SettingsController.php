@@ -126,65 +126,71 @@ class SettingsController extends Controller
         ));
     }
 
-    /**
-     * Return real-time CPU & memory utilisation as JSON.
-     * Works on Linux, macOS and Windows. Never crashes; falls back to 0 %.
-     */
-    public function serverMetrics()
-    {
-        /* ---------- CPU % -------------------------------------------------- */
-        $cpu = 0;
+   /**
+ * Return real-time CPU & memory utilisation as JSON.
+ * - Works on Linux, macOS, Windows.
+ * - Never crashes if shell_exec/exec are disabled; falls back gracefully.
+ */
+public function serverMetrics()
+{
+    /* ───── CPU % ───── */
+    $load  = sys_getloadavg()[0] ?? 0;
+    $cores = 1;
 
-        if (PHP_OS_FAMILY === 'Linux' || PHP_OS_FAMILY === 'Darwin') {
-            $load  = sys_getloadavg()[0] ?? 0;
-            $cores = (int) (trim(shell_exec(
-                PHP_OS_FAMILY === 'Linux'
-                    ? 'nproc'
-                    : 'sysctl -n hw.ncpu'
-            )) ?: 1);
-            $cpu = $cores ? min(100, ($load / $cores) * 100) : 0;
-
-        } elseif (PHP_OS_FAMILY === 'Windows') {
-            $wmic = shell_exec('wmic cpu get LoadPercentage /Value');
-            preg_match('/LoadPercentage=(\d+)/', $wmic, $m);
-            $cpu = (float) ($m[1] ?? 0);
+    if (PHP_OS_FAMILY === 'Linux') {
+        // First try /proc/cpuinfo (no shell needed)
+        if (is_readable('/proc/cpuinfo')) {
+            $cpuinfo = file_get_contents('/proc/cpuinfo');
+            preg_match_all('/^processor\s*:/m', $cpuinfo, $m);
+            $cores = max(1, count($m[0]));
+        } elseif (function_exists('shell_exec')) {
+            // Fallback to nproc
+            $cores = (int) trim(shell_exec('nproc') ?: 1);
         }
-
-        /* ---------- Memory % ----------------------------------------------- */
-        $memory = 0;
-
-        if (is_readable('/proc/meminfo')) { // Linux
-            $mem = file_get_contents('/proc/meminfo');
-            preg_match('/MemTotal:\s+(\d+)/',     $mem, $tot);
-            preg_match('/MemAvailable:\s+(\d+)/', $mem, $avail);
-            $total = (int) ($tot[1] ?? 0) * 1024;
-            $free  = (int) ($avail[1] ?? 0) * 1024;
-            $memory = $total ? (($total - $free) / $total) * 100 : 0;
-
-        } elseif (PHP_OS_FAMILY === 'Darwin') { // macOS
-            $total = (int) trim(shell_exec('sysctl -n hw.memsize'));
-            $vm    = shell_exec('vm_stat');
-            preg_match('/Pages free:\s+(\d+)/', $vm, $f);
-            $free  = ((int) ($f[1] ?? 0)) * 4096;
-            $memory = $total ? (($total - $free) / $total) * 100 : 0;
-
-        } elseif (PHP_OS_FAMILY === 'Windows') {
-            $out = shell_exec(
-                'wmic OS get FreePhysicalMemory,TotalVisibleMemorySize /Value'
-            );
-            preg_match('/TotalVisibleMemorySize=(\d+)/', $out, $tot);
-            preg_match('/FreePhysicalMemory=(\d+)/',     $out, $free);
-            $total = (float) ($tot[1] ?? 0);
-            $avail = (float) ($free[1] ?? 0);
-            $memory = $total ? (($total - $avail) / $total) * 100 : 0;
+    } elseif (PHP_OS_FAMILY === 'Darwin') {
+        if (function_exists('shell_exec')) {
+            $cores = (int) trim(shell_exec('sysctl -n hw.ncpu') ?: 1);
         }
-
-        return response()->json([
-            'cpu'    => round($cpu, 2),
-            'memory' => round($memory, 2),
-        ]);
+    } elseif (PHP_OS_FAMILY === 'Windows') {
+        $cores = (int) (getenv('NUMBER_OF_PROCESSORS') ?: 1);
     }
 
+    $cpu = min(100, ($cores ? $load / $cores : $load) * 100);
+
+    /* ───── Memory % ───── */
+    $memory = 0;
+
+    if (is_readable('/proc/meminfo')) {                        // Linux
+        $mem = file_get_contents('/proc/meminfo');
+        preg_match('/MemTotal:\s+(\d+)/',     $mem, $tot);
+        preg_match('/MemAvailable:\s+(\d+)/', $mem, $avail);
+        $total = (int) ($tot[1] ?? 0) * 1024;
+        $free  = (int) ($avail[1] ?? 0) * 1024;
+        $memory = $total ? (($total - $free) / $total) * 100 : 0;
+
+    } elseif (PHP_OS_FAMILY === 'Darwin' && function_exists('shell_exec')) { // macOS
+        $total = (int) trim(shell_exec('sysctl -n hw.memsize'));
+        $vm    = shell_exec('vm_stat');
+        preg_match('/Pages free:\s+(\d+)/', $vm, $f);
+        $free  = ((int) ($f[1] ?? 0)) * 4096;
+        $memory = $total ? (($total - $free) / $total) * 100 : 0;
+
+    } elseif (PHP_OS_FAMILY === 'Windows' && function_exists('shell_exec')) {
+        $out = shell_exec(
+            'wmic OS get FreePhysicalMemory,TotalVisibleMemorySize /Value'
+        );
+        preg_match('/TotalVisibleMemorySize=(\d+)/', $out, $tot);
+        preg_match('/FreePhysicalMemory=(\d+)/',     $out, $free);
+        $total = (float) ($tot[1] ?? 0);
+        $avail = (float) ($free[1] ?? 0);
+        $memory = $total ? (($total - $avail) / $total) * 100 : 0;
+    }
+
+    return response()->json([
+        'cpu'    => round($cpu, 2),
+        'memory' => round($memory, 2),
+    ]);
+}
 
     /**
      * Display the Utilities page.
