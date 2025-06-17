@@ -69,13 +69,34 @@ class SegmentationController extends Controller
 
     public function store(Request $request)
     {
-        /* ---------- 1.  first-pass validation (field types) ----------------- */
-        $baseRules = [
+        /* ------------------------------------------------------------------
+        * 0.  Pre-processing                                               
+        * ----------------------------------------------------------------*/
+        if ($request->segment_type === 'device') {
+            // normalise and dedupe – “Tablet” → “tablet”
+            $request->merge([
+                'devicetype' => collect($request->input('devicetype', []))
+                    ->filter()
+                    ->map('strtolower')
+                    ->unique()
+                    ->values()
+                    ->toArray(),
+            ]);
+            // strip geo arrays that might still be in the form
+            $request->request->remove('geo_type');
+            $request->request->remove('country');
+            $request->request->remove('state');
+        }
+
+        /* ------------------------------------------------------------------
+        * 1.  Field-level validation                                      
+        * ----------------------------------------------------------------*/
+        $rules = [
             'segment_name' => [
                 'required', 'string', 'max:255',
-                /* unique per domain */
-                Rule::unique('segments', 'name')->where(fn ($q) =>
-                    $q->where('domain', $request->domain_name)
+                // unique segment name inside the same domain
+                Rule::unique('segments', 'name')->where(
+                    fn ($q) => $q->where('domain', $request->domain_name)
                 ),
             ],
             'domain_name'  => 'required|exists:domains,name',
@@ -83,100 +104,95 @@ class SegmentationController extends Controller
         ];
 
         if ($request->segment_type === 'device') {
-            $baseRules += [
+            $rules += [
                 'devicetype'   => 'required|array|min:1|max:4',
                 'devicetype.*' => 'in:desktop,tablet,mobile,other',
             ];
         }
 
         if ($request->segment_type === 'geo') {
-            $rows = (array) $request->geo_type;   // could be [] on first load
-
-            $baseRules += [
+            $rows = count($request->input('geo_type', []));
+            $rules += [
                 'geo_type'      => 'required|array|min:1|max:5',
                 'geo_type.*'    => 'in:equals,not_equals',
-                'country'       => 'required|array|size:' . count($rows),
+                'country'       => 'required|array|size:'.$rows,
                 'country.*'     => 'required|string|max:100',
-                'state'         => 'array|size:' . count($rows),
+                'state'         => 'array|size:'.$rows,
                 'state.*'       => 'nullable|string|max:100',
             ];
         }
 
-        /* run first-pass validation */
-        $data = Validator::make($request->all(), $baseRules)->validate();
+        $data = $request->validate($rules);
 
+        /* ------------------------------------------------------------------
+        * 2.  Cross-field logical checks                                    
+        * ----------------------------------------------------------------*/
+        $extra = [];
 
-        /* ---------- 2.  second-pass logical consistency --------------------- */
-        $extraErrors = [];
-
-        /* Device duplicates -------------------------------------------------- */
-        if ($data['segment_type'] === 'device') {
-            if (count($data['devicetype']) !== count(array_unique($data['devicetype']))) {
-                $extraErrors['devicetype'] = 'Device types must be unique.';
-            }
+        /* duplicate device types */
+        if ($data['segment_type'] === 'device' &&
+            count($data['devicetype']) !== count(array_unique($data['devicetype']))) {
+            $extra['devicetype'] = 'Device types must be unique.';
         }
 
-        /* Geo consistency ---------------------------------------------------- */
+        /* geo contradictions & duplicates */
         if ($data['segment_type'] === 'geo') {
 
-            $seenCombo = [];      // key = country|state
-            $opMatrix  = [];      // country|state => [equals=>bool, not_equals=>bool]
+            $seen = [];          // country|state key
+            $ops  = [];          // key => [equals, not_equals]
 
-            //                                                          ─── cached map
-            $validMap  = Cache::remember('psm:countries_states', 3600, function () {
+            $valid = Cache::remember('psm:countries_states', 3600, function () {
                 return PushSubscriptionMeta::selectRaw('DISTINCT country, state')
                     ->get()->groupBy('country')
                     ->map->pluck('state')->map->filter()->map->values()->toArray();
             });
 
             foreach ($data['geo_type'] as $i => $op) {
-                $country = $data['country'][$i];
-                $state   = $data['state'][$i] ?? '';
-                $key     = $country . '|' . $state;
+                $c  = $data['country'][$i];
+                $s  = $data['state'][$i] ?? '';
+                $k  = $c.'|'.$s;
 
-                /* duplicates */
-                if (isset($seenCombo[$key])) {
-                    $extraErrors['country.' . $i] = 'Duplicate country / state row.';
-                    continue;
+                if (isset($seen[$k])) {
+                    $extra["country.$i"] = 'Duplicate country / state row.';
                 }
-                $seenCombo[$key] = true;
+                $seen[$k] = true;
 
-                /* conflicting op */
-                $opMatrix[$key][$op] = true;
-                if (!empty($opMatrix[$key]['equals']) && !empty($opMatrix[$key]['not_equals'])) {
-                    $extraErrors['geo_type.' . $i] = 'Cannot mix "Only" and "Without" for the same location.';
+                $ops[$k][$op] = true;
+                if (!empty($ops[$k]['equals']) && !empty($ops[$k]['not_equals'])) {
+                    $extra["geo_type.$i"] = 'Cannot mix "Only" and "Without" for the same location.';
                 }
 
-                /* unknown country/state */
-                if (!isset($validMap[$country])) {
-                    $extraErrors['country.' . $i] = 'Unknown country.';
-                } elseif ($state && !in_array($state, $validMap[$country], true)) {
-                    $extraErrors['state.' . $i] = 'State does not belong to selected country.';
+                if (!isset($valid[$c])) {
+                    $extra["country.$i"] = 'Unknown country.';
+                } elseif ($s && !in_array($s, $valid[$c], true)) {
+                    $extra["state.$i"] = 'State does not belong to selected country.';
                 }
             }
         }
 
-        if ($extraErrors) {
-            throw ValidationException::withMessages($extraErrors);
+        if ($extra) {
+            throw ValidationException::withMessages($extra);
         }
 
-        /* ---------- 3.  save segment + rules in one TX ---------------------- */
+        /* ------------------------------------------------------------------
+        * 3.  Persist inside a single transaction                            
+        * ----------------------------------------------------------------*/
         DB::transaction(function () use ($data) {
 
             $segment = Segment::create([
                 'name'   => $data['segment_name'],
                 'domain' => $data['domain_name'],
                 'type'   => $data['segment_type'],
-                'status' => true,
+                'status' => 1,
             ]);
 
             if ($data['segment_type'] === 'device') {
-                foreach ($data['devicetype'] as $device) {
+                foreach ($data['devicetype'] as $d) {
                     $segment->deviceRules()->create([
-                        'device_type' => $device,
+                        'device_type' => $d,
                     ]);
                 }
-                return;
+                return;  // done
             }
 
             foreach ($data['geo_type'] as $i => $op) {
@@ -188,9 +204,11 @@ class SegmentationController extends Controller
             }
         });
 
-        return redirect()->route('segmentation.index')
-                        ->with('success', 'Segment created successfully.');
+        return redirect()
+            ->route('segmentation.index')
+            ->with('success', 'Segment created successfully.');
     }
+
 
     public function remove($id)
     {
@@ -210,109 +228,6 @@ class SegmentationController extends Controller
                 ->toArray();
         });
     }
-
-    // public function refreshData(Request $request)
-    // {
-    //     /* ---------- 1.  same field-level validation ------------------------ */
-    //     $rules = [
-    //         'segment_name' => 'required|string|max:255',
-    //         'domain_name'  => 'required|exists:domains,name',
-    //         'segment_type' => 'required|in:device,geo',
-    //     ];
-
-    //     if ($request->segment_type === 'device') {
-    //         $rules += [
-    //             'devicetype'   => 'required|array|min:1|max:4',
-    //             'devicetype.*' => 'in:desktop,tablet,mobile,other',
-    //         ];
-    //     }
-
-    //     if ($request->segment_type === 'geo') {
-    //         $rows = count($request->geo_type ?? []);
-    //         $rules += [
-    //             'geo_type'      => 'required|array|min:1|max:5',
-    //             'geo_type.*'    => 'in:equals,not_equals',
-    //             'country'       => 'required|array|size:'.$rows,
-    //             'country.*'     => 'required|string|max:100',
-    //             'state'         => 'array|size:'.$rows,
-    //             'state.*'       => 'nullable|string|max:100',
-    //         ];
-    //     }
-
-    //     $data = $request->validate($rules);
-
-    //     /* ---------- 2.  build a stable cache key --------------------------- */
-    //     $cacheKey = 'seg:audience:' .
-    //         md5(json_encode([
-    //             $data['domain_name'],
-    //             $data['segment_type'],
-    //             $data['devicetype'] ?? [],
-    //             $data['geo_type']   ?? [],
-    //             $data['country']    ?? [],
-    //             $data['state']      ?? [],
-    //         ]));
-
-    //     /* ---------- 3.  count with Cache::remember (120 s) ----------------- */
-    //     $count = Cache::remember($cacheKey, 120, function () use ($data) {
-
-    //         $q = DB::table('push_subscriptions_head as h')
-    //             ->join('push_subscriptions_meta as m', 'm.head_id', '=', 'h.id')
-    //             ->where('h.status', 1)
-    //             ->where('h.domain', $data['domain_name']);
-
-    //         /* device filter */
-    //         if ($data['segment_type'] === 'device') {
-    //             $q->whereIn('m.device', $data['devicetype']);
-    //         }
-
-    //         /* geo filter */
-    //         if ($data['segment_type'] === 'geo') {
-    //             $eq  = []; $neq = [];
-    //             foreach ($data['geo_type'] as $i => $op) {
-    //                 $row = [
-    //                     'country' => $data['country'][$i],
-    //                     'state'   => $data['state'][$i] ?? null,
-    //                 ];
-
-    //                 if ($op === 'equals') {
-    //                     $eq[]  = $row;      // include list
-    //                 } else {                // not_equals
-    //                     $neq[] = $row;      // exclude list
-    //                 }
-    //             }
-    //             if ($eq) {
-    //                 $q->where(function ($sub) use ($eq) {
-    //                     foreach ($eq as $row) {
-    //                         $sub->orWhere(function ($w) use ($row) {
-    //                             $w->where('m.country', $row['country']);
-    //                             if ($row['state']) { $w->where('m.state', $row['state']); }
-    //                         });
-    //                     }
-    //                 });
-    //             }
-
-    //             if ($neq) {
-    //                 $q->whereNotExists(function ($sub) use ($neq) {
-    //                     $sub->select(DB::raw(1))
-    //                         ->from('push_subscriptions_meta as nx')
-    //                         ->whereColumn('nx.head_id','h.id')
-    //                         ->where(function ($inn) use ($neq) {
-    //                             foreach ($neq as $row) {
-    //                                 $inn->orWhere(function ($w) use ($row) {
-    //                                     $w->where('nx.country', $row['country']);
-    //                                     if ($row['state']) { $w->where('nx.state', $row['state']); }
-    //                                 });
-    //                             }
-    //                         });
-    //                 });
-    //             }
-    //         }
-
-    //         return (int) $q->count();   // 🔢  DB does the heavy lifting
-    //     });
-
-    //     return response()->json(['count' => $count]);
-    // }
     
     public function refreshData(Request $request)
     {
