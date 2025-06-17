@@ -88,14 +88,21 @@ class SubscribePushSubscriptionJob implements ShouldQueue
                     }
                 });
 
+                $deviceType = match (true) {
+                    $agent->isTablet()  => 'tablet',
+                    $agent->isMobile()  => 'mobile',
+                    method_exists($agent,'isDesktop') && $agent->isDesktop() => 'desktop',
+                    default => 'other',
+                };
+
                 PushSubscriptionMeta::updateOrCreate(
                     ['head_id' => $head->id],
                     [
                         'ip_address' => $ip,
-                        'country'    => $position->countryName ?? null,
-                        'state'      => $position->regionName ?? null,
-                        'city'       => $position->cityName ?? null,
-                        'device'     => $agent->device(),
+                        'country'    => $position->countryName ?? "other",
+                        'state'      => $position->regionName ?? "other",
+                        'city'       => $position->cityName ?? "other",
+                        'device'     => $deviceType,
                         'browser'    => $agent->browser(),
                         'platform'   => $agent->platform(),
                     ]

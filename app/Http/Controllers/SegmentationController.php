@@ -386,7 +386,7 @@ class SegmentationController extends Controller
                 else /* not_equals */     { $notEquals[] = $row; }
             }
 
-            /* --- INCLUDE set (OR of all “Only …”) ---------------- */
+            /* --- INCLUDE set (OR of all “Only”) ---------------- */
             if ($equals) {
                 $q->where(function ($sub) use ($equals) {
                     foreach ($equals as $row) {
@@ -398,7 +398,7 @@ class SegmentationController extends Controller
                 });
             }
 
-            /* --- EXCLUDE set (NOT EXISTS any “Without …”) -------- */
+            /* --- EXCLUDE set (NOT EXISTS any “Without”) -------- */
             if ($notEquals) {
                 $q->whereNotExists(function ($sub) use ($notEquals) {
                     $sub->select(DB::raw(1))
