@@ -69,144 +69,148 @@ class SegmentationController extends Controller
 
     public function store(Request $request)
     {
-        /* ------------------------------------------------------------------
-        * 0.  Pre-processing                                               
-        * ----------------------------------------------------------------*/
-        if ($request->segment_type === 'device') {
-            // normalise and dedupe – “Tablet” → “tablet”
-            $request->merge([
-                'devicetype' => collect($request->input('devicetype', []))
-                    ->filter()
-                    ->map('strtolower')
-                    ->unique()
-                    ->values()
-                    ->toArray(),
-            ]);
-            // strip geo arrays that might still be in the form
-            $request->request->remove('geo_type');
-            $request->request->remove('country');
-            $request->request->remove('state');
-        }
+        try {
+            /* ------------------------------------------------------------------
+            * 0.  Pre-processing                                               
+            * ----------------------------------------------------------------*/
+            if ($request->segment_type === 'device') {
+                // normalise and dedupe – “Tablet” → “tablet”
+                $request->merge([
+                    'devicetype' => collect($request->input('devicetype', []))
+                        ->filter()
+                        ->map('strtolower')
+                        ->unique()
+                        ->values()
+                        ->toArray(),
+                ]);
+                // strip geo arrays that might still be in the form
+                $request->request->remove('geo_type');
+                $request->request->remove('country');
+                $request->request->remove('state');
+            }
 
-        /* ------------------------------------------------------------------
-        * 1.  Field-level validation                                      
-        * ----------------------------------------------------------------*/
-        $rules = [
-            'segment_name' => [
-                'required', 'string', 'max:255',
-                // unique segment name inside the same domain
-                Rule::unique('segments', 'name')->where(
-                    fn ($q) => $q->where('domain', $request->domain_name)
-                ),
-            ],
-            'domain_name'  => 'required|exists:domains,name',
-            'segment_type' => 'required|in:device,geo',
-        ];
-
-        if ($request->segment_type === 'device') {
-            $rules += [
-                'devicetype'   => 'required|array|min:1|max:4',
-                'devicetype.*' => 'in:desktop,tablet,mobile,other',
+            /* ------------------------------------------------------------------
+            * 1.  Field-level validation                                      
+            * ----------------------------------------------------------------*/
+            $rules = [
+                'segment_name' => [
+                    'required', 'string', 'max:255',
+                    // unique segment name inside the same domain
+                    Rule::unique('segments', 'name')->where(
+                        fn ($q) => $q->where('domain', $request->domain_name)
+                    ),
+                ],
+                'domain_name'  => 'required|exists:domains,name',
+                'segment_type' => 'required|in:device,geo',
             ];
-        }
 
-        if ($request->segment_type === 'geo') {
-            $rows = count($request->input('geo_type', []));
-            $rules += [
-                'geo_type'      => 'required|array|min:1|max:5',
-                'geo_type.*'    => 'in:equals,not_equals',
-                'country'       => 'required|array|size:'.$rows,
-                'country.*'     => 'required|string|max:100',
-                'state'         => 'array|size:'.$rows,
-                'state.*'       => 'nullable|string|max:100',
-            ];
-        }
+            if ($request->segment_type === 'device') {
+                $rules += [
+                    'devicetype'   => 'required|array|min:1|max:4',
+                    'devicetype.*' => 'in:desktop,tablet,mobile,other',
+                ];
+            }
 
-        $data = $request->validate($rules);
+            if ($request->segment_type === 'geo') {
+                $rows = count($request->input('geo_type', []));
+                $rules += [
+                    'geo_type'      => 'required|array|min:1|max:5',
+                    'geo_type.*'    => 'in:equals,not_equals',
+                    'country'       => 'required|array|size:'.$rows,
+                    'country.*'     => 'required|string|max:100',
+                    'state'         => 'array|size:'.$rows,
+                    'state.*'       => 'nullable|string|max:100',
+                ];
+            }
 
-        /* ------------------------------------------------------------------
-        * 2.  Cross-field logical checks                                    
-        * ----------------------------------------------------------------*/
-        $extra = [];
+            $data = $request->validate($rules);
 
-        /* duplicate device types */
-        if ($data['segment_type'] === 'device' &&
-            count($data['devicetype']) !== count(array_unique($data['devicetype']))) {
-            $extra['devicetype'] = 'Device types must be unique.';
-        }
+            /* ------------------------------------------------------------------
+            * 2.  Cross-field logical checks                                    
+            * ----------------------------------------------------------------*/
+            $extra = [];
 
-        /* geo contradictions & duplicates */
-        if ($data['segment_type'] === 'geo') {
+            /* duplicate device types */
+            if ($data['segment_type'] === 'device' &&
+                count($data['devicetype']) !== count(array_unique($data['devicetype']))) {
+                $extra['devicetype'] = 'Device types must be unique.';
+            }
 
-            $seen = [];          // country|state key
-            $ops  = [];          // key => [equals, not_equals]
+            /* geo contradictions & duplicates */
+            if ($data['segment_type'] === 'geo') {
 
-            $valid = Cache::remember('psm:countries_states', 3600, function () {
-                return PushSubscriptionMeta::selectRaw('DISTINCT country, state')
-                    ->get()->groupBy('country')
-                    ->map->pluck('state')->map->filter()->map->values()->toArray();
-            });
+                $seen = [];          // country|state key
+                $ops  = [];          // key => [equals, not_equals]
 
-            foreach ($data['geo_type'] as $i => $op) {
-                $c  = $data['country'][$i];
-                $s  = $data['state'][$i] ?? '';
-                $k  = $c.'|'.$s;
+                $valid = Cache::remember('psm:countries_states', 3600, function () {
+                    return PushSubscriptionMeta::selectRaw('DISTINCT country, state')
+                        ->get()->groupBy('country')
+                        ->map->pluck('state')->map->filter()->map->values()->toArray();
+                });
 
-                if (isset($seen[$k])) {
-                    $extra["country.$i"] = 'Duplicate country / state row.';
-                }
-                $seen[$k] = true;
+                foreach ($data['geo_type'] as $i => $op) {
+                    $c  = $data['country'][$i];
+                    $s  = $data['state'][$i] ?? '';
+                    $k  = $c.'|'.$s;
 
-                $ops[$k][$op] = true;
-                if (!empty($ops[$k]['equals']) && !empty($ops[$k]['not_equals'])) {
-                    $extra["geo_type.$i"] = 'Cannot mix "Only" and "Without" for the same location.';
-                }
+                    if (isset($seen[$k])) {
+                        $extra["country.$i"] = 'Duplicate country / state row.';
+                    }
+                    $seen[$k] = true;
 
-                if (!isset($valid[$c])) {
-                    $extra["country.$i"] = 'Unknown country.';
-                } elseif ($s && !in_array($s, $valid[$c], true)) {
-                    $extra["state.$i"] = 'State does not belong to selected country.';
+                    $ops[$k][$op] = true;
+                    if (!empty($ops[$k]['equals']) && !empty($ops[$k]['not_equals'])) {
+                        $extra["geo_type.$i"] = 'Cannot mix "Only" and "Without" for the same location.';
+                    }
+
+                    if (!isset($valid[$c])) {
+                        $extra["country.$i"] = 'Unknown country.';
+                    } elseif ($s && !in_array($s, $valid[$c], true)) {
+                        $extra["state.$i"] = 'State does not belong to selected country.';
+                    }
                 }
             }
-        }
 
-        if ($extra) {
-            throw ValidationException::withMessages($extra);
-        }
+            if ($extra) {
+                throw ValidationException::withMessages($extra);
+            }
 
-        /* ------------------------------------------------------------------
-        * 3.  Persist inside a single transaction                            
-        * ----------------------------------------------------------------*/
-        DB::transaction(function () use ($data) {
+            /* ------------------------------------------------------------------
+            * 3.  Persist inside a single transaction                            
+            * ----------------------------------------------------------------*/
+            DB::transaction(function () use ($data) {
 
-            $segment = Segment::create([
-                'name'   => $data['segment_name'],
-                'domain' => $data['domain_name'],
-                'type'   => $data['segment_type'],
-                'status' => 1,
-            ]);
+                $segment = Segment::create([
+                    'name'   => $data['segment_name'],
+                    'domain' => $data['domain_name'],
+                    'type'   => $data['segment_type'],
+                    'status' => 1,
+                ]);
 
-            if ($data['segment_type'] === 'device') {
-                foreach ($data['devicetype'] as $d) {
-                    $segment->deviceRules()->create([
-                        'device_type' => $d,
+                if ($data['segment_type'] === 'device') {
+                    foreach ($data['devicetype'] as $d) {
+                        $segment->deviceRules()->create([
+                            'device_type' => $d,
+                        ]);
+                    }
+                    return;  // done
+                }
+
+                foreach ($data['geo_type'] as $i => $op) {
+                    $segment->geoRules()->create([
+                        'operator' => $op,
+                        'country'  => $data['country'][$i],
+                        'state'    => $data['state'][$i] ?? null,
                     ]);
                 }
-                return;  // done
-            }
+            });
 
-            foreach ($data['geo_type'] as $i => $op) {
-                $segment->geoRules()->create([
-                    'operator' => $op,
-                    'country'  => $data['country'][$i],
-                    'state'    => $data['state'][$i] ?? null,
-                ]);
-            }
-        });
-
-        return redirect()
-            ->route('segmentation.index')
-            ->with('success', 'Segment created successfully.');
+            return redirect()
+                ->route('segmentation.view')
+                ->with('success', 'Segment created successfully.');
+        } catch (\Throwable $th) {
+            return redirect()->back()->with('error', 'Something Went Wrong : '.$th->getMessage());
+        }
     }
 
 
