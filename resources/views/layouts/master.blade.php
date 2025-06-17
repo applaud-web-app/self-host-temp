@@ -110,43 +110,43 @@
                                 </a>
                             </li> --}}
                            @php
-    $defaultAvatar = asset('images/user.png');
-    $userAvatar = Auth::user() && Auth::user()->image
-        ? asset(Auth::user()->image)
-        : $defaultAvatar;
-    // If the file exists, use its modified time to bust cache:
-    $timestamp = (Auth::user() && Auth::user()->image && file_exists(public_path(Auth::user()->image)))
-        ? filemtime(public_path(Auth::user()->image))
-        : now()->timestamp;
-@endphp
+                                $defaultAvatar = asset('images/user.png');
+                                $userAvatar = Auth::user() && Auth::user()->image
+                                    ? asset(Auth::user()->image)
+                                    : $defaultAvatar;
+                                // If the file exists, use its modified time to bust cache:
+                                $timestamp = (Auth::user() && Auth::user()->image && file_exists(public_path(Auth::user()->image)))
+                                    ? filemtime(public_path(Auth::user()->image))
+                                    : now()->timestamp;
+                            @endphp
 
-<li class="nav-item dropdown header-profile">
-    <a class="nav-link" href="#" role="button" data-bs-toggle="dropdown">
-        <img
-          src="{{ $userAvatar }}?v={{ $timestamp }}"
-          width="56"
-          alt="User Avatar"
-          class="rounded-circle"
-        />
-    </a>
-    <div class="dropdown-menu dropdown-menu-end">
-        <a href="{{ route('user.profile') }}" class="dropdown-item ai-icon">
-            <i class="far fa-user text-primary"></i>
-            <span class="ms-1">Profile</span>
-        </a>
-        <a 
-          class="dropdown-item ai-icon text-danger" 
-          href="" 
-          onclick="event.preventDefault(); document.getElementById('logout-form').submit();"
-        >
-            <i class="far fa-sign-out text-danger"></i>
-            <span class="ms-1">Logout</span>
-        </a>
-        <form id="logout-form" action="{{ route('logout') }}" method="POST" class="d-none">
-            @csrf
-        </form>
-    </div>
-</li>
+                            <li class="nav-item dropdown header-profile">
+                                <a class="nav-link" href="#" role="button" data-bs-toggle="dropdown">
+                                    <img
+                                    src="{{ $userAvatar }}?v={{ $timestamp }}"
+                                    width="56"
+                                    alt="User Avatar"
+                                    class="rounded-circle"
+                                    />
+                                </a>
+                                <div class="dropdown-menu dropdown-menu-end">
+                                    <a href="{{ route('user.profile') }}" class="dropdown-item ai-icon">
+                                        <i class="far fa-user text-primary"></i>
+                                        <span class="ms-1">Profile</span>
+                                    </a>
+                                    <a 
+                                    class="dropdown-item ai-icon text-danger" 
+                                    href="" 
+                                    onclick="event.preventDefault(); document.getElementById('logout-form').submit();"
+                                    >
+                                        <i class="far fa-sign-out text-danger"></i>
+                                        <span class="ms-1">Logout</span>
+                                    </a>
+                                    <form id="logout-form" action="{{ route('logout') }}" method="POST" class="d-none">
+                                        @csrf
+                                    </form>
+                                </div>
+                            </li>
 
                         </ul>
                     </div>
@@ -185,7 +185,7 @@
     </li>
  <!-- Segments  ← new -->
     <li>
-        <a class="ai-icon" href="{{ route('segmentation.index') }}" aria-expanded="false">
+        <a class="ai-icon" href="{{ route('segmentation.view') }}" aria-expanded="false">
             <i class="fal fa-layer-group"></i>
             <span class="nav-text">Segmentation</span>
         </a>

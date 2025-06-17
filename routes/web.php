@@ -94,17 +94,14 @@ Route::middleware(['auth','ensure_push_config'])->group(function() {
         Route::post('/fetch-meta', 'fetchMeta')->name('fetchMeta');
     });
 
-
     // Segmentation routes (only list & create)
-Route::controller(SegmentationController::class)
-    ->prefix('segmentation')
-    ->name('segmentation.')
-    ->group(function () {
-        Route::get('/',        'index')->name('index');   // list page
-        Route::get('/create',  'create')->name('create'); // create form
-        Route::post('/',       'store')->name('store');   // form POST
+    Route::controller(SegmentationController::class)->prefix('segmentation')->name('segmentation.')->group(function () {
+        Route::get('/','view')->name('view');
+        Route::get('/create','create')->name('create');
+        Route::post('/','store')->name('store');
+        Route::post('refresh-data','refreshData')->name('refresh-data');
+        Route::get('/update-status','updateStatus')->name('update-status');
     });
-
 
     // Route::get('/domain', [Controller::class, 'domain'])->name('domain');
     Route::get('/integrate-domain', [Controller::class, 'integrateDomain'])->name('integrate-domain');
