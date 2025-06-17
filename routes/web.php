@@ -59,6 +59,7 @@ Route::middleware(['auth','ensure_push_config'])->group(function() {
         Route::get('profile', 'profile')->name('profile');
         Route::post('update', 'updateProfile')->name('update');
         Route::post('update-password', 'updatePassword')->name('update-password');
+
         Route::get('subscription', 'subscription')->name('subscription');
         Route::get('addons', 'addons')->name('addons');
     });
@@ -113,24 +114,26 @@ Route::middleware(['auth','ensure_push_config'])->group(function() {
 
     
 
-    Route::middleware(['auth','ensure_push_config'])->group(function() {
-    Route::prefix('settings')->controller(SettingsController::class)->name('settings.')->group(function () {
-        Route::get('/general', 'generalSettings')->name('general');
-        Route::post('/general', 'updateGeneralSettings');
-        Route::get('/email', 'emailSettings')->name('email');
-        Route::post('/email', 'updateEmailSettings');
-        Route::get('/server-info', 'serverInfo')->name('server-info');
-        Route::get('/server-info/metrics', 'serverMetrics')->name('server-info.metrics');
-        Route::get('/utilities', 'utilities')->name('utilities');
-        Route::post('/utilities/purge-cache', 'purgeCache')->name('utilities.purge-cache');
-        Route::post('/utilities/clear-log', 'clearLog')->name('utilities.clear-log');
-        Route::post('/utilities/make-cache', 'makeCache')->name('utilities.make-cache');
-        Route::get('/upgrade', 'upgrade')->name('upgrade');
-        Route::get('/backup-subscribers', 'backupSubscribers')->name('backup-subscribers');
-        Route::get('/backup-subscribers/download', 'downloadBackupSubscribers')->name('backup-subscribers.download');
-        Route::get('/firebase-setup', 'firebaseSetup')->name('firebase-setup');
+   Route::middleware(['auth','ensure_push_config'])->group(function() {
+        Route::prefix('settings')->controller(SettingsController::class)->name('settings.')->group(function () {
+            Route::get('/general', 'generalSettings')->name('general');
+            Route::post('/general', 'updateGeneralSettings');
+            Route::get('/email', 'emailSettings')->name('email');
+            Route::post('/email', 'updateEmailSettings');
+            Route::get('/server-info', 'serverInfo')->name('server-info');
+            Route::get('/server-info/metrics', 'serverMetrics')->name('server-info.metrics');
+            Route::get('/utilities', 'utilities')->name('utilities');
+            Route::post('/utilities/purge-cache', 'purgeCache')->name('utilities.purge-cache');
+            Route::post('/utilities/clear-log', 'clearLog')->name('utilities.clear-log');
+            Route::post('/utilities/make-cache', 'makeCache')->name('utilities.make-cache');
+            Route::post('/utilities/queue-manage', 'queueManage')->name('utilities.queue-manage');
+            Route::get('/upgrade', 'upgrade')->name('upgrade');
+            Route::get('/backup-subscribers', 'backupSubscribers')->name('backup-subscribers');
+            Route::get('/backup-subscribers/download', 'downloadBackupSubscribers')->name('backup-subscribers.download');
+            Route::get('/firebase-setup', 'firebaseSetup')->name('firebase-setup');
+        });
     });
-});
+
 
 
 });
