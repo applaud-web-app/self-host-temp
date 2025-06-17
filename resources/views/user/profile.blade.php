@@ -30,7 +30,7 @@
       {{-- Profile + Avatar --}}
       <div class="col-lg-8">
         <div class="card">
-          <div class="card-header"><h4>Profile Details</h4></div>
+          <div class="card-header"><h4 class="mb-0">Profile Details</h4></div>
           <div class="card-body">
             <form action="{{ route('user.update') }}"
                   method="POST"
@@ -133,7 +133,7 @@
       {{-- Change Password --}}
       <div class="col-lg-4">
         <div class="card">
-          <div class="card-header"><h4>Change Password</h4></div>
+          <div class="card-header"><h4 class="mb-0">Change Password</h4></div>
           <div class="card-body">
             <form action="{{ route('user.update-password') }}"
                   method="POST"
