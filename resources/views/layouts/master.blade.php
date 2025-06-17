@@ -192,7 +192,7 @@
     </li>
     <!-- Subscriptions -->
     <li>
-        <a class="ai-icon" href="{{ route('subscription') }}" aria-expanded="false">
+        <a class="ai-icon" href="{{ route('user.subscription') }}" aria-expanded="false">
             <i class="fal fa-credit-card"></i>
             <span class="nav-text">Subscriptions</span>
         </a>
@@ -202,7 +202,7 @@
         @includeIf(strtolower($module->getLowerName()) . '::partials.menu')
     @endforeach --}}
       <li>
-        <a class="ai-icon" href="{{ route('addons') }}" aria-expanded="false">
+        <a class="ai-icon" href="{{ route('user.addons') }}" aria-expanded="false">
             <i class="fal fa-credit-card"></i>
             <span class="nav-text">Addons</span>
         </a>

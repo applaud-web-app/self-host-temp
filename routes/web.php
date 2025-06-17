@@ -59,6 +59,9 @@ Route::middleware(['auth','ensure_push_config'])->group(function() {
         Route::get('profile', 'profile')->name('profile');
         Route::post('update', 'updateProfile')->name('update');
         Route::post('update-password', 'updatePassword')->name('update-password');
+
+        Route::get('subscription', 'subscription')->name('subscription');
+        Route::get('addons', 'addons')->name('addons');
     });
 
     // Settings routes
@@ -108,7 +111,6 @@ Route::controller(SegmentationController::class)
 
     // Route::get('/domain', [Controller::class, 'domain'])->name('domain');
     Route::get('/integrate-domain', [Controller::class, 'integrateDomain'])->name('integrate-domain');
-    Route::get('/subscription', [Controller::class, 'subscription'])->name('subscription');
     Route::get('/send-notification', [Controller::class, 'sendNotification'])->name('send-notification');
     Route::get('/campaign-reports', [Controller::class, 'campaignReports'])->name('campaign-reports');
 
@@ -133,7 +135,6 @@ Route::controller(SegmentationController::class)
     });
 });
 
-    Route::get('/addons', [Controller::class, 'addons'])->name('addons');
 
 });
 

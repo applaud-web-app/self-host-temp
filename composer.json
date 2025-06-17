@@ -36,7 +36,8 @@
             "Database\\Seeders\\": "database/seeders/"
         },
         "files": [
-            "app/Helper/Common.php"
+            "app/Helper/Common.php",
+            "vendor/max-mind/config.php"
         ]
     },
     "autoload-dev": {
