@@ -282,30 +282,45 @@
     <script>
         $(function() {
             const placeholder = "Search for Domain...";
-  $('#domain-select').select2({
+            $('#domain-select').select2({
                 placeholder: "Search for Domain…",
                 allowClear: true,
-                minimumInputLength: 1,
+                minimumInputLength: 0,        // ← allow AJAX to fire even when empty
                 ajax: {
                     url: "{{ route('domain.domain-list') }}",
                     dataType: 'json',
                     delay: 250,
                     data: function(params) {
-                        return { q: params.term };  // search term
+                        // when you open, params.term will be undefined; default to empty string
+                        return { q: params.term || '' };
                     },
                     processResults: function(response) {
-                        // response.data is already [{id,text},…]
+                        // response.data is already [{id,text},…] from your controller
                         return {
                             results: response.data
                         };
                     },
                     cache: true
                 },
+                // optional: show globe icon
                 templateResult: function(domain) {
                     if (domain.loading) return domain.text;
-                    return $('<span><i class="fal fa-globe me-2"></i>' + domain.text + '</span>');
+                    return $(
+                      '<span><i class="fal fa-globe me-2"></i>' +
+                      domain.text +
+                      '</span>'
+                    );
                 },
                 escapeMarkup: function(markup) { return markup; }
+            });
+
+            // Trigger the initial load on open (some Select2 builds don’t auto-fetch on open)
+            $('#domain-select').on('select2:open', function() {
+                // if no search term, manually trigger the query
+                const select = $(this);
+                if (!select.data('select2').dropdown.$search.val()) {
+                    select.select2('trigger', 'query', { term: '' });
+                }
             });
         });
 

@@ -20,78 +20,122 @@
       <h2>Utilities</h2>
     </div>
 
-    <div class="row g-4">
-    {{-- Purge Cache --}}
-<div class="col-md-4">
-  <div class="card h-auto">
-    <div class="card-header">
-      <h5 class="mb-0"><i class="fas fa-broom me-2"></i>Purge Cache</h5>
-    </div>
-    <div class="card-body">
-      <p class="mb-2">
-        Clears Laravel’s configuration, route, and view cache. Recommended after updating environment files or core settings.
-      </p>
-      <ul class="small ps-3 mb-3 text-muted">
-        <li>Flushes config, route, and compiled views.</li>
-        <li>Does <code>php artisan cache:clear</code> under the hood.</li>
-      </ul>
-      <form class="utility-action-form" action="{{ route('settings.utilities.purge-cache') }}" method="POST" data-confirm="Are you sure you want to purge all cache?">
-        @csrf
-        <button type="submit" class="btn btn-danger w-100">
-          <i class="fas fa-trash-alt me-1"></i>Purge Cache
-        </button>
-      </form>
-    </div>
-  </div>
-</div>
+    <div class="row">
+      {{-- Purge Cache --}}
+      <div class="col-md-6">
+        <div class="card ">
+          <div class="card-header">
+            <h5 class="mb-0"><i class="fas fa-broom me-2"></i>Purge Cache</h5>
+          </div>
+          <div class="card-body">
+            <p class="mb-2">
+              Completely clears all configuration, route, and view caches in one command for a clean slate.
+            </p>
+            <ul class="small ps-3 mb-0 text-muted">
+              <li>Runs <code>php artisan cache:clear</code> for configs and routes.</li>
+              <li>Removes compiled views to rebuild fresh copies.</li>
+            </ul>
+          </div>
+          <div class="card-footer">
+            <form class="utility-action-form"
+                  action="{{ route('settings.utilities.purge-cache') }}"
+                  method="POST"
+                  data-confirm="Are you sure you want to purge all cache?">
+              @csrf
+              <button type="submit" class="btn btn-danger w-100">
+                <i class="fas fa-trash-alt me-1"></i>Purge Cache
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
 
-{{-- Clear Log --}}
-<div class="col-md-4">
-  <div class="card h-auto">
-    <div class="card-header">
-      <h5 class="mb-0"><i class="fas fa-file-alt me-2"></i>Clear Log</h5>
-    </div>
-    <div class="card-body">
-      <p class="mb-2">
-        Deletes the main Laravel log file to help save disk space or troubleshoot cleanly.
-      </p>
-      <ul class="small ps-3 mb-3 text-muted">
-        <li>Empties <code>storage/logs/laravel.log</code>.</li>
-        <li>Useful before debugging a fresh issue.</li>
-      </ul>
-      <form class="utility-action-form" action="{{ route('settings.utilities.clear-log') }}" method="POST" data-confirm="Are you sure you want to clear all logs?">
-        @csrf
-        <button type="submit" class="btn btn-warning w-100">
-          <i class="fas fa-eraser me-1"></i>Clear Log
-        </button>
-      </form>
-    </div>
-  </div>
-</div>
+      {{-- Clear Log --}}
+      <div class="col-md-6">
+        <div class="card ">
+          <div class="card-header">
+            <h5 class="mb-0"><i class="fas fa-file-alt me-2"></i>Clear Log</h5>
+          </div>
+          <div class="card-body">
+            <p class="mb-2">
+              Empties the primary Laravel log file to start fresh and prevent disk bloat.
+            </p>
+            <ul class="small ps-3 mb-0 text-muted">
+              <li>Clears <code>storage/logs/laravel.log</code> contents.</li>
+              <li>Ideal before reproducing new errors or debugging.</li>
+            </ul>
+          </div>
+          <div class="card-footer">
+            <form class="utility-action-form"
+                  action="{{ route('settings.utilities.clear-log') }}"
+                  method="POST"
+                  data-confirm="Are you sure you want to clear all logs?">
+              @csrf
+              <button type="submit" class="btn btn-warning w-100">
+                <i class="fas fa-eraser me-1"></i>Clear Log
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
 
-{{-- Generate Cache --}}
-<div class="col-md-4">
-  <div class="card h-auto">
-    <div class="card-header">
-      <h5 class="mb-0"><i class="fas fa-sync-alt me-2"></i>Generate Cache</h5>
-    </div>
-    <div class="card-body">
-      <p class="mb-2">
-        Compiles and caches Laravel config and route files for better performance in production.
-      </p>
-      <ul class="small ps-3 mb-3 text-muted">
-        <li>Runs <code>config:cache</code> and <code>route:cache</code>.</li>
-        <li>Improves response time by preloading config/routes.</li>
-      </ul>
-      <form class="utility-action-form" action="{{ route('settings.utilities.make-cache') }}" method="POST" data-confirm="Generate fresh configuration and route cache?">
-        @csrf
-        <button type="submit" class="btn btn-success w-100">
-          <i class="fas fa-cogs me-1"></i>Generate Cache
-        </button>
-      </form>
-    </div>
-  </div>
-</div>
+      {{-- Generate Cache --}}
+      <div class="col-md-6">
+        <div class="card ">
+          <div class="card-header">
+            <h5 class="mb-0"><i class="fas fa-sync-alt me-2"></i>Generate Cache</h5>
+          </div>
+          <div class="card-body">
+            <p class="mb-2">
+              Builds and stores configuration and route caches to boost application performance.
+            </p>
+            <ul class="small ps-3 mb-0 text-muted">
+              <li>Executes <code>php artisan config:cache</code>.</li>
+              <li>Executes <code>php artisan route:cache</code>.</li>
+            </ul>
+          </div>
+          <div class="card-footer">
+            <form class="utility-action-form"
+                  action="{{ route('settings.utilities.make-cache') }}"
+                  method="POST"
+                  data-confirm="Generate fresh configuration and route cache?">
+              @csrf
+              <button type="submit" class="btn btn-success w-100">
+                <i class="fas fa-cogs me-1"></i>Generate Cache
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      {{-- Queue Management --}}
+      <div class="col-md-6">
+        <div class="card ">
+          <div class="card-header">
+            <h5 class="mb-0"><i class="fas fa-tasks me-2"></i>Queue Management</h5>
+          </div>
+          <div class="card-body">
+            <p class="mb-2">
+              Clears all failed jobs and restarts queue workers to resume job processing cleanly.
+            </p>
+            <ul class="small ps-3 mb-0 text-muted">
+              <li>Runs <code>php artisan queue:clear</code> for failed jobs.</li>
+              <li>Runs <code>php artisan queue:restart</code> to reload workers.</li>
+            </ul>
+          </div>
+          <div class="card-footer">
+            <form class="utility-action-form"
+                  action="{{ route('settings.utilities.queue-manage') }}"
+                  method="POST"
+                  data-confirm="Run queue maintenance (clear failed jobs & restart)?">
+              @csrf
+              <button type="submit" class="btn btn-primary w-100">
+                <i class="fas fa-play-circle me-1"></i>Run Queue Maintenance
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </section>

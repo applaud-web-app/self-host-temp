@@ -228,6 +228,16 @@ class SettingsController extends Controller
         return back()->with('status', 'Config & route cache created.');
     }
 
+
+    public function queueManage()
+    {
+        Artisan::call('queue:clear');
+       
+        Artisan::call('queue:restart');
+
+        return back()->with('status', 'Queue cleared, and workers restarted.');
+    }
+
     /**
      * Display the Upgrade page.
      */

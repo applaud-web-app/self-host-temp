@@ -13,6 +13,7 @@
 @import url("../vendor/perfect-scrollbar/css/perfect-scrollbar.css");
 @import url("../vendor/metismenu/css/metisMenu.min.css");
 
+@import url('https://fonts.googleapis.com/css2?family=Cabin:ital,wght@0,400..700;1,400..700&display=swap');
 
 
 @font-face {
@@ -37,8 +38,8 @@
     --rgba-primary-7: rgba(249, 58, 11, 0.7);
     --rgba-primary-8: rgba(249, 58, 11, 0.8);
     --rgba-primary-9: rgba(249, 58, 11, 0.9);
-     --font-family-base: 'Urbanist', sans-serif;
-    --font-family-title: 'Urbanist', sans-serif;
+     --font-family-base: 'Cabin', sans-serif;
+    --font-family-title: 'Cabin', sans-serif;
     --title: #000;
 }
 
@@ -256,7 +257,7 @@ Fixing Order => Base + Typography >> General Layout + Grid >> Page Layout + Comp
 
 body {
     margin: 0;
-    font-family: 'Urbanist', sans-serif;
+    font-family: 'Cabin', sans-serif;
     font-size: 1rem;
     font-weight: 400;
     height: 100%;
@@ -24875,7 +24876,7 @@ button:focus {
 }
 
 .card-footer {
-    border-color: #f5f5f5;
+    border-top: 1px dashed #b1b1b1;
     background: transparent;
     padding: 1rem 1.5rem;
     /* Reduced padding */
