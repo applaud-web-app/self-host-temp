@@ -22,7 +22,7 @@ class SegmentationController extends Controller
     {
         if ($request->ajax()) {
 
-            $query = Segment::select(['id','name','domain','type','status','created_at']);
+            $query = Segment::select(['id','name','domain','type','status','created_at'])->where('status','!=',2);
             if ($request->filled('search_name')) {
                 $query->where('name', 'like', '%'.$request->search_name.'%');
             }
@@ -35,32 +35,118 @@ class SegmentationController extends Controller
                 $query->where('type', $request->filter_type);
             }
 
+            $query->latest();
+
             return DataTables::of($query)
                 ->addIndexColumn()
                 ->addColumn('status', function ($row) {
+
+                    $updateStatusUrl = route('segmentation.update-status');
+                    $param = ['id' => $row->id];
+                    $integrateUpdateStatusUrl = encryptUrl($updateStatusUrl, $param);
+
                     $checked = $row->status ? 'checked' : '';
                     return '<div class="form-check form-switch">
                             <input class="form-check-input toggle-status"
-                                    data-id="'.$row->id.'"
+                                    data-url="'.$integrateUpdateStatusUrl.'"
                                     type="checkbox" '.$checked.'>
                             </div>';
                 })
                 ->editColumn('created_at',
-                    fn ($row) => $row->created_at->format('d-M, Y')
+                    fn ($row) => $row->created_at->format('d M, Y')
+                )
+                ->editColumn('type',
+                    fn ($row) => ucfirst($row->type)
                 )
                 ->addColumn('actions', function ($row) {
-                    $url = "https://testdevansh.awmtab.in/";
-                    return '<a href="'.$url.'" class="btn btn-sm btn-primary me-1">
+                    
+                    $param = ['id' => $row->id];
+                    $integrateRemoveUrl = encryptUrl(route('segmentation.update-status'), $param);
+                    $integrateViewUrl = encryptUrl(route('segmentation.info'), $param);
+
+                    return '<button type="button" data-url="'.$integrateViewUrl.'" class="btn btn-sm btn-info me-1 view-btn">
                                 <i class="far fa-eye"></i>
-                            </a>';
+                            </button>
+                            <button type="button" data-url="'.$integrateRemoveUrl.'" class="btn btn-sm btn-danger me-1 remove-btn">
+                                <i class="far fa-trash"></i>
+                            </button>';
                 })
-                ->rawColumns(['status', 'actions'])
+                ->rawColumns(['status', 'type', 'actions'])
                 ->make(true);
         }
 
         return view('segmentation.index');
     }
     
+    public function info(Request $request)
+    {
+        try {
+            // Validate request with proper error messages
+            $validated = $request->validate([
+                'eq' => 'required|string',
+            ], [
+                'eq.required' => 'Encrypted parameter is required',
+                'eq.string'   => 'Invalid parameter format',
+            ]);
+
+            // Decrypt ID with error handling
+            $response = decryptUrl($request->eq);
+            if (!isset($response['id'])) {
+                throw new \Exception('Invalid segment identifier');
+            }
+
+            $id = $response['id'];
+
+            $segment = Segment::with(['deviceRules', 'geoRules'])
+                ->findOrFail($id);
+
+            if ($request->ajax()) {
+                $payload = [
+                    'id'         => $segment->id,
+                    'name'       => $segment->name,
+                    'domain'     => $segment->domain,
+                    'type'       => $segment->type,
+                    'created_at' => $segment->created_at->format('d M Y, h:i A'),
+                    'status'     => $segment->status,
+                    'status_badge' => $segment->status ? 'success' : 'secondary',
+                    'status_text' => $segment->status ? 'Active' : 'Inactive',
+                ];
+
+                if ($segment->type === 'device') {
+                    $payload['devices'] = $segment->deviceRules->pluck('device_type')->unique()->values();
+                } else {
+                    $payload['geo'] = $segment->geoRules
+                        ->map(fn ($r) => [
+                            'operator' => $r->operator,
+                            'country'  => $r->country,
+                            'state'    => $r->state,
+                        ])->values();
+                }
+
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Segment details loaded successfully',
+                    'data' => $payload
+                ]);
+            }
+
+            abort(404, 'Page not found');
+            
+        } catch (ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation error',
+                'errors' => $e->errors()
+            ], 422);
+            
+        } catch (\Throwable $th) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to load segment details' . $th->getMessage()
+            ], 500);
+        }
+    }
+
     public function create()
     {
         $countriesStates = $this->countriesStates();
@@ -212,11 +298,44 @@ class SegmentationController extends Controller
     }
 
 
-    public function remove($id)
+    public function updateStatus(Request $request)
     {
-        $segment = Segment::findOrFail($id);
-        $segment->update(['status' => ! $segment->status]);
-        return response()->json(['success' => true, 'status' => $segment->status]);
+        try {
+            // Validate request
+            $request->validate([
+                'eq'     => 'required|string',
+                'status' => 'required|in:0,1,2',
+            ]);
+
+            // Decrypt ID
+            $response = decryptUrl($request->eq);
+            $id = $response['id'];
+
+            // Find and update segment
+            $segment = Segment::findOrFail($id);
+            $segment->status = $request->status;
+            $segment->save();
+
+            // Return custom message
+            $message = $segment->status == 1  ? 'Segment activated successfully.' : ($segment->status == 0 ? 'Segment paused successfully.' : 'Segment remove successfully.');
+
+            return response()->json([
+                'success' => true,
+                'message' => $message
+            ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            // Validation error
+            return response()->json([
+                'success' => false,
+                'message' => $e->validator->errors()->first()
+            ], 422);
+        } catch (\Throwable $th) {
+            // General error
+            return response()->json([
+                'success' => false,
+                'message' => 'Something went wrong: ' . $th->getMessage()
+            ], 500);
+        }
     }
 
     private function countriesStates(): array
