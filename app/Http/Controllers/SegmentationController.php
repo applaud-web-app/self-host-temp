@@ -316,6 +316,22 @@ class SegmentationController extends Controller
     
     public function refreshData(Request $request)
     {
+        /* ---------- 0.  Normalise input ----------------------------------- */
+        if ($request->segment_type === 'device') {
+            $request->merge([
+                'devicetype' => collect($request->input('devicetype', []))
+                                ->filter()
+                                ->map('strtolower')
+                                ->unique()
+                                ->values()
+                                ->toArray(),
+            ]);
+            $request->request->remove('geo_type');
+            $request->request->remove('country');
+            $request->request->remove('state');
+        }
+
+        /* ---------- 1.  Validate ------------------------------------------ */
         $rules = [
             'segment_name' => 'required|string|max:255',
             'domain_name'  => 'required|exists:domains,name',
@@ -330,34 +346,32 @@ class SegmentationController extends Controller
         }
 
         if ($request->segment_type === 'geo') {
-            $rowCount = count($request->geo_type ?? []);
+            $rows = count($request->input('geo_type', []));
             $rules += [
                 'geo_type'      => 'required|array|min:1|max:5',
                 'geo_type.*'    => 'in:equals,not_equals',
-                'country'       => 'required|array|size:'.$rowCount,
+                'country'       => 'required|array|size:'.$rows,
                 'country.*'     => 'required|string|max:100',
-                'state'         => 'array|size:'.$rowCount,
+                'state'         => 'array|size:'.$rows,
                 'state.*'       => 'nullable|string|max:100',
             ];
         }
 
         $data = $request->validate($rules);
 
-        /* ---------------------------------------------------------
-        * 2)  build one aggregated COUNT(*) query
-        * --------------------------------------------------------- */
+        /* ---------- 2.  Build single COUNT query -------------------------- */
         $q = DB::table('push_subscriptions_head as h')
             ->join('push_subscriptions_meta as m', 'm.head_id', '=', 'h.id')
             ->where('h.status', 1)
             ->where('h.domain', $data['domain_name']);
 
-        /* ---------- Device-based -------------------------------- */
-        if ($data['segment_type'] === 'device') {
-            $q->whereIn('m.device', $data['devicetype']);
-        }
+            /* Device filter */
+            if ($data['segment_type'] === 'device') {
+                $q->whereIn('m.device', $data['devicetype']);
+            }
 
-        /* ---------- Geo-based ----------------------------------- */
-        if ($data['segment_type'] === 'geo') {
+            /* Geo filter */
+            if ($data['segment_type'] === 'geo') {
 
             /* split rows by operator */
             $equals    = [];
@@ -407,5 +421,6 @@ class SegmentationController extends Controller
 
         return response()->json(['count' => $count]);
     }
+
 
 }
