@@ -14,80 +14,11 @@ use Carbon\Carbon;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\DB;
 use App\Models\PushEventCount;
+use App\Models\Segment;
+use Illuminate\Http\JsonResponse;
 
 class NotificationController extends Controller
 {
-    // public function view(Request $request)
-    // {
-    //     // AJAX request? return JSON for DataTables
-    //     if ($request->ajax()) {
-    //         $query = Notification::with('domains')->select('notifications.*');
-
-    //         // 1) filter by campaign name
-    //         if ($request->filled('campaign_name')) {
-    //             $query->where('campaign_name','like','%'.$request->campaign_name.'%');
-    //         }
-
-    //         // 2) filter by status (assumes you have a `status` column)
-    //         if ($request->filled('status')) {
-    //             $query->where('status', $request->status);
-    //         }
-
-    //         // 3) filter by domain URL
-    //         if ($request->filled('site_web')) {
-    //             $query->whereHas('domains', function($q) use($request){
-    //                 $q->where('domain_url','like','%'.$request->site_web.'%');
-    //             });
-    //         }
-
-    //         // 4) date-range on “sent time” (one_time_datetime)
-    //         if ($request->filled('last_send')) {
-    //             [$start, $end] = explode(' - ', $request->last_send);
-    //             $start = Carbon::createFromFormat('m/d/Y', $start)->startOfDay();
-    //             $end   = Carbon::createFromFormat('m/d/Y', $end)->endOfDay();
-    //             $query->whereBetween('one_time_datetime', [$start, $end]);
-    //         }
-
-    //         // 5) campaign type radio
-    //         if ($request->filled('campaign_type') && $request->campaign_type!=='all') {
-    //             $query->where('schedule_type',$request->campaign_type);
-    //         }
-
-    //         return DataTables::of($query)
-    //             ->addIndexColumn()
-
-    //             // flatten domains into a comma list
-    //             ->addColumn('domain', fn($row) => 
-    //                 $row->domains->pluck('domain_url')->implode(', ')
-    //             )
-
-    //             // choose the right “sent time” col (one-time vs recurring)
-    //             ->addColumn('sent_time', function($row){
-    //                 return $row->one_time_datetime
-    //                     ? $row->one_time_datetime->format('Y-m-d H:i')
-    //                     : ($row->recurring_start_date
-    //                         ? $row->recurring_start_date->format('Y-m-d')
-    //                         : '');
-    //             })
-    //             ->addColumn('clicks', fn($row) => $row->clicks_count ?? 0)
-
-    //             // actions column
-    //             ->addColumn('action', fn($row) =>
-    //                 '<a href="'.route('notification.view',$row->id)
-    //                 .'" class="btn btn-sm btn-primary">View</a>'
-    //             )
-    //             ->rawColumns(['action'])
-    //             ->make(true);
-    //     }
-
-    //     // initial page load: pass domain list for the dropdown
-    //     $domains = Domain::pluck('name')->sortBy('name');
-    //     return view('notification.view', compact('domains'));
-    // }
-
-    /**
-     * List + filter notifications (DataTables-AJAX).
-     */
     public function view(Request $request)
     {
         // regular page load

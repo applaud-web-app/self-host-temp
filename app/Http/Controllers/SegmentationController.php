@@ -15,6 +15,7 @@ use Illuminate\Validation\ValidationException;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Str;
+use Illuminate\Http\JsonResponse;
 
 class SegmentationController extends Controller
 {
@@ -456,6 +457,21 @@ class SegmentationController extends Controller
         $count = (int) $q->count();
 
         return response()->json(['count' => $count]);
+    }
+
+    public function segmentList(Request $request): JsonResponse
+    {
+        try {
+            // cache for 2 min so repeated clicks don’t hit the DB
+            $segments = Segment::select('id','name','type')->where('status', 1)
+                ->orderBy('name')
+                ->get(['id', 'name'])
+                ->map(fn ($s) => ['id' => $s->id, 'text' => $s->name." - ".ucfirst($s->type)]);
+            return response()->json(['success' => true, 'data' => $segments]);
+        } catch (\Throwable $e) {
+            Log::error('segmentList error', ['msg' => $e->getMessage()]);
+            return response()->json(['success' => false], 500);
+        }
     }
 
 

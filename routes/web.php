@@ -59,7 +59,6 @@ Route::middleware(['auth','ensure_push_config'])->group(function() {
         Route::get('profile', 'profile')->name('profile');
         Route::post('update', 'updateProfile')->name('update');
         Route::post('update-password', 'updatePassword')->name('update-password');
-
         Route::get('subscription', 'subscription')->name('subscription');
         Route::get('addons', 'addons')->name('addons');
     });
@@ -92,7 +91,6 @@ Route::middleware(['auth','ensure_push_config'])->group(function() {
         Route::get('details', 'details')->name('details');
         Route::get('/create','create')->name('create');
         Route::post('/send','store')->name('send');
-        // Route::get('/{notification}','show')->name('show');
         Route::post('/{notification}/send','send')->name('resend');
         Route::post('/fetch-meta', 'fetchMeta')->name('fetchMeta');
     });
@@ -105,6 +103,7 @@ Route::middleware(['auth','ensure_push_config'])->group(function() {
         Route::post('refresh-data','refreshData')->name('refresh-data');
         Route::post('/update-status','updateStatus')->name('update-status');
         Route::get ('info','info' )->name('info');
+        Route::get('segment-list','segmentList')->name('segment-list');
     });
 
     // Route::get('/domain', [Controller::class, 'domain'])->name('domain');
