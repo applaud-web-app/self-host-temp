@@ -134,7 +134,5 @@ Route::middleware(['auth','ensure_push_config'])->group(function() {
         });
     });
 
-
-
 });
 
