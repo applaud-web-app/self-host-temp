@@ -49,7 +49,7 @@ class SegmentationController extends Controller
                     fn ($row) => $row->created_at->format('d-M, Y')
                 )
                 ->addColumn('actions', function ($row) {
-                    $url = route('segmentation.show', $row->id);
+                    $url = "https://testdevansh.awmtab.in/";
                     return '<a href="'.$url.'" class="btn btn-sm btn-primary me-1">
                                 <i class="far fa-eye"></i>
                             </a>';
@@ -205,9 +205,7 @@ class SegmentationController extends Controller
                 }
             });
 
-            return redirect()
-                ->route('segmentation.view')
-                ->with('success', 'Segment created successfully.');
+            return redirect()->route('segmentation.view')->with('success', 'Segment created successfully.');
         } catch (\Throwable $th) {
             return redirect()->back()->with('error', 'Something Went Wrong : '.$th->getMessage());
         }
