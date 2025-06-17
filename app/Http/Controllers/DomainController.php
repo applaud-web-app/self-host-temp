@@ -212,20 +212,37 @@ class DomainController extends Controller
         }
     }
 
-    public function domainList(Request $request)
+   public function domainList(Request $request)
     {
         try {
-            $domains = Domain::where('status', 1)
+            // grab the search term (or empty string)
+            $search = $request->input('q', '');
+
+            $domains = Domain::query()
+                ->where('status', 1)
+                // only filter if they typed something
+                ->when($search, function($q) use ($search) {
+                    $q->where('name', 'LIKE', "%{$search}%");
+                })
                 ->orderBy('name')
-                ->get(['name as domain_name']);
+                ->limit(20)
+                ->get(['id', 'name']);
+
+            // map into Select2 format
+            $payload = $domains->map(function($d) {
+                return [
+                    'id'   => $d->id,
+                    'text' => $d->name,
+                ];
+            });
 
             return response()->json([
                 'status' => true,
-                'data'   => $domains,
+                'data'   => $payload,
             ], 200);
 
         } catch (\Exception $e) {
-            Log::error('DomainController : ' . $e->getMessage());
+            Log::error('DomainController@domainList: ' . $e->getMessage());
 
             return response()->json([
                 'status'  => false,

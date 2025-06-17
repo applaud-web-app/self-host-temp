@@ -1,7 +1,6 @@
 @extends('layouts.master')
 
 @push('styles')
-    <link rel="stylesheet" href="{{ asset('/vendor/bootstrap-daterangepicker/daterangepicker.css') }}">
     <link rel="stylesheet" href="{{ asset('vendor/select2/css/select2.min.css') }}">
 @endpush
 
@@ -283,35 +282,30 @@
     <script>
         $(function() {
             const placeholder = "Search for Domain...";
-            $('#domain-select').select2({
-                placeholder: placeholder,
+  $('#domain-select').select2({
+                placeholder: "Search for Domain…",
                 allowClear: true,
                 minimumInputLength: 1,
                 ajax: {
                     url: "{{ route('domain.domain-list') }}",
                     dataType: 'json',
                     delay: 250,
-                    data: function (params) {
-                    return {
-                        q: params.term   // although your controller ignores q, you could filter server-side if you like
-                    };
+                    data: function(params) {
+                        return { q: params.term };  // search term
                     },
-                    processResults: function (response) {
-                    // response.data is an array of { domain_name }
-                    if (!response.status) {
-                        return { results: [] };
-                    }
-                    return {
-                        results: response.data.map(function(item) {
+                    processResults: function(response) {
+                        // response.data is already [{id,text},…]
                         return {
-                            id:   item.domain_name,
-                            text: item.domain_name
+                            results: response.data
                         };
-                        })
-                    };
                     },
                     cache: true
-                }
+                },
+                templateResult: function(domain) {
+                    if (domain.loading) return domain.text;
+                    return $('<span><i class="fal fa-globe me-2"></i>' + domain.text + '</span>');
+                },
+                escapeMarkup: function(markup) { return markup; }
             });
         });
 
@@ -364,11 +358,7 @@
                         );
                     } else {
                         $('#preloader-cart').toggleClass('d-none d-flex');
-                        // iziToast.error({
-                        //     title: 'Error',
-                        //     message: 'Failed to fetch domain data.',
-                        //     position: 'topRight'
-                        // });
+                     
                     }
                 },
                 error: function() {
