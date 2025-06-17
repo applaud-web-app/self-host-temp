@@ -8,8 +8,8 @@ use Illuminate\Database\Eloquent\Model;
 class SegmentGeoRule extends Model
 {
     use HasFactory;
+    
     public $timestamps   = false;
-
     protected $fillable = [
         'segment_id',
         'operator',
