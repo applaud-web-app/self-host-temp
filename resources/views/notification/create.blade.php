@@ -39,7 +39,8 @@
             <div class="d-flex flex-wrap align-items-center text-head">
                 <h2 class="mb-3 me-auto">Add Notifications</h2>
             </div>
-            <form action="{{ route('notification.send') }}" method="post" id="notificationform" enctype="multipart/form-data" novalidate>
+            <form action="{{ route('notification.send') }}" method="post" id="notificationform" enctype="multipart/form-data"
+                novalidate>
                 @csrf
                 <div class="row">
                     <!-- LEFT COLUMN: Form Inputs -->
@@ -106,8 +107,8 @@
                                             <img src="{{ asset('images/default.png') }}" id="banner_image" alt="Banner"
                                                 class="img-fluid upimage">
                                             <div class="input-group">
-                                                <input type="url" class="form-control" name="banner_image" id="image_input"
-                                                    placeholder="e.g.: https://example.com/image.jpg"
+                                                <input type="url" class="form-control" name="banner_image"
+                                                    id="image_input" placeholder="e.g.: https://example.com/image.jpg"
                                                     aria-label="Banner Image URL" value="{{ asset('images/default.png') }}"
                                                     onchange="changeBanner(this.value)" />
                                             </div>
@@ -121,8 +122,8 @@
                                             <img src="{{ asset('images/push/icons/alarm-1.png') }}" id="banner_icon"
                                                 alt="Icon" class="img-fluid upimage">
                                             <div class="input-group">
-                                                <input type="text" class="form-control banner_icon_trans" name="banner_icon"
-                                                    id="target" placeholder="Select Icon"
+                                                <input type="text" class="form-control banner_icon_trans"
+                                                    name="banner_icon" id="target" placeholder="Select Icon"
                                                     value="{{ asset('images/push/icons/alarm-1.png') }}"
                                                     onchange="prv_icons(this.value)">
                                                 <button class="input-group-text" type="button" style="margin:inherit"
@@ -140,9 +141,10 @@
                                 </div>
                             </div>
 
-                               <div class="card-footer">
+                            <div class="card-footer">
                                 <div class="form-check mb-2">
-                                    <input type="checkbox" class="form-check-input" id="ctaCheckbox" name="cta_enabled" value="1">
+                                    <input type="checkbox" class="form-check-input" id="ctaCheckbox" name="cta_enabled"
+                                        value="1">
                                     <label class="form-check-label" for="ctaCheckbox">Enable CTA's Section</label>
                                 </div>
                                 <div id="cardContainer" class="cardContainer" style="display: none">
@@ -177,7 +179,8 @@
                                                         class="text-danger">*</span>
                                                 </label>
                                                 <input type="text" class="form-control" name="btn_title_2"
-                                                    placeholder="Click Here" onkeyup="btn_title_prv2(this.value)" required>
+                                                    placeholder="Click Here" onkeyup="btn_title_prv2(this.value)"
+                                                    required>
                                             </div>
                                             <div class="col-lg-9">
                                                 <label for="btn_url_2" class="form-label">Landing URL: <span
@@ -193,7 +196,40 @@
                                     </div>
                                 </div>
                             </div>
+                        </div>
 
+                        {{-- SEGMENT SECTION --}}
+                        <div class="card h-auto">
+                            <div class="card-header">
+                                <h4 class="card-title fs-20 mb-0">Segment</h4>
+                            </div>
+                            <div class="card-body">
+                                <div class="col-lg-12">
+                                    <div class="custom-radio justify-content-start">
+                                        <label class="mb-2 mb-lg-3 w-auto d-inline-block" for="segment_all">
+                                            <input type="radio" name="segment_type" id="segment_all" value="all"
+                                                checked>
+                                            <span>Broadcast (All Subscribers)</span>
+                                        </label>
+                                        <label class="mb-2 mb-lg-3 w-auto d-inline-block" for="segment_particular">
+                                            <input type="radio" name="segment_type" id="segment_particular"
+                                                value="particular">
+                                            <span id="selectedSegmentLabel">Send to Segment</span>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card h-auto segment-card d-none">
+                            <div class="card-body">
+                                <div class="mb-1">
+                                    <label for="segmentSelect" class="form-label">Choose a Segment:</label>
+                                    <select class="form-select select-segment" name="segment_name" id="segmentSelect">
+                                        <option disabled selected>Select a segment</option>
+                                    </select>
+                                </div>
+                            </div>
                         </div>
 
                         <!-- Domain Selection -->
@@ -263,64 +299,6 @@
                                                         <input type="datetime-local" class="form-control"
                                                             name="one_time_datetime" id="one_time_start_date"
                                                             min="2025-06-02T00:00" required>
-                                                        <div class="invalid-feedback"></div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        <!-- Recurring Tab -->
-                                        <div class="tab-pane fade mb-3 p-3 border" id="recurring" role="tabpanel">
-                                            <div class="row">
-                                                <div class="col-lg-6 col-md-6 col-12 mb-3">
-                                                    <div class="form-group">
-                                                        <label for="recurring_start_date">Start Date <span
-                                                                class="text-danger">*</span></label>
-                                                        <input type="date" class="form-control"
-                                                            name="recurring_start_date" id="recurring_start_date"
-                                                            placeholder="Enter date" min="2025-06-02" required>
-                                                        <div class="invalid-feedback"></div>
-                                                    </div>
-                                                </div>
-                                                <div class="col-lg-6 col-md-6 col-12 mb-3">
-                                                    <div class="form-group">
-                                                        <div class="d-flex justify-content-between">
-                                                            <label for="recurring_end_date">End Date <span
-                                                                    class="text-danger">*</span></label>
-                                                            <div>
-                                                                <input class="form-check-input" type="checkbox"
-                                                                    id="end_date" onchange="disableDate()">
-                                                                <label class="form-check-label mt-0" for="end_date">Never
-                                                                    Ends</label>
-                                                            </div>
-                                                        </div>
-                                                        <input type="date" class="form-control"
-                                                            id="recurring_end_date" name="recurring_end_date"
-                                                            placeholder="Enter date" min="2025-06-02" required>
-                                                        <div class="invalid-feedback"></div>
-                                                    </div>
-                                                </div>
-                                                <div class="col-lg-6 col-md-6 col-12 mb-3">
-                                                    <div class="form-group">
-                                                        <label for="occurrence">Repeat <span
-                                                                class="text-danger">*</span></label>
-                                                        <select class="form-control form-select" id="occurrence"
-                                                            name="occurrence" required>
-                                                            <option value="">Select</option>
-                                                            <option value="daily">Daily</option>
-                                                            <option value="weekly">Weekly</option>
-                                                            <option value="monthly">Monthly</option>
-                                                        </select>
-                                                        <div class="invalid-feedback"></div>
-                                                    </div>
-                                                </div>
-                                                <div class="col-lg-6 col-md-6 col-12 mb-3">
-                                                    <div class="form-group">
-                                                        <label for="recurring_start_time">Start Time <span
-                                                                class="text-danger">*</span></label>
-                                                        <input type="time" class="form-control"
-                                                            name="recurring_start_time" id="recurring_start_time"
-                                                            placeholder="Enter time" required>
                                                         <div class="invalid-feedback"></div>
                                                     </div>
                                                 </div>
@@ -443,7 +421,7 @@
     </section>
 
     <!-- Modal: Select Icons -->
-      <div class="modal fade" id="staticBackdrop" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1"
+    <div class="modal fade" id="staticBackdrop" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1"
         aria-labelledby="staticBackdropLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-scrollable modal-lg">
             <div class="modal-content">
@@ -467,18 +445,93 @@
 
 @push('scripts')
     <script src="{{ asset('vendor/select2/js/select2.full.min.js') }}"></script>
+    
+    <script>
+        $(document).ready(function() {
+            $('input[name="segment_type"]').on('change', function() {
+                if ($('#segment_particular').is(':checked')) {
+                    $('.segment-card').removeClass('d-none');
+                    $('#domainCard').addClass('d-none');
+                } else {
+                    $('.segment-card').addClass('d-none');
+                    $('#domainCard').removeClass('d-none');
+                }
+            });
+        });
+    </script>
+    <script>
+        $(function () {
+            let loaded = false;
 
-     @php
+            $('#segmentSelect').select2({
+                placeholder: 'Select a segment',
+                allowClear: true,
+                width: '100%',
+
+                ajax: {
+                    transport: function (params, success, failure) {
+                        if (loaded) {
+                            success({ results: $('#segmentSelect').data('segments') });
+                            return;
+                        }
+
+                        $.ajax({
+                            url: "{{ route('segmentation.segment-list') }}",
+                            dataType: 'json',
+                            success: function (resp) {
+                                if (resp.success) {
+                                    $('#segmentSelect').data('segments', resp.data);
+                                    loaded = true;
+                                    success({ results: resp.data });
+                                } else {
+                                    failure();
+                                }
+                            },
+                            error: failure
+                        });
+                    },
+                    processResults: d => d
+                },
+
+                minimumInputLength: 0,
+
+                // ✅ Format dropdown list items
+                templateResult: function (data) {
+                    if (!data.id) return data.text; // skip placeholder
+
+                    const type = (data.text || '').toLowerCase().includes('device') ? 'device' :
+                                (data.text || '').toLowerCase().includes('geo') ? 'geo' : '';
+
+                    const icon = type === 'device' ? '📱' : type === 'geo' ? '🌍' : '';
+
+                    return $('<span>' + icon + ' ' + data.text + '</span>');
+                },
+
+                // ✅ Format selected item
+                templateSelection: function (data) {
+                    if (!data.id) return data.text;
+
+                    const type = (data.text || '').toLowerCase().includes('device') ? 'device' :
+                                (data.text || '').toLowerCase().includes('geo') ? 'geo' : '';
+
+                    const icon = type === 'device' ? '📱' : type === 'geo' ? '🌍' : '';
+
+                    return $('<span>' + icon + ' ' + data.text + '</span>');
+                }
+            });
+        });
+    </script>
+
+    @php
         use Illuminate\Support\Facades\File;
         $files = File::files(public_path('images/push/icons'));
-        $iconUrls = collect($files)
-            ->map(fn($f) => asset('images/push/icons/' . $f->getFilename()))
-            ->toJson();
+        $iconUrls = collect($files)->map(fn($f) => asset('images/push/icons/' . $f->getFilename()))->toJson();
     @endphp
 
-     <script>
+    <script>
         const ICON_URLS = {!! $iconUrls !!};
     </script>
+    
     <script>
         // unified show/hide + required toggling
         function hideOrShow() {
@@ -490,9 +543,9 @@
                 .prop('required', isSchedule);
 
             $('.send_btn').html(
-                isSchedule
-                ? '<i class="far fa-check-square pe-2"></i>Schedule Now'
-                : '<i class="far fa-check-square pe-2"></i>Send Now'
+                isSchedule ?
+                '<i class="far fa-check-square pe-2"></i>Schedule Now' :
+                '<i class="far fa-check-square pe-2"></i>Send Now'
             );
         }
 
@@ -658,8 +711,6 @@
                 }
             });
         });
-
-       
     </script>
     <script>
         $(function() {
@@ -729,7 +780,7 @@
             $("#notificationform").validate({
                 errorElement: 'div',
                 errorClass: 'invalid-feedback',
-                ignore      : ':hidden',
+                ignore: ':hidden',
                 rules: {
                     target_url: {
                         required: true,
@@ -741,7 +792,7 @@
                     },
                     description: {
                         required: true,
-                        maxlength: 200 
+                        maxlength: 200
                     },
                     'domain_name[]': {
                         required: true
@@ -822,11 +873,9 @@
                         n === 'btn_title_2' || n === 'btn_url_2') {
                         // put CTA errors right after their inputs
                         error.insertAfter(element);
-                    }
-                    else if (n === 'domain_name[]') {
+                    } else if (n === 'domain_name[]') {
                         error.appendTo('#domain-error-span');
-                    }
-                    else {
+                    } else {
                         error.insertAfter(element);
                     }
                 },
@@ -847,109 +896,112 @@
     </script>
 
     <script>
-        (function(){
-            let injected=false;
-            $('#staticBackdrop').on('show.bs.modal',function(){
-                if(injected) return;
+        (function() {
+            let injected = false;
+            $('#staticBackdrop').on('show.bs.modal', function() {
+                if (injected) return;
                 const $ct = $('#icon-container').empty();
-                ICON_URLS.forEach(url=>{
+                ICON_URLS.forEach(url => {
                     $('<div class="m-1">')
-                        .append($('<img>').attr({src:url,width:52,height:52,class:'img-thumbnail p-2',alt:'icon'})
-                            .css('cursor','pointer')
-                            .click(()=> setImageUrl(url))
+                        .append($('<img>').attr({
+                                src: url,
+                                width: 52,
+                                height: 52,
+                                class: 'img-thumbnail p-2',
+                                alt: 'icon'
+                            })
+                            .css('cursor', 'pointer')
+                            .click(() => setImageUrl(url))
                         )
                         .appendTo($ct);
                 });
-                injected=true;
+                injected = true;
             });
         })();
     </script>
-<script>
-  $(function() {
-    // Cache selectors
-    const $ctaCheckbox    = $('#ctaCheckbox');
-    const $cardContainer  = $('#cardContainer');
-    const $firstBtn       = $('#first_btn');
-    const $addAnotherBtn  = $firstBtn.find('button');
-    const $secondBtn      = $('#second_btn');
-    const $removeBtn      = $secondBtn.find('button');
-    const $btnPreview1    = $('.btn_prv');
-    const $btnPreview2    = $('.btn2_prv');
-    const $btnTitle1Spans = $('.btn_title1');
-    const $btnTitle2Spans = $('.btn_title2');
-    const $titleInput1    = $('#titleInput1');
-    const $btn2Input      = $('input[name="btn_title_2"]');
+    <script>
+        $(function() {
+            // Cache selectors
+            const $ctaCheckbox = $('#ctaCheckbox');
+            const $cardContainer = $('#cardContainer');
+            const $firstBtn = $('#first_btn');
+            const $addAnotherBtn = $firstBtn.find('button');
+            const $secondBtn = $('#second_btn');
+            const $removeBtn = $secondBtn.find('button');
+            const $btnPreview1 = $('.btn_prv');
+            const $btnPreview2 = $('.btn2_prv');
+            const $btnTitle1Spans = $('.btn_title1');
+            const $btnTitle2Spans = $('.btn_title2');
+            const $titleInput1 = $('#titleInput1');
+            const $btn2Input = $('input[name="btn_title_2"]');
 
-    // Update first CTA preview
-    function updateFirstPreview(text) {
-      $btnTitle1Spans.text(text || 'Click Here');
-      if ($ctaCheckbox.is(':checked') && text.trim()) {
-        $btnPreview1.show();
-      } else {
-        $btnPreview1.hide();
-      }
-    }
+            // Update first CTA preview
+            function updateFirstPreview(text) {
+                $btnTitle1Spans.text(text || 'Click Here');
+                if ($ctaCheckbox.is(':checked') && text.trim()) {
+                    $btnPreview1.show();
+                } else {
+                    $btnPreview1.hide();
+                }
+            }
 
-    // Update second CTA preview
-    function updateSecondPreview(text) {
-      $btnTitle2Spans.text(text || 'Click Here');
-      if ($ctaCheckbox.is(':checked') && $secondBtn.is(':visible') && text.trim()) {
-        $btnPreview2.show();
-      } else {
-        $btnPreview2.hide();
-      }
-    }
+            // Update second CTA preview
+            function updateSecondPreview(text) {
+                $btnTitle2Spans.text(text || 'Click Here');
+                if ($ctaCheckbox.is(':checked') && $secondBtn.is(':visible') && text.trim()) {
+                    $btnPreview2.show();
+                } else {
+                    $btnPreview2.hide();
+                }
+            }
 
-    // Reset the "Add Another" button text
-    function setAddBtnDefault() {
-      $addAnotherBtn.html('<i class="fas fa-plus"></i> Add Another');
-    }
+            // Reset the "Add Another" button text
+            function setAddBtnDefault() {
+                $addAnotherBtn.html('<i class="fas fa-plus"></i> Add Another');
+            }
 
-    // Clear second-CTA inputs
-    function clearSecondFields() {
-      $secondBtn.find('input').val('');
-    }
+            // Clear second-CTA inputs
+            function clearSecondFields() {
+                $secondBtn.find('input').val('');
+            }
 
-    // Toggle second CTA on/off
-    function toggleSecondBtn() {
-      if ($secondBtn.is(':visible')) {
-        $secondBtn.slideUp(200, function() {
-          updateSecondPreview('');
+            // Toggle second CTA on/off
+            function toggleSecondBtn() {
+                if ($secondBtn.is(':visible')) {
+                    $secondBtn.slideUp(200, function() {
+                        updateSecondPreview('');
+                    });
+                    setAddBtnDefault();
+                    clearSecondFields();
+                } else {
+                    $secondBtn.slideDown(200, function() {
+                        updateSecondPreview($btn2Input.val());
+                    });
+                    $addAnotherBtn.html('<i class="fas fa-minus"></i> Hide');
+                }
+            }
+
+            // Remove/hide second CTA
+            function removeSecondBtn() {
+                $secondBtn.slideUp(200, function() {
+                    updateSecondPreview('');
+                });
+                setAddBtnDefault();
+                clearSecondFields();
+            }
+
+            // Wire up events
+            $ctaCheckbox.on('change', toggleCTASection);
+            $addAnotherBtn.on('click', toggleSecondBtn);
+            $removeBtn.on('click', removeSecondBtn);
+            $titleInput1.on('input', () => updateFirstPreview($titleInput1.val()));
+            $btn2Input.on('input', () => updateSecondPreview($btn2Input.val()));
+
+            // Initial state
+            $cardContainer.hide();
+            $secondBtn.hide();
+            $btnPreview1.hide();
+            $btnPreview2.hide();
         });
-        setAddBtnDefault();
-        clearSecondFields();
-      } else {
-        $secondBtn.slideDown(200, function() {
-          updateSecondPreview($btn2Input.val());
-        });
-        $addAnotherBtn.html('<i class="fas fa-minus"></i> Hide');
-      }
-    }
-
-    // Remove/hide second CTA
-    function removeSecondBtn() {
-      $secondBtn.slideUp(200, function() {
-        updateSecondPreview('');
-      });
-      setAddBtnDefault();
-      clearSecondFields();
-    }
-
-    // Wire up events
-    $ctaCheckbox.on('change', toggleCTASection);
-    $addAnotherBtn.on('click', toggleSecondBtn);
-    $removeBtn.on('click', removeSecondBtn);
-    $titleInput1.on('input', () => updateFirstPreview($titleInput1.val()));
-    $btn2Input.on('input', () => updateSecondPreview($btn2Input.val()));
-
-    // Initial state
-    $cardContainer.hide();
-    $secondBtn.hide();
-    $btnPreview1.hide();
-    $btnPreview2.hide();
-  });
-</script>
-
-
-
+    </script>
 @endpush
