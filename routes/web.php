@@ -103,7 +103,8 @@ Route::middleware(['auth','ensure_push_config'])->group(function() {
         Route::get('/create','create')->name('create');
         Route::post('/','store')->name('store');
         Route::post('refresh-data','refreshData')->name('refresh-data');
-        Route::get('/update-status','updateStatus')->name('update-status');
+        Route::post('/update-status','updateStatus')->name('update-status');
+        Route::get ('info','info' )->name('info');
     });
 
     // Route::get('/domain', [Controller::class, 'domain'])->name('domain');
