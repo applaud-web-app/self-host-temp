@@ -13,12 +13,9 @@
 @import url("../vendor/perfect-scrollbar/css/perfect-scrollbar.css");
 @import url("../vendor/metismenu/css/metisMenu.min.css");
 
-@import url('https://fonts.googleapis.com/css2?family=Cabin:ital,wght@0,400..700;1,400..700&display=swap');
-
-
 @font-face {
-    font-family: 'Urbanist';
-    src: url('../web_fonts/Urbanist.ttf') format('woff2');
+    font-family: 'Cabin';
+    src: url('../web_fonts/Cabin.ttf') format('woff2');
     font-weight: 100 900;
     font-style: normal;
 }
