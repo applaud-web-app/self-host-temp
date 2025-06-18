@@ -41,20 +41,23 @@ class NotificationController extends Controller
             ->select([
                 'n.id',
                 'n.campaign_name',
+                'n.schedule_type',
+                'n.segment_type',
                 'n.title',
                 'd.name as domain',
+                'dn.sent_at as sent_time',
                 'dn.status',
-                'n.one_time_datetime as sent_time',
                 DB::raw('COALESCE(SUM(pec.count),0) as clicks'),
             ])
-            // group so every row is unique and clicks are aggregated
             ->groupBy(
                 'n.id',
                 'n.campaign_name',
+                'n.schedule_type',
+                'n.segment_type',
                 'n.title',
                 'd.name',
+                'dn.sent_at',
                 'dn.status',
-                'n.one_time_datetime'
             );
 
         /* --------------------------------------------------------------------
@@ -70,7 +73,7 @@ class NotificationController extends Controller
                     });
                 })
                 ->when($request->filled('campaign_type') && $request->campaign_type !== 'all',
-                fn ($q) => $q->where('n.schedule_type', $request->campaign_type))
+                fn ($q) => $q->where('n.schedule_type', $request->campaign_type)->orwhere('n.segment_type', $request->campaign_type))
                 ->when($request->filled('site_web'),
                 fn ($q) => $q->where('d.name', $request->site_web))
                 ->when($request->filled('last_send'), function ($q) use ($request) {
@@ -81,14 +84,17 @@ class NotificationController extends Controller
                     ]);
               });
 
+        $query = $query->orderBy('n.id','DESC');
+
         /* --------------------------------------------------------------------
          |  Return DataTables JSON
          * ------------------------------------------------------------------ */
         return DataTables::of($query)
             ->addIndexColumn()
             ->addColumn('campaign_name', function ($row) {
-                $truncated = Str::limit($row->title, 60, '…');
-                return '<div>'.e($row->campaign_name).'<br><small>'.e($truncated).'</small></div>';
+                $truncated = Str::limit($row->title, 50, '…');
+                $segment = $row->segment_type === "all" ? "" : '<small class="ms-1 text-secondary text-capitalize">[Segment]</small>';
+                return '<div>'.e($row->campaign_name).' <small class="ms-1 text-primary text-capitalize">['.e($row->schedule_type).']</small>'.$segment.'<br><small> '.e($truncated).'</small></div>';
             })
             ->addColumn('status', function ($row) {
                 $map = [
@@ -101,21 +107,83 @@ class NotificationController extends Controller
                 [$class, $label] = $map[$row->status] ?? ['badge-secondary', ucfirst($row->status)];
                 return "<span class=\"badge {$class}\">{$label}</span>";
             })
-            ->addColumn('sent_time', fn ($row) => optional($row->sent_time)->format('Y-m-d H:i') ?? '—')
+            ->addColumn('sent_time', function($row) {
+                if ($row->sent_time) {
+                    $dt   = Carbon::parse($row->sent_time);
+                    $date = $dt->format('d M, Y');
+                    $time = $dt->format('H:i A');
+                    return "{$date}<br><small>{$time}</small>";
+                }
+
+                return '—';
+            })
             ->addColumn('clicks',    fn ($row) => $row->clicks)
             ->addColumn('action', function ($row) {
-                $notifyDetailsUrl = route('notification.details');
-                $param = ['notification' => $row->id,'domain'=>$row->domain];
-                $otifyDetailsEncryptUrl = encryptUrl($notifyDetailsUrl, $param);
-                return '<button type="button" class="btn btn-primary light btn-sm report-btn rounded-pill"
-                        data-bs-toggle="modal" data-bs-target="#reportModal" data-url="'.$otifyDetailsEncryptUrl.'">
+
+                $param = ['notification' => $row->id,'domain' => $row->domain];
+                $detailsUrl = encryptUrl(route('notification.details'), $param);
+                $cancelUrl  = encryptUrl(route('notification.cancel'),  $param);
+                $html = '<button type="button" class="btn btn-primary light btn-sm report-btn rounded-pill"
+                        data-bs-toggle="modal" data-bs-target="#reportModal" data-url="'.$detailsUrl.'">
                     <i class="fas fa-analytics"></i>
-                 </button>';
+                </button>';
+                if ($row->schedule_type === 'schedule' && $row->status === 'pending') {
+                    $html .= ' <button type="button" class="btn btn-danger btn-sm cancel-btn rounded-pill"
+                                    data-url="'.e($cancelUrl).'"
+                                    title="Cancel Notification">
+                                <i class="fas fa-times"></i>
+                            </button>';
+                }
+                return $html;
             }
                 
             )
-            ->rawColumns(['campaign_name', 'status', 'action'])
+            ->rawColumns(['campaign_name', 'status', 'sent_time', 'action'])
             ->make(true);
+    }
+
+    public function cancel(Request $request)
+    {
+        // 1) Validate the encrypted token
+        $request->validate([
+            'eq' => 'required|string',
+        ]);
+
+        // 2) Decrypt payload
+        try {
+            $payload        = decryptUrl($request->input('eq'));
+            $notificationId = $payload['notification'];
+            $domainName     = $payload['domain'];
+        } catch (\Throwable $e) {
+            Log::warning("Cancel failed: invalid link [{$e->getMessage()}]");
+            return response()->json([
+                'status'  => false,
+                'message' => 'Invalid or expired link.',
+            ], 422);
+        }
+
+        // 3) Attempt to mark pending → cancelled
+        $affected = DB::table('domain_notification as dn')
+            ->join('domains as d', 'd.id', '=', 'dn.domain_id')
+            ->where('dn.notification_id', $notificationId)
+            ->where('dn.status',          'pending')
+            ->where('d.name',             $domainName)
+            ->update([
+                'dn.status'  => 'cancelled',
+                'dn.sent_at' => Carbon::now(),
+            ]);
+
+        if (! $affected) {
+            return response()->json([
+                'status'  => false,
+                'message' => 'Notification not pending or already processed.',
+            ], 404);
+        }
+
+        return response()->json([
+            'status'  => true,
+            'message' => 'Scheduled notification has been cancelled.',
+        ]);
     }
 
     public function details(Request $request)

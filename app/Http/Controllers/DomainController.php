@@ -11,6 +11,11 @@ use Illuminate\Support\Facades\Auth;
 use Google\Client as GoogleClient;
 use GuzzleHttp\Client as GuzzleClient;
 use Illuminate\Support\Facades\DB;
+use App\Models\DomainLicense;
+use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Hash;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+use Illuminate\Validation\ValidationException;
 
 class DomainController extends Controller
 {
@@ -251,4 +256,69 @@ class DomainController extends Controller
         }
     }
 
+    public function generatePlugin(Request $request)
+    {
+        // 1) validate incoming payload (eq in query or body)
+        $data = $request->validate([
+            'eq' => 'required|string',
+        ]);
+
+        // 2) decrypt & pull out your domain name
+        try {
+            $payload    = decryptUrl($data['eq']);
+            $domainName = $payload['domain'] ?? null;
+        } catch (\Exception $e) {
+            throw ValidationException::withMessages(['eq' => 'Invalid parameter']);
+        }
+
+        if (! $domainName) {
+            throw ValidationException::withMessages(['eq' => 'Invalid domain.']);
+        }
+
+        // 3) fetch active domain
+        $domain = Domain::where('name', $domainName)->where('status', 1)->first();
+        if (! $domain) {
+            throw new NotFoundHttpException("Domain not found or inactive.");
+        }
+
+        // 4) only respond to AJAX here
+        if ($request->ajax()) {
+            // 4a) build raw key + salt + (optional) pepper
+            $rawKey = Str::random(64);
+            $salt   = Str::random(16);
+            $pepper = config('license.license_code');  // make sure this is set
+
+            if (empty($pepper)) {
+                // purgeMissingPepper();
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Server misconfiguration: pepper missing.',
+                ], 500);
+            }
+
+            // 4b) hash it: salt + rawKey + pepper
+            $toHash = $salt . $rawKey . $pepper;
+            $hash   = Hash::make($toHash);
+
+            // 4c) store one-way
+            DomainLicense::create([
+                'domain_id'  => $domain->id,
+                'salt'       => $salt,
+                'key_hash'   => $hash,
+            ]);
+
+            // 4d) return the raw key exactly once
+            return response()->json([
+                'success' => true,
+                'key'     => $rawKey,
+                'message' => 'Key generated successfully.',
+            ]);
+        }
+
+        // If not AJAX, we’re not in the generate-key flow.
+        return response()->json([
+            'success' => false,
+            'message' => 'Invalid request.',
+        ], 400);
+    }
 }
