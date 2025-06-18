@@ -16,6 +16,7 @@ use Illuminate\Support\Facades\DB;
 use App\Models\PushEventCount;
 use App\Models\Segment;
 use Illuminate\Http\JsonResponse;
+use App\Jobs\SendSegmentNotificationJob;
 
 class NotificationController extends Controller
 {
@@ -285,22 +286,24 @@ class NotificationController extends Controller
 
         // 1) Validate
         $data = $request->validate([
-            'target_url'           => 'required|url',
-            'title'                => 'required|string|max:100',
-            'description'          => 'required|string|max:200',
-            'banner_image'         => 'nullable|url',
-            'banner_icon'          => 'nullable|url',
-            'schedule_type'        => 'required|in:Instant,Schedule',
-            'one_time_datetime'    => 'required_if:schedule_type,Schedule|nullable|date',
-            'domain_name'          => 'required|array|min:1',
-            'domain_name.*'        => 'required|string|exists:domains,name',
+            'target_url'        => 'required|url',
+            'title'             => 'required|string|max:100',
+            'description'       => 'required|string|max:200',
+            'banner_image'      => 'nullable|url',
+            'banner_icon'       => 'nullable|url',
+            'schedule_type'     => 'required|in:Instant,Schedule',
+            'one_time_datetime' => 'required_if:schedule_type,Schedule|nullable|date',
+            'domain_name'       => 'required|array|min:1',
+            'domain_name.*'     => 'required|string|exists:domains,name',
             'cta_enabled'       => 'required|in:0,1',
             'btn_1_title'       => 'nullable|required_if:cta_enabled,1|string|max:255',
             'btn_1_url'         => 'nullable|required_if:cta_enabled,1|url',
             'btn_title_2'       => 'nullable|required_with:btn_url_2|string|max:255',
             'btn_url_2'         => 'nullable|required_with:btn_title_2|url',
+            'segment_type' => 'required|in:all,particular',
+            'segment_id'   => 'nullable|required_if:segment_type,particular|exists:segments,id',
         ], [], [
-            'one_time_datetime' => 'one‐time date & time',
+            'one_time_datetime' => 'one-time date & time',
             'btn_1_title'       => 'Button 1 title',
             'btn_1_url'         => 'Button 1 URL',
             'btn_title_2'       => 'Button 2 title',
@@ -316,22 +319,26 @@ class NotificationController extends Controller
                 'banner_image'      => $data['banner_image'] ?? null,
                 'banner_icon'       => $data['banner_icon']  ?? null,
                 'schedule_type'     => strtolower($data['schedule_type']),
-                'one_time_datetime' => $data['schedule_type'] === 'Schedule'
-                                          ? $data['one_time_datetime']
-                                          : null,
+                'one_time_datetime' => $data['schedule_type'] === 'Schedule' ? $data['one_time_datetime'] : null,
                 'message_id'        => Str::uuid(),
                 'btn_1_title'       => $data['btn_1_title']  ?? null,
                 'btn_1_url'         => $data['btn_1_url']    ?? null,
                 'btn_title_2'       => $data['btn_title_2']  ?? null,
                 'btn_url_2'         => $data['btn_url_2']    ?? null,
+                'segment_id'        => $data['segment_id']   ?? null,
             ]);
 
             $ids = Domain::whereIn('name', $data['domain_name'])->pluck('id')->all();
             $notification->domains()->sync($ids);
 
             // Instant: fire off immediately
-            if ($notification->schedule_type === 'instant') {
+            if ($notification->schedule_type === 'instant' && $request->segment_type === 'all') {
                 SendNotificationJob::dispatch($notification->id);
+            }else if($request->schedule_type === 'instant' && $request->segment_type === 'particular'){
+                SendSegmentNotificationJob::dispatch(
+                    $notification->id,
+                    $notification->segment_id
+                );
             }
 
             return back()->with('success', "Notification {$notification->campaign_name} queued.");
