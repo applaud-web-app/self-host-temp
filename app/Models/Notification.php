@@ -51,4 +51,9 @@ class Notification extends Model
     {
         return $this->hasMany(NotificationSend::class);
     }
+
+    public function segment()
+    {
+        return $this->belongsTo(Segment::class);
+    }
 }
