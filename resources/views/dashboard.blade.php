@@ -291,13 +291,18 @@
                     dataType: 'json',
                     delay: 250,
                     data: function(params) {
+                        console.log(params);
                         // when you open, params.term will be undefined; default to empty string
                         return { q: params.term || '' };
                     },
                     processResults: function(response) {
-                        // response.data is already [{id,text},…] from your controller
                         return {
-                            results: response.data
+                            results: response.data.map(function(item) {
+                                return {
+                                    id: item.text,
+                                    text: item.text 
+                                };
+                            })
                         };
                     },
                     cache: true
@@ -324,63 +329,63 @@
             });
         });
 
-        $('#domain-select').on('select2:select', function(e) {
-            $('#preloader-cart').toggleClass('d-none d-flex');
-            $('#dashboardBody').removeClass('d-none');
-            $('#onLoading').addClass('d-none');
+        // $('#domain-select').on('select2:select', function(e) {
+        //     $('#preloader-cart').toggleClass('d-none d-flex');
+        //     $('#dashboardBody').removeClass('d-none');
+        //     $('#onLoading').addClass('d-none');
 
-            var selectedDomainId = e.params.data.id;
+        //     var selectedDomainId = e.params.data.id;
 
-            $('#currentDomain').val(e.params.data.text);
+        //     $('#currentDomain').val(e.params.data.text);
 
-            const domainName = $('#currentDomain').val();
-            $.ajax({
-                url: '',
-                type: 'GET',
-                data: {
-                    domain_name: domainName
-                },
-                success: function(response) {
-                    if (response.status) {
-                        $('#preloader-cart').toggleClass('d-none d-flex');
-                        $('#total_sub').text(response.data['total_subscribers'] || 0);
-                        $('#monthly_sub').text(response.data['monthly_subscribers'] || 0);
-                        $('#today_sub').text(response.data['today_subscribers'] || 0);
+        //     const domainName = $('#currentDomain').val();
+        //     $.ajax({
+        //         url: '',
+        //         type: 'GET',
+        //         data: {
+        //             domain_name: domainName
+        //         },
+        //         success: function(response) {
+        //             if (response.status) {
+        //                 $('#preloader-cart').toggleClass('d-none d-flex');
+        //                 $('#total_sub').text(response.data['total_subscribers'] || 0);
+        //                 $('#monthly_sub').text(response.data['monthly_subscribers'] || 0);
+        //                 $('#today_sub').text(response.data['today_subscribers'] || 0);
 
-                        if (response.data['import_data']['total'] == 0 || response.data['import_data'][
-                                'inactive'
-                            ] == response.data['import_data']['total']) {
-                            $('#imported_stats').addClass('d-none');
-                        } else {
-                            $('#imported_stats').removeClass('d-none');
-                        }
-                        $('#imported_sub').text(response.data['import_data']['total'] || 0);
-                        $('#imported_active_sub').text(response.data['import_data']['active'] || 0);
-                        $('#imported_inactive_sub').text(response.data['import_data']['inactive'] || 0);
+        //                 if (response.data['import_data']['total'] == 0 || response.data['import_data'][
+        //                         'inactive'
+        //                     ] == response.data['import_data']['total']) {
+        //                     $('#imported_stats').addClass('d-none');
+        //                 } else {
+        //                     $('#imported_stats').removeClass('d-none');
+        //                 }
+        //                 $('#imported_sub').text(response.data['import_data']['total'] || 0);
+        //                 $('#imported_active_sub').text(response.data['import_data']['active'] || 0);
+        //                 $('#imported_inactive_sub').text(response.data['import_data']['inactive'] || 0);
 
-                        const notification = response.data['recent_campaigns'];
-                        if (notification && notification.length > 0) {
-                            updateNotificationTable(notification);
-                        } else {
-                            $('#dataBox').html(
-                                '<tr><td colspan="5">No notifications available.</td></tr>'
-                            );
-                        }
+        //                 const notification = response.data['recent_campaigns'];
+        //                 if (notification && notification.length > 0) {
+        //                     updateNotificationTable(notification);
+        //                 } else {
+        //                     $('#dataBox').html(
+        //                         '<tr><td colspan="5">No notifications available.</td></tr>'
+        //                     );
+        //                 }
 
-                        updateChart(
-                            response.data['graph_data']['dates'],
-                            response.data['graph_data']['subscribers']
-                        );
-                    } else {
-                        $('#preloader-cart').toggleClass('d-none d-flex');
+        //                 updateChart(
+        //                     response.data['graph_data']['dates'],
+        //                     response.data['graph_data']['subscribers']
+        //                 );
+        //             } else {
+        //                 $('#preloader-cart').toggleClass('d-none d-flex');
                      
-                    }
-                },
-                error: function() {
-                    $('#preloader-cart').toggleClass('d-none d-flex');
-                }
-            });
-        });
+        //             }
+        //         },
+        //         error: function() {
+        //             $('#preloader-cart').toggleClass('d-none d-flex');
+        //         }
+        //     });
+        // });
 
         // // Refresh button logic
         $('.refresh-button').on('click', function() {

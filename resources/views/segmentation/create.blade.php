@@ -43,10 +43,6 @@
                                 <label class="form-label">Select Domain <span class="text-danger">*</span></label>
                                 <select class="form-select" id="domain-select" name="domain_name">
                                     <option value="">Choose domain…</option>
-                                    <option>example.com</option>
-                                    <option>shop.com</option>
-                                    <option>saas.io</option>
-                                    <option>events.io</option>
                                 </select>
                             </div>
                         </div>
@@ -298,25 +294,30 @@
          * 5.  Live Select2 domain list
          * ------------------------------------------------------------ */
         $('#domain-select').select2({
-            placeholder: 'Search for Domain...',
+            placeholder: 'Search for Domain…',
             allowClear: true,
-            minimumInputLength: 1,
+            minimumInputLength: 0,  // show list even when empty
             width: '100%',
             ajax: {
                 url: "{{ route('domain.domain-list') }}",
                 dataType: 'json',
                 delay: 250,
-                data: params => ({
-                    q: params.term
-                }),
+                cache: true,
+                data: params => ({ q: params.term || '' }),
                 processResults: resp => ({
-                    results: (resp.data || []).map(d => ({
-                        id: d.domain_name,
-                        text: d.domain_name
+                    results: (resp.status ? resp.data : []).map(d => ({
+                        id:   d.text,         // matches your controller
+                        text: d.text
                     }))
-                }),
-                cache: true
-            }
+                })
+            },
+            templateResult: domain => {
+                if (domain.loading) return domain.text;
+                return $(
+                `<span><i class="fal fa-globe me-2"></i>${domain.text}</span>`
+                );
+            },
+            escapeMarkup: m => m
         });
 
         /* ------------------------------------------------------------

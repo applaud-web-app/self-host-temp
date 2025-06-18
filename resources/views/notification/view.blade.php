@@ -3,7 +3,6 @@
 @push('styles')
     <!-- Bootstrap Date Range Picker CSS -->
     <link rel="stylesheet" href="{{ asset('/vendor/bootstrap-daterangepicker/daterangepicker.css') }}">
-    <link rel="stylesheet" href="{{ asset('vendor/sweetalert2/dist/sweetalert2.min.css') }}">
     <link rel="stylesheet" href="{{ asset('vendor/select2/css/select2.min.css') }}">
 
 
@@ -57,11 +56,6 @@
             overflow: hidden;
         }
 
-        /* Button styling */
-        .btn-sm {
-            padding: 0.25rem 0.5rem;
-            font-size: 0.75rem;
-        }
     </style>
 @endpush
 
@@ -181,84 +175,7 @@
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        @php
-                                            use Carbon\Carbon;
-
-                                            $statuses = [
-                                                ['label' => 'Sent', 'class' => 'badge-success'],
-                                                ['label' => 'Ongoing', 'class' => 'badge-primary'],
-                                                ['label' => 'Scheduled', 'class' => 'badge-warning'],
-                                                ['label' => 'Cancelled', 'class' => 'badge-danger'],
-                                                ['label' => 'Draft', 'class' => 'badge-secondary'],
-                                            ];
-                                        @endphp
-
-                                        @for ($i = 1; $i <= 20; $i++)
-                                            @php
-                                                $status = $statuses[($i - 1) % count($statuses)];
-                                                $statusLabel = $status['label'];
-                                                $statusClass = $status['class'];
-
-                                                // For demonstration, use June $i, 2025 at 10:00 AM
-                                                $sentTime = Carbon::create(2025, 6, $i, 10, 0)->format('Y-m-d h:i A');
-
-                                                $clicks =
-                                                    $statusLabel === 'Sent' || $statusLabel === 'Ongoing'
-                                                        ? $i * 100
-                                                        : null;
-
-                                                $reachCount = $i * 1000;
-                                                $sentCount = $i * 900;
-                                                $clickedCount = $i * ($i * 5);
-                                            @endphp
-
-                                            <tr>
-                                                <td>{{ $i }}</td>
-
-                                                <td>
-                                                    <a href="javascript:void(0)" class="open-modal text-decoration-none"
-                                                        data-title="Campaign {{ $i }}"
-                                                        data-description="This is the description for Campaign {{ $i }}."
-                                                        data-image="{{ asset('images/default.png') }}"
-                                                        data-link="https://example.com/campaign-{{ $i }}"
-                                                        data-reach="{{ $reachCount }}" data-sent="{{ $sentCount }}"
-                                                        data-clicked="{{ $clickedCount }}" data-bs-toggle="modal"
-                                                        data-bs-target="#campaign">
-                                                        Campaign {{ $i }}
-                                                    </a>
-                                                </td>
-
-                                                <td>domain{{ $i }}.com</td>
-
-                                                <td>
-                                                    <span class="badge light {{ $statusClass }}">
-                                                        {{ $statusLabel }}
-                                                    </span>
-                                                </td>
-
-                                                <td>{{ $sentTime }}</td>
-
-                                                <td>{{ $clicks !== null ? $clicks : '—' }}</td>
-
-                                                <td>
-                                                    <button type="button"
-                                                        class="btn btn-sm btn-outline-secondary open-modal"
-                                                        data-title="Campaign {{ $i }}"
-                                                        data-description="This is the description for Campaign {{ $i }}."
-                                                        data-image="{{ asset('images/default.png') }}"
-                                                        data-link="https://example.com/campaign-{{ $i }}"
-                                                        data-reach="{{ $reachCount }}" data-sent="{{ $sentCount }}"
-                                                        data-clicked="{{ $clickedCount }}" data-bs-toggle="modal"
-                                                        data-bs-target="#campaign">
-                                                        <i class="fas fa-eye me-1"></i> View
-                                                    </button>
-
-                                                    <button type="button" class="btn btn-sm btn-outline-primary">
-                                                        <i class="fas fa-clone me-1"></i> Clone
-                                                    </button>
-                                                </td>
-                                            </tr>
-                                        @endfor
+                                      
                                     </tbody>
                                 </table>
                             </div>
@@ -268,74 +185,7 @@
             </div>
         </div>
 
-        <!-- Campaign Modal (Static Preview) -->
-        {{-- <div class="modal fade" id="campaign" tabindex="-1" aria-labelledby="reportModal" aria-hidden="true">
-            <div class="modal-dialog modal-xl">
-                <!-- add just 3 lines -->
-                <div id="modalLoader" class="d-flex justify-content-center align-items-center" style="height:250px;">
-                    <div class="spinner-border text-primary"></div>
-                </div>
-                <div class="modal-content" class="d-none">
-                    <div class="modal-header">
-                        <h5 class="modal-title"><i class="fas fa-bullhorn"></i> <span id="campaign_name"></span></h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                    </div>
-                    <div class="modal-body">
-                        <div class="row">
-                            <!-- Analytics Section -->
-                            <div class="col-lg-6">
-                                <h4 class="mb-0"><i class="fas fa-chart-bar"></i> Analytics</h4>
-                                <hr>
-                                <div id="chart" class="border p-3">
-                                    <!-- Static placeholder chart area -->
-                                    <p class="text-center text-muted">[Chart will render here]</p>
-                                </div>
-                            </div>
-                            <!-- Preview Section -->
-                            <div class="col-lg-6">
-                                <h4 class="mb-0"><i class="fas fa-bell"></i> Preview</h4>
-                                <hr>
-                                <div class="windows_view border p-3">
-                                    <img src="" id="message_image" class="feat_img img-fluid mb-3"
-                                        alt="Campaign Image" style="height: 260px; width: auto;">
-                                    <div class="windows_body">
-                                        <div class="d-flex align-items-center mb-3">
-                                            <img src="{{ asset('images/chrome.png') }}" class="me-2"
-                                                alt="Browser Icon">
-                                            <span>Google Chrome</span>
-                                            <i class="far fa-window-close ms-auto"></i>
-                                        </div>
-                                        <div class="preview_content d-flex align-items-start mb-3">
-                                            <div class="flex-shrink-0 me-3">
-                                                <img src="{{ asset('images/push/icons/alarm-1.png') }}" id="icon_prv"
-                                                    class="img-fluid" alt="Icon Preview"
-                                                    style="height: 50px; width: 50px;">
-                                            </div>
-                                            <div class="flex-grow-1">
-                                                <span class="fw-bold fs-13" id="prv_title"></span>
-                                                <p class="card-text mb-2" id="prv_desc"></p>
-                                                <span class="fw-light text-primary" id="prv_link"></span>
-                                            </div>
-                                        </div>
-                                        <div class="row g-2">
-                                            <div class="col-6" style="display:none;" id="btn_prv">
-                                                <span id="btn_title1" class="btn btn-dark w-100 btn-sm">Click Here</span>
-                                            </div>
-                                            <div class="col-6" style="display:none;" id="btn2_prv">
-                                                <span id="btn_title2" class="btn btn-dark w-100 btn-sm">Click Here</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div><!-- End of Row -->
-                    </div>
-                </div>
-            </div>
-        </div> --}}
-
-
-        <!-- Campaign Modal -->
+        
         <!-- Campaign Modal -->
         <div class="modal fade" id="reportModal" tabindex="-1" aria-hidden="true">
             <div class="modal-dialog modal-dialog-centered modal-lg">
@@ -437,41 +287,41 @@
     <script>
         $(function() {
             /* ------------------------------------------------- Select2 (domains) */
-            const $domain = $('#filter_domain').select2({
-                placeholder: "Search for Domain...",
-                allowClear: true,
-                minimumInputLength: 0, // <— show list even with empty search
-                ajax: {
-                    url: "{{ route('domain.domain-list') }}",
-                    dataType: 'json',
-                    delay: 250,
-                    data: params => ({
-                        q: params.term || ''
-                    }),
-                    processResults: res => {
-                        if (!res.status) return {
-                            results: []
-                        };
-                        return {
-                            results: res.data.map(item => ({
-                                id: item.domain_name,
-                                text: item.domain_name
-                            }))
-                        };
-                    },
-                    cache: true
-                }
-            });
+             const $domain = $('#filter_domain').select2({
+            placeholder: 'Search for Domain…',
+            allowClear: true,
+            minimumInputLength: 0, // show list even when empty
+            ajax: {
+                url: "{{ route('domain.domain-list') }}",
+                dataType: 'json',
+                delay: 250,
+                cache: true,
+                data: params => ({ q: params.term || '' }),
+                processResults: res => ({
+                    results: (res.status ? res.data : []).map(item => ({
+                        id:   item.text,       // matches your controller
+                        text: item.text
+                    }))
+                })
+            },
+            templateResult: domain => {
+                if (domain.loading) return domain.text;
+                return $(
+                    `<span><i class="fal fa-globe me-2"></i>${domain.text}</span>`
+                );
+            },
+            escapeMarkup: markup => markup
+        });
 
-            // force initial load so opening the dropdown shows everything
-            $domain.on('select2:open', () => {
-                if (!$domain.data('select2').dropdown._dataFetched) {
-                    $domain.data('select2').trigger('query', {
-                        term: ''
-                    });
-                    $domain.data('select2').dropdown._dataFetched = true;
-                }
-            });
+        // On open, if no term typed, trigger an empty search to load all domains
+        $domain.on('select2:open', () => {
+            const search = $domain.data('select2').dropdown.$search;
+            if (!search.val()) {
+                $domain.select2('trigger', 'query', { term: '' });
+            }
+        });
+
+            
 
             /* ------------------------------------------------- DataTable */
             const table = $('#datatable').DataTable({
