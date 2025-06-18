@@ -225,7 +225,7 @@
                             <div class="card-body">
                                 <div class="mb-1">
                                     <label for="segmentSelect" class="form-label">Choose a Segment:</label>
-                                    <select class="form-select select-segment" name="segment_name" id="segmentSelect">
+                                    <select class="form-select select-segment" name="segment_id" id="segmentSelect">
                                         <option disabled selected>Select a segment</option>
                                     </select>
                                 </div>

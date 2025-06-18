@@ -1,9 +1,12 @@
 <?php
+// app/Jobs/SendSegmentNotificationDomainJob.php
 
 namespace App\Jobs;
 
 use App\Models\PushConfig;
 use App\Models\PushSubscriptionHead;
+use App\Models\SegmentDeviceRule;
+use App\Models\SegmentGeoRule;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -14,8 +17,6 @@ use Kreait\Firebase\Factory;
 use Kreait\Firebase\Messaging\CloudMessage;
 use Kreait\Firebase\Messaging\WebPushConfig;
 use Throwable;
-use App\Models\SegmentGeoRule;
-use App\Models\SegmentDeviceRule;
 
 class SendSegmentNotificationDomainJob implements ShouldQueue
 {
@@ -35,7 +36,7 @@ class SendSegmentNotificationDomainJob implements ShouldQueue
     public function handle(): void
     {
         try {
-            // load FCM credentials
+            // 1) Setup FCM
             $cfg       = PushConfig::first();
             $factory   = (new Factory())->withServiceAccount($cfg->credentials);
             $messaging = $factory->createMessaging();
@@ -45,6 +46,7 @@ class SendSegmentNotificationDomainJob implements ShouldQueue
 
             $success = $failed = 0;
 
+            // 2) Build subscription query
             $query = PushSubscriptionHead::where('status', 1)
                 ->where('domain', $this->domainName);
 
@@ -52,69 +54,66 @@ class SendSegmentNotificationDomainJob implements ShouldQueue
             $deviceTypes = SegmentDeviceRule::where('segment_id', $this->segmentId)
                 ->pluck('device_type')
                 ->all();
-            if ($deviceTypes) {
+            if (! empty($deviceTypes)) {
                 $query->whereIn('device_type', $deviceTypes);
             }
 
-            // apply geo rules
-            $geoRules = SegmentGeoRule::where('segment_id', $this->segmentId)
-                ->get();
+            // apply geo rules via the `meta` relation
+            $geoRules = SegmentGeoRule::where('segment_id', $this->segmentId)->get();
             foreach ($geoRules as $rule) {
                 if ($rule->operator === 'equals') {
-                    $query->where('country', $rule->country);
-                    if ($rule->state) {
-                        $query->where('state', $rule->state);
-                    }
+                    $query->whereHas('meta', function($q) use($rule) {
+                        $q->where('country', $rule->country)
+                          ->when($rule->state, fn($q2) => $q2->where('state', $rule->state));
+                    });
                 } else {
-                    $query->where(fn($q) => 
-                        $q->where('country','!=',$rule->country)
-                          ->when($rule->state, fn($q2) => $q2->orWhere('state','!=',$rule->state))
-                    );
+                    $query->whereHas('meta', function($q) use($rule) {
+                        $q->where('country', '!=', $rule->country)
+                          ->when($rule->state, fn($q2) => $q2->where('state', '!=', $rule->state));
+                    });
                 }
             }
 
-            // chunk & push
+            // 3) Chunk & send
             $query->select('id','token')
-                ->orderBy('id')
-                ->chunkById(500, function($subs) use (
-                    $messaging, $message, &$success, &$failed, $now
-                ) {
-                    $list   = $subs->values()->all();
-                    $tokens = array_column($list, 'token');
-                    if (count($tokens)) {
-                        $report = $messaging->sendMulticast($message, $tokens);
-                        $s = $report->successes()->count();
-                        $f = $report->failures()->count();
-                        $success += $s;
-                        $failed  += $f;
+            ->orderBy('id')
+            ->chunkById(500, function($subs) use ($messaging, $message, &$success, &$failed, $now) {
+                $list   = $subs->values()->all();
+                $tokens = array_column($list, 'token');
+                if (! empty($tokens)) {
+                    $report = $messaging->sendMulticast($message, $tokens);
+                    $s = $report->successes()->count();
+                    $f = $report->failures()->count();
+                    $success += $s;
+                    $failed  += $f;
 
-                        // deactivate bad tokens
-                        $idxs = array_keys($report->failures()->getItems());
-                        if (count($idxs)) {
-                            $bad = array_map(fn($i)=> $list[$i]->id, $idxs);
-                            DB::table('push_subscriptions_head')
-                              ->whereIn('id', $bad)
-                              ->update(['status'=>0]);
-                        }
-
-                        // bulk‐record sends
-                        $rows = [];
-                        foreach ($list as $i => $sub) {
-                            $rows[] = [
-                                'notification_id'      => $this->notificationId,
-                                'subscription_head_id' => $sub->id,
-                                'status'               => in_array($i, $idxs) ? 0 : 1,
-                                'created_at'           => $now,
-                                'updated_at'           => $now,
-                            ];
-                        }
-                        foreach (array_chunk($rows, 500) as $chunk) {
-                            DB::table('notification_sends')->insertOrIgnore($chunk);
-                        }
+                    // deactivate bad tokens
+                    $idxs = array_keys($report->failures()->getItems());
+                    if (! empty($idxs)) {
+                        $bad = array_map(fn($i) => $list[$i]->id, $idxs);
+                        DB::table('push_subscriptions_head')
+                        ->whereIn('id', $bad)
+                        ->update(['status'=>0]);
                     }
-                });
 
-            // update aggregates
+                    // record sends in bulk
+                    $rows = [];
+                    foreach ($list as $i => $sub) {
+                        $rows[] = [
+                        'notification_id'      => $this->notificationId,
+                        'subscription_head_id' => $sub->id,
+                        'status'               => in_array($i, $idxs) ? 0 : 1,
+                        'created_at'           => $now,
+                        'updated_at'           => $now,
+                        ];
+                    }
+                    foreach (array_chunk($rows, 500) as $chunk) {
+                        DB::table('notification_sends')->insertOrIgnore($chunk);
+                    }
+                }
+            });
+
+            // 4) Update notification & pivot
             DB::table('notifications')->where('id', $this->notificationId)
               ->update([
                 'active_count'  => DB::raw("active_count + ".($success+$failed)),
@@ -122,14 +121,10 @@ class SendSegmentNotificationDomainJob implements ShouldQueue
                 'failed_count'  => DB::raw("failed_count + {$failed}"),
               ]);
 
-            // mark pivot
             DB::table('domain_notification')
               ->where('notification_id', $this->notificationId)
               ->where('domain_id', $this->domainId)
-              ->update([
-                  'status'  => $success ? 'sent' : 'failed',
-                  'sent_at' => $now,
-              ]);
+              ->update(['status'=>'sent','sent_at'=>$now]);
 
         } catch (Throwable $e) {
             Log::error("Segment domain job failed [notif={$this->notificationId},seg={$this->segmentId},dom={$this->domainId}]: {$e->getMessage()}");

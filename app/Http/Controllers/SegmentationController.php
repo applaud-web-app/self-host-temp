@@ -298,7 +298,6 @@ class SegmentationController extends Controller
         }
     }
 
-
     public function updateStatus(Request $request)
     {
         try {

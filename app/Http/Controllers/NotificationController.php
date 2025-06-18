@@ -293,15 +293,15 @@ class NotificationController extends Controller
             'banner_icon'       => 'nullable|url',
             'schedule_type'     => 'required|in:Instant,Schedule',
             'one_time_datetime' => 'required_if:schedule_type,Schedule|nullable|date',
-            'domain_name'       => 'required|array|min:1',
-            'domain_name.*'     => 'required|string|exists:domains,name',
+            'segment_type'      => 'required|in:all,particular',
+            'domain_name'       => 'required_if:segment_type,all|array|min:1',
+            'domain_name.*'     => 'required_if:segment_type,all|string|exists:domains,name',
             'cta_enabled'       => 'required|in:0,1',
             'btn_1_title'       => 'nullable|required_if:cta_enabled,1|string|max:255',
             'btn_1_url'         => 'nullable|required_if:cta_enabled,1|url',
             'btn_title_2'       => 'nullable|required_with:btn_url_2|string|max:255',
             'btn_url_2'         => 'nullable|required_with:btn_title_2|url',
-            'segment_type' => 'required|in:all,particular',
-            'segment_id'   => 'nullable|required_if:segment_type,particular|exists:segments,id',
+            'segment_id'        => 'nullable|required_if:segment_type,particular|exists:segments,id',
         ], [], [
             'one_time_datetime' => 'one-time date & time',
             'btn_1_title'       => 'Button 1 title',
@@ -321,24 +321,37 @@ class NotificationController extends Controller
                 'schedule_type'     => strtolower($data['schedule_type']),
                 'one_time_datetime' => $data['schedule_type'] === 'Schedule' ? $data['one_time_datetime'] : null,
                 'message_id'        => Str::uuid(),
-                'btn_1_title'       => $data['btn_1_title']  ?? null,
-                'btn_1_url'         => $data['btn_1_url']    ?? null,
-                'btn_title_2'       => $data['btn_title_2']  ?? null,
-                'btn_url_2'         => $data['btn_url_2']    ?? null,
-                'segment_id'        => $data['segment_id']   ?? null,
+                'btn_1_title'       => $data['btn_1_title'] ?? null,
+                'btn_1_url'         => $data['btn_1_url'] ?? null,
+                'btn_title_2'       => $data['btn_title_2'] ?? null,
+                'btn_url_2'         => $data['btn_url_2'] ?? null,
+                'segment_id'        => $data['segment_id'] ?? null,
             ]);
 
-            $ids = Domain::whereIn('name', $data['domain_name'])->pluck('id')->all();
-            $notification->domains()->sync($ids);
+            if ($data['segment_type'] === 'all') {
+                $ids = Domain::whereIn('name', $data['domain_name'])->pluck('id')->all();
+                $notification->domains()->sync($ids);
+            }else{
+                // particular segment → attach its single domain
+                $segment = Segment::find($data['segment_id']);
+                if ($segment && $segment->domain) {
+                    $domain = Domain::where('name', $segment->domain)->first();
+                    if ($domain) {
+                        $notification->domains()->sync([$domain->id]);
+                    }
+                }
+            }
 
             // Instant: fire off immediately
-            if ($notification->schedule_type === 'instant' && $request->segment_type === 'all') {
-                SendNotificationJob::dispatch($notification->id);
-            }else if($request->schedule_type === 'instant' && $request->segment_type === 'particular'){
-                SendSegmentNotificationJob::dispatch(
-                    $notification->id,
-                    $notification->segment_id
-                );
+            if ($notification->schedule_type === 'instant') {
+                if ($data['segment_type'] === 'all') {
+                    SendNotificationJob::dispatch($notification->id);
+                } else {
+                    SendSegmentNotificationJob::dispatch(
+                        $notification->id,
+                        $notification->segment_id
+                    );
+                }
             }
 
             return back()->with('success', "Notification {$notification->campaign_name} queued.");
@@ -350,10 +363,6 @@ class NotificationController extends Controller
         }
     }
 
-    /**
-     * GET  /notifications/{notification}
-     * Show details of a single notification.
-     */
     public function show(Notification $notification)
     {
         $notification->load('domains');

@@ -4,7 +4,6 @@
 
 namespace App\Jobs;
 
-use App\Models\Notification;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -29,21 +28,55 @@ class SendSegmentNotificationJob implements ShouldQueue
     {
         try {
 
-            $n = Notification::with(['domains','segment.deviceRules','segment.geoRules'])->find($this->notificationId);
-            if (! $n) {
+            // 1) Load notification payload
+            $row = DB::table('notifications')
+                ->where('id', $this->notificationId)
+                ->first([
+                    'title','description','banner_icon','banner_image',
+                    'target_url','message_id',
+                    'btn_1_title','btn_1_url',
+                    'btn_title_2','btn_url_2',
+                ]);
+
+            if (! $row) {
                 Log::error("Notification {$this->notificationId} not found");
                 return;
             }
 
-            // build payload inline 
-            $webPush = $this->buildWebPush($n);
+             // 2) Build push payload
+            $webPush = $this->buildWebPush($row);
 
-            foreach ($n->domains as $domain) {
+            // 3) Fetch & mark pending domains in one transaction
+            $pending = DB::transaction(function() {
+                $list = DB::table('domain_notification as dn')
+                    ->join('domains as d', 'dn.domain_id', '=', 'd.id')
+                    ->where('dn.notification_id', $this->notificationId)
+                    ->where('dn.status', 'pending')
+                    ->select('dn.domain_id', 'd.name as domain_name')
+                    ->lockForUpdate()
+                    ->get();
+
+                if ($list->isNotEmpty()) {
+                    DB::table('domain_notification')
+                      ->where('notification_id', $this->notificationId)
+                      ->whereIn('domain_id', $list->pluck('domain_id')->all())
+                      ->update(['status'=>'queued','sent_at'=>null]);
+                }
+
+                return $list;
+            });
+
+            if ($pending->isEmpty()) {
+                return;
+            }
+
+            // 4) Dispatch one domain job per-domain
+            foreach ($pending as $domain) {
                 SendSegmentNotificationDomainJob::dispatch(
                     $this->notificationId,
                     $this->segmentId,
-                    $domain->id,
-                    $domain->name,
+                    $domain->domain_id,
+                    $domain->domain_name,
                     $webPush
                 );
             }
