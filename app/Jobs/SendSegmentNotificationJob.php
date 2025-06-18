@@ -27,8 +27,6 @@ class SendSegmentNotificationJob implements ShouldQueue
     public function handle(): void
     {
         try {
-
-            // 1) Load notification payload
             $row = DB::table('notifications')
                 ->where('id', $this->notificationId)
                 ->first([
@@ -43,10 +41,8 @@ class SendSegmentNotificationJob implements ShouldQueue
                 return;
             }
 
-             // 2) Build push payload
             $webPush = $this->buildWebPush($row);
 
-            // 3) Fetch & mark pending domains in one transaction
             $pending = DB::transaction(function() {
                 $list = DB::table('domain_notification as dn')
                     ->join('domains as d', 'dn.domain_id', '=', 'd.id')
@@ -70,7 +66,6 @@ class SendSegmentNotificationJob implements ShouldQueue
                 return;
             }
 
-            // 4) Dispatch one domain job per-domain
             foreach ($pending as $domain) {
                 SendSegmentNotificationDomainJob::dispatch(
                     $this->notificationId,

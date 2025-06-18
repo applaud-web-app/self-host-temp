@@ -36,7 +36,6 @@ class SendSegmentNotificationDomainJob implements ShouldQueue
     public function handle(): void
     {
         try {
-            // 1) Setup FCM
             $cfg       = PushConfig::first();
             $factory   = (new Factory())->withServiceAccount($cfg->credentials);
             $messaging = $factory->createMessaging();
@@ -46,74 +45,71 @@ class SendSegmentNotificationDomainJob implements ShouldQueue
 
             $success = $failed = 0;
 
-            // 2) Build subscription query
             $query = PushSubscriptionHead::where('status', 1)
                 ->where('domain', $this->domainName);
 
-            // apply device rules
+            // apply device rules via meta.device
             $deviceTypes = SegmentDeviceRule::where('segment_id', $this->segmentId)
                 ->pluck('device_type')
                 ->all();
             if (! empty($deviceTypes)) {
-                $query->whereIn('device_type', $deviceTypes);
+                $query->whereHas('meta', fn($q) =>
+                    $q->whereIn('device', $deviceTypes)
+                );
             }
 
-            // apply geo rules via the `meta` relation
+            // apply geo rules via meta.country/state
             $geoRules = SegmentGeoRule::where('segment_id', $this->segmentId)->get();
             foreach ($geoRules as $rule) {
                 if ($rule->operator === 'equals') {
-                    $query->whereHas('meta', function($q) use($rule) {
+                    $query->whereHas('meta', fn($q) =>
                         $q->where('country', $rule->country)
-                          ->when($rule->state, fn($q2) => $q2->where('state', $rule->state));
-                    });
+                          ->when($rule->state, fn($q2) => $q2->where('state', $rule->state))
+                    );
                 } else {
-                    $query->whereHas('meta', function($q) use($rule) {
+                    $query->whereHas('meta', fn($q) =>
                         $q->where('country', '!=', $rule->country)
-                          ->when($rule->state, fn($q2) => $q2->where('state', '!=', $rule->state));
-                    });
+                          ->when($rule->state, fn($q2) => $q2->where('state', '!=', $rule->state))
+                    );
                 }
             }
 
-            // 3) Chunk & send
             $query->select('id','token')
-            ->orderBy('id')
-            ->chunkById(500, function($subs) use ($messaging, $message, &$success, &$failed, $now) {
-                $list   = $subs->values()->all();
-                $tokens = array_column($list, 'token');
-                if (! empty($tokens)) {
-                    $report = $messaging->sendMulticast($message, $tokens);
-                    $s = $report->successes()->count();
-                    $f = $report->failures()->count();
-                    $success += $s;
-                    $failed  += $f;
+                  ->orderBy('id')
+                  ->chunkById(500, function($subs) use ($messaging, $message, &$success, &$failed, $now) {
+                      $list   = $subs->values()->all();
+                      $tokens = array_column($list, 'token');
+                      if (! empty($tokens)) {
+                          $report = $messaging->sendMulticast($message, $tokens);
+                          $s = $report->successes()->count();
+                          $f = $report->failures()->count();
+                          $success += $s;
+                          $failed  += $f;
 
-                    // deactivate bad tokens
-                    $idxs = array_keys($report->failures()->getItems());
-                    if (! empty($idxs)) {
-                        $bad = array_map(fn($i) => $list[$i]->id, $idxs);
-                        DB::table('push_subscriptions_head')
-                        ->whereIn('id', $bad)
-                        ->update(['status'=>0]);
-                    }
+                          $idxs = array_keys($report->failures()->getItems());
+                          if (! empty($idxs)) {
+                              $bad = array_map(fn($i) => $list[$i]->id, $idxs);
+                              DB::table('push_subscriptions_head')
+                                ->whereIn('id', $bad)
+                                ->update(['status'=>0]);
+                          }
 
-                    // record sends in bulk
-                    $rows = [];
-                    foreach ($list as $i => $sub) {
-                        $rows[] = [
-                        'notification_id'      => $this->notificationId,
-                        'subscription_head_id' => $sub->id,
-                        'status'               => in_array($i, $idxs) ? 0 : 1,
-                        'created_at'           => $now,
-                        'updated_at'           => $now,
-                        ];
-                    }
-                    foreach (array_chunk($rows, 500) as $chunk) {
-                        DB::table('notification_sends')->insertOrIgnore($chunk);
-                    }
-                }
-            });
+                          $rows = [];
+                          foreach ($list as $i => $sub) {
+                              $rows[] = [
+                                  'notification_id'      => $this->notificationId,
+                                  'subscription_head_id' => $sub->id,
+                                  'status'               => in_array($i, $idxs) ? 0 : 1,
+                                  'created_at'           => $now,
+                                  'updated_at'           => $now,
+                              ];
+                          }
+                          foreach (array_chunk($rows,500) as $chunk) {
+                              DB::table('notification_sends')->insertOrIgnore($chunk);
+                          }
+                      }
+                  });
 
-            // 4) Update notification & pivot
             DB::table('notifications')->where('id', $this->notificationId)
               ->update([
                 'active_count'  => DB::raw("active_count + ".($success+$failed)),

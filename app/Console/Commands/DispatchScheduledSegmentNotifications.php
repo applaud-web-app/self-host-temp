@@ -17,11 +17,11 @@ class DispatchScheduledSegmentNotifications extends Command
     {
         $now = Carbon::now();
 
-        Notification::where('schedule_type', 'schedule')
+        Notification::where('schedule_type','schedule')
             ->whereNotNull('one_time_datetime')
             ->where('segment_type','particular')
             ->where('one_time_datetime','<=',$now)
-            ->whereHas('domains', fn($q) => 
+            ->whereHas('domains', fn($q) =>
                 $q->where('domain_notification.status','pending')
             )
             ->each(function(Notification $n) {
