@@ -225,7 +225,7 @@
                             <div class="card-body">
                                 <div class="mb-1">
                                     <label for="segmentSelect" class="form-label">Choose a Segment:</label>
-                                    <select class="form-select select-segment" name="segment_id" id="segmentSelect">
+                                    <select class="form-select select-segment" name="segment_id" id="segmentSelect" required>
                                         <option disabled selected>Select a segment</option>
                                     </select>
                                 </div>
@@ -240,23 +240,17 @@
                                         id="select_all_domain" value="Select All">
                                     <label class="form-check-label" for="select_all_domain">Select All</label>
                                 </div>
+                                <!-- filter box -->
+                                <input type="search" id="domainFilter" class="form-control domain-input" placeholder="Search domains…" style="max-width: 200px;">
                             </div>
                             <div class="card-body">
+                                <div id="domain-loader" class="text-center my-3" style="display: none;">
+                                    <div class="spinner-border" role="status"><span class="visually-hidden">Loading…</span></div>
+                                </div>
                                 <div class="row scrollbar" id="domain-list">
-                                    @foreach ($domains as $domain)
-                                        <div class="col-lg-6 col-md-6 col-12 domain-item">
-                                            <div class="form-check form-check-inline">
-                                                <input class="form-check-input" type="checkbox" name="domain_name[]"
-                                                    id="domain-{{ $domain->id }}" value="{{ $domain->name }}">
-                                                <label class="form-check-label" for="domain-{{ $domain->id }}">
-                                                    {{ $domain->name }}
-                                                </label>
-                                            </div>
-                                        </div>
-                                    @endforeach
+                                    <!-- AJAX-injected items -->
                                 </div>
                                 <span id="domain-error-span"></span>
-
                             </div>
                         </div>
 
@@ -290,7 +284,10 @@
                                         <!-- One Time Tab -->
                                         <div class="tab-pane show active fade mb-3 p-3 border" id="one_time"
                                             role="tabpanel">
-                                            <!-- Static min datetime set to June 2, 2025 00:00 -->
+                                            @php
+                                                $minDt   = \Carbon\Carbon::now()->format('Y-m-d\TH:i');
+                                                $minLabel= \Carbon\Carbon::now()->format('j M Y, H:i');
+                                            @endphp
                                             <div class="row">
                                                 <div class="col-12 mb-3">
                                                     <div class="form-group">
@@ -298,7 +295,7 @@
                                                                 class="text-danger">*</span></label>
                                                         <input type="datetime-local" class="form-control"
                                                             name="one_time_datetime" id="one_time_start_date"
-                                                            min="2025-06-02T00:00" required>
+                                                            min="{{ $minDt }}" value="{{ old('one_time_datetime', $minDt) }}" required>
                                                         <div class="invalid-feedback"></div>
                                                     </div>
                                                 </div>
@@ -857,7 +854,7 @@
                         maxlength: 'Description cannot exceed 200 characters.'
                     },
                     'domain_name[]': 'Please select at least one domain.',
-                    one_time_datetime: 'Start Date & Time is required when scheduling.',
+                    one_time_datetime: 'Please select a date & time for scheduling (must be now or later).',
                     // recurring_start_date: 'Recurring Start Date is required.',
                     // recurring_end_date: 'Recurring End Date is required unless “Never Ends” is checked.',
                     occurrence: 'Please select a repeat interval.',
@@ -1002,6 +999,77 @@
             $secondBtn.hide();
             $btnPreview1.hide();
             $btnPreview2.hide();
+        });
+    </script>
+    <script>
+        // fetch & render domains
+        function loadDomains(search = '') {
+            const $loader = $('#domain-loader');
+            const $list = $('#domain-list');
+            $list.empty();
+            $loader.show();
+
+            $.ajax({
+                url: "{{ route('domain.domain-list') }}",
+                dataType: 'json',
+                data: {
+                    q: search
+                },
+                success(res) {
+                    if (res.status) {
+                        res.data.forEach(domain => {
+                            $list.append(`<div class="col-lg-6 col-md-6 col-12 domain-item">
+                                <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="checkbox"
+                                        name="domain_name[]" id="domain-${domain.id}"
+                                        value="${domain.text}">
+                                <label class="form-check-label"
+                                        for="domain-${domain.id}">
+                                    ${domain.text}
+                                </label>
+                                </div>
+                            </div>`);
+                        });
+                    } else {
+                        $list.append(`<div class="text-danger">${res.message}</div>`);
+                    }
+                },
+                error() {
+                    $list.append('<div class="text-danger">Failed to load domains.</div>');
+                },
+                complete() {
+                    $loader.hide();
+                }
+            });
+        }
+
+        $(document).ready(function() {
+            // initially load all domains
+            loadDomains();
+
+             // 1) Client-side filter
+            $('#domainFilter').on('input', function() {
+                const term = this.value.trim().toLowerCase();
+                $('#domain-list .domain-item').each(function() {
+                const label = $(this).find('label').text().toLowerCase();
+                $(this).toggle(label.includes(term));
+                });
+                // whenever you filter, uncheck the “Select All” box
+                $('#select_all_domain').prop('checked', false);
+            });
+
+            // 2) “Select All” only for visible items
+            $('#select_all_domain').on('click', function() {
+                const shouldCheck = this.checked;
+                // first, clear every checkbox
+                $("input[name='domain_name[]']").prop('checked', false);
+                if (shouldCheck) {
+                // then check only the visible ones
+                $('#domain-list .domain-item:visible')
+                    .find("input[name='domain_name[]']")
+                    .prop('checked', true);
+                }
+            });
         });
     </script>
 @endpush

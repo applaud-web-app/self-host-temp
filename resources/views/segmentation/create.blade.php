@@ -448,9 +448,15 @@
             submitHandler(form) {
                 /* extra Geo consistency check */
                 if ($('#segment_type').val() === 'geo' && !geoIsConsistent()) {
-                    alert('Geo rules contain duplicates or conflicting "Only" / "Without" pairs.');
+                    iziToast.error({
+                        title: 'Error',
+                        message: 'Geo rules contain duplicates or conflicting "Only" / "Without" pairs.',
+                        position: 'topRight'
+                    });
                     return false;
                 }
+                const $btn = $(form).find('button[type="submit"]');
+                $btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-2"></span>Processing…');
                 form.submit();
             }
         });

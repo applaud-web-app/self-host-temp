@@ -423,7 +423,7 @@ class NotificationController extends Controller
                 }
             }
 
-            return back()->with('success', "Notification {$notification->campaign_name} queued.");
+            return redirect()->route('notification.view')->with('success', "Notification {$notification->campaign_name} queued.");
         } catch (\Throwable $e) {
             Log::error("Failed to create notification: {$e->getMessage()}", [
                 'data' => $data,
