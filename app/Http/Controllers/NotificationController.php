@@ -325,6 +325,7 @@ class NotificationController extends Controller
                 'btn_1_url'         => $data['btn_1_url'] ?? null,
                 'btn_title_2'       => $data['btn_title_2'] ?? null,
                 'btn_url_2'         => $data['btn_url_2'] ?? null,
+                'segment_type'      => $data['segment_type'],
                 'segment_id'        => $data['segment_id'] ?? null,
             ]);
 

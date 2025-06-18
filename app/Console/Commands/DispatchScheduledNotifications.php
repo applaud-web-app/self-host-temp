@@ -18,7 +18,7 @@ class DispatchScheduledNotifications extends Command
 
         Notification::where('schedule_type','schedule')
         ->whereNotNull('one_time_datetime')
-        ->WhereNull('segment_id')
+        ->where('segment_type','all')
         ->where('one_time_datetime','<=',$now)
         ->whereHas('domains', function($q) {
             $q->where('domain_notification.status','pending');

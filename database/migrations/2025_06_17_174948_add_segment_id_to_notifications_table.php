@@ -12,11 +12,12 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('notifications', function (Blueprint $table) {
-            $table->foreignId('segment_id')
-                ->nullable()
-                ->constrained('segments')
-                ->nullOnDelete()
-                ->after('id');
+            $table->enum('schedule_type', ['all', 'particular'])->default('all');
+            $table->foreignId('segment_id')->nullable()->constrained('segments')->nullOnDelete()->after('id');
+            $table->index(
+                ['segment_type', 'one_time_datetime'],
+                'notifications_segment_schedule_index'
+            );
         });
     }
 

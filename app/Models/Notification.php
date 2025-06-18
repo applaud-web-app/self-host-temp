@@ -23,6 +23,7 @@ class Notification extends Model
         'btn_1_url',
         'btn_title_2',
         'btn_url_2',
+        'segment_type',
         'segment_id'
     ];
 
