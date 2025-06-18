@@ -144,7 +144,7 @@
                             <span>Schedule</span>
                         </label>
                         <label class="mb-2 mb-lg-3 w-auto d-inline-block" for="campaign_type_segment">
-                            <input type="radio" name="campaign_type" id="campaign_type_segment" value="segment">
+                            <input type="radio" name="campaign_type" id="campaign_type_segment" value="particular">
                             <span>Segment</span>
                         </label>
                         <label class="mb-2 mb-lg-3 w-auto d-inline-block" for="campaign_type_api">
