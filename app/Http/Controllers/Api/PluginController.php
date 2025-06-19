@@ -43,19 +43,29 @@ class PluginController extends Controller
         return Hash::check($toCheck, $license->key_hash);
     }
 
+    private function verifyHostName(string $hostName): bool
+    {
+        // Use Laravel request() helper to get current host
+        $currentHost = request()->getHost();
+
+        // Compare case-insensitively
+        return strcasecmp($hostName, $currentHost) === 0;
+    }
+
     public function verifyLicenseKey(Request $request)
     {
         $clientIp   = $request->header('CF-Connecting-IP') ?? $request->getClientIp();
         $limiterKey = 'plugin-verify:' . $clientIp;
-        $freezTime = 300; // 3 minute
+        $maxAttempts = 3;
+        $lockSeconds = 300;
 
         // 1) block on 4th try, lock for 5 minutes
-        if (RateLimiter::tooManyAttempts($limiterKey, 3)) {
-            $seconds = RateLimiter::availableIn($limiterKey);
-            $minutes = ceil($seconds / 60);
+        if (RateLimiter::tooManyAttempts($limiterKey, $maxAttempts)) {
+            $available = RateLimiter::availableIn($limiterKey);
+            $minutes   = ceil($available / 60);
             return response()->json([
                 'status'  => false,
-                'message' => "Too many attempts. Please try again in {$minutes} minute(s)."
+                'message' => "Too many attempts. Try again in {$minutes} minute(s)."
             ], 429);
         }
 
@@ -64,10 +74,11 @@ class PluginController extends Controller
             $data = $request->validate([
                 'domain_name' => 'required|string|max:100',
                 'key'         => 'required|string|max:200',
+                'host_name'   => 'required|string|max:100',
             ]);
         } catch (ValidationException $e) {
             // count as a “try”
-            RateLimiter::hit($limiterKey, $freezTime);
+            RateLimiter::hit($limiterKey, $lockSeconds);
             return response()->json([
                 'status'  => false,
                 'message' => 'Unauthorized request.'
@@ -75,36 +86,46 @@ class PluginController extends Controller
         }
 
         try {
-            // 3) domain lookup
+            // 3) host name check
+            if (! $this->verifyHostName($data['host_name'])) {
+                RateLimiter::hit($limiterKey, $lockSeconds);
+                return response()->json([
+                    'status'  => false,
+                    'message' => 'Host name is not authorized.'
+                ], 401);
+            }
+
+            // 4) domain lookup
             $domain = $this->getValidDomain($data['domain_name']);
             if (! $domain) {
-                RateLimiter::hit($limiterKey, $freezTime);
+                RateLimiter::hit($limiterKey, $lockSeconds);
                 return response()->json([
                     'status'  => false,
                     'message' => 'Unauthorized access.'
                 ], 401);
             }
 
-            // 4) license check
+            // 5) license check
             $license = DomainLicense::where('domain_id', $domain->id)->latest('created_at')->first();
 
             if (! $license || ! $this->verifyDomainKey($data['key'], $license)) {
-                RateLimiter::hit($limiterKey, $freezTime);
+                RateLimiter::hit($limiterKey, $lockSeconds);
                 return response()->json([
                     'status'  => false,
                     'message' => 'The provided license key is invalid.'
                 ], 401);
             }
             
+            // 6) already used?
             if($license->is_used){
-                RateLimiter::hit($limiterKey, $freezTime);
+                RateLimiter::hit($limiterKey, $lockSeconds);
                 return response()->json([
                     'status'  => false,
                     'message' => 'This license key has already been used.'
                 ], 401);
             }
 
-            // 5) success — mark it used and clear the throttle
+            // 7) success — mark it used and clear the throttle
             $license->markUsed();
             RateLimiter::clear($limiterKey);
 
@@ -114,7 +135,7 @@ class PluginController extends Controller
             ], 200);
 
         } catch (\Throwable $e) {
-            RateLimiter::hit($limiterKey, $freezTime);
+            RateLimiter::hit($limiterKey, $lockSeconds);
             return response()->json([
                 'status'  => false,
                 'message' => 'Unauthorized access.'
