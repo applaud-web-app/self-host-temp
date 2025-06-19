@@ -158,7 +158,7 @@
    <ul class="metismenu" id="menu">
     <!-- Dashboard -->
     <li>
-        <a class="ai-icon" href="{{ route('dashboard') }}" aria-expanded="false">
+        <a class="ai-icon" href="{{ route('dashboard.view') }}" aria-expanded="false">
             <i class="far fa-tachometer-alt-slowest"></i>
             <span class="nav-text">Dashboard</span>
         </a>

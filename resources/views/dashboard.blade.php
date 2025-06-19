@@ -2,6 +2,15 @@
 
 @push('styles')
     <link rel="stylesheet" href="{{ asset('vendor/select2/css/select2.min.css') }}">
+    <style>
+        .refresh-icon {
+            cursor: pointer;
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            color: #f93a0b;
+        }
+    </style>
 @endpush
 
 @section('content')
@@ -10,7 +19,7 @@
             <div class="d-flex flex-wrap align-items-center justify-content-between text-head">
                 <div class="me-3 d-flex align-items-center mb-2">
                     <h2 class="mb-0 me-auto applaud">Self-Hosted Admin Dashboard</h2>
-                    <button id="refresh-button" class="btn btn-sm btn-primary ms-2 align-items-center refresh-button"><i
+                    <button id="refresh-all" class="btn btn-sm btn-primary ms-2 align-items-center refresh-button"><i
                             class="me-2 far fa-sync-alt"></i> Refresh</button>
                 </div>
                 <div class="form-group mb-3" style="min-width: 350px" id="hiddenSelect">
@@ -20,443 +29,396 @@
                 </div>
             </div>
 
-            <!-- 8 Summary Cards -->
+
+            <div class="row mt-4">
+                @php
+                    $cards = [
+                        'total' => ['label' => 'Total Subscribers', 'icon' => 'fa-users', 'badge' => 'primary'],
+                        'monthly' => ['label' => 'This Month', 'icon' => 'fa-user-plus', 'badge' => 'secondary'],
+                        'today' => ['label' => 'Today', 'icon' => 'fa-calendar-day', 'badge' => 'success'],
+                        'active' => ['label' => 'Total Active', 'icon' => 'fa-check-circle', 'badge' => 'info'],
+                    ];
+                @endphp
+                @foreach ($cards as $key => $c)
+                    <div class="col-lg-3 col-md-6 col-sm-6 col-12">
+                        <div class="widget-stat card">
+                            <div class="card-body p-4 position-relative">
+                                <div class="media ai-icon">
+                                    <span class="me-3 bgl-{{ $c['badge'] }} text-{{ $c['badge'] }}">
+                                        <i class="fal {{ $c['icon'] }}"></i>
+                                    </span>
+                                    <div class="media-body">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <p class="mb-0">{{ $c['label'] }}</p>
+                                            <i class="fas fa-sync-alt card-refresh refresh-icon"
+                                                data-metric="{{ $key }}" style="cursor:pointer"
+                                                title="Refresh"></i>
+                                        </div>
+                                        <h4 id="card-{{ $key }}" class="mb-0">0</h4>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                @endforeach
+            </div>
+
+            {{-- FOR NOTIFICATION STATS --}}
+
+            <div class="row mb-1">
+                @php
+                    $notifCards = [
+                        'total' => ['label' => 'Total Notifications', 'icon' => 'fa-bell', 'badge' => 'info'],
+                        'segment' => ['label' => 'Segment Notifications','icon' => 'fa-users-cog','badge' => 'warning'],
+                        'broadcast' => ['label' => 'Broadcast Notifications','icon' => 'fa-globe','badge' => 'primary'],
+                        'plugin' => ['label' => 'Plugin Notifications', 'icon' => 'fa-plug', 'badge' => 'success'],
+                    ];
+                @endphp
+
+                @foreach ($notifCards as $key => $c)
+                    <div class="col-lg-3 col-md-6 col-sm-6 col-12">
+                        <div class="widget-stat card">
+                            <div class="card-body p-4 position-relative">
+                                <div class="media ai-icon">
+                                    <span class="me-3 bgl-{{ $c['badge'] }} text-{{ $c['badge'] }}">
+                                        <i class="fal {{ $c['icon'] }}"></i>
+                                    </span>
+                                    <div class="media-body">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <p class="mb-0">{{ $c['label'] }}</p>
+                                            <i class="fas fa-sync-alt notif-refresh refresh-icon"
+                                            data-metric="{{ $key }}"
+                                            title="Refresh"></i>
+                                        </div>
+                                        <h4 id="notif-{{ $key }}" class="mb-0">0</h4>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                @endforeach
+            </div>
+
+            {{-- Weekly charts --}}
             <div class="row">
-                <div class="col-lg-3 col-md-6 col-sm-6 col-12">
-                    <div class="widget-stat card">
-                        <div class="card-body p-4">
-                            <div class="media ai-icon">
-                                <span class="me-3 bgl-primary text-primary"><i class="fal fa-users"></i></span>
-                                <div class="media-body">
-                                    <p class="mb-0">Total Subscribers</p>
-                                    <h4 class="mb-0">1,200</h4>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-lg-3 col-md-6 col-sm-6 col-12">
-                    <div class="widget-stat card">
-                        <div class="card-body p-4">
-                            <div class="media ai-icon">
-                                <span class="me-3 bgl-secondary text-secondary"><i class="fal fa-user-plus"></i></span>
-                                <div class="media-body">
-                                    <p class="mb-0">This Month Subs</p>
-                                    <h4 class="mb-0">300</h4>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-lg-3 col-md-6 col-sm-6 col-12">
-                    <div class="widget-stat card">
-                        <div class="card-body p-4">
-                            <div class="media ai-icon">
-                                <span class="me-3 bgl-success text-success"><i class="fal fa-calendar-day"></i></span>
-                                <div class="media-body">
-                                    <p class="mb-0">Today Subs</p>
-                                    <h4 class="mb-0">25</h4>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-lg-3 col-md-6 col-sm-6 col-12">
-                    <div class="widget-stat card">
-                        <div class="card-body p-4">
-                            <div class="media ai-icon">
-                                <span class="me-3 bgl-warning text-warning"><i class="fal fa-bullhorn"></i></span>
-                                <div class="media-body">
-                                    <p class="mb-0">Active Campaigns</p>
-                                    <h4 class="mb-0">5</h4>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-lg-3 col-md-6 col-sm-6 col-12">
-                    <div class="widget-stat card">
-                        <div class="card-body p-4">
-                            <div class="media ai-icon">
-                                <span class="me-3 bgl-info text-info"><i class="fal fa-bell"></i></span>
-                                <div class="media-body">
-                                    <p class="mb-0">Total Notifications</p>
-                                    <h4 class="mb-0">850</h4>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-lg-3 col-md-6 col-sm-6 col-12">
-                    <div class="widget-stat card">
-                        <div class="card-body p-4">
-                            <div class="media ai-icon">
-                                <span class="me-3 bgl-danger text-danger"><i class="fal fa-globe"></i></span>
-                                <div class="media-body">
-                                    <p class="mb-0">Total Domains</p>
-                                    <h4 class="mb-0">12</h4>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-lg-3 col-md-6 col-sm-6 col-12">
-                    <div class="widget-stat card">
-                        <div class="card-body p-4">
-                            <div class="media ai-icon">
-                                <span class="me-3 bgl-light text-dark"><i class="fal fa-percentage"></i></span>
-                                <div class="media-body">
-                                    <p class="mb-0">Campaign Success Rate</p>
-                                    <h4 class="mb-0">75%</h4>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-lg-3 col-md-6 col-sm-6 col-12">
-                    <div class="widget-stat card">
-                        <div class="card-body p-4">
-                            <div class="media ai-icon">
-                                <span class="me-3 bgl-light text-dark"><i class="fal fa-envelope-open"></i></span>
-                                <div class="media-body">
-                                    <p class="mb-0">Avg Open Rate</p>
-                                    <h4 class="mb-0">48%</h4>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Keep the Charts and Table as before -->
-            <div class="row">
-                <div class="col-xl-6">
+                <div class="col-xl-6 mb-4">
                     <div class="card">
-                        <div class="card-header">
-                            <h4 class="fs-20 mb-0">Daily Subscribers</h4>
+                        <div class="card-header d-flex justify-content-between">
+                            <h4 class="mb-0">Weekly Subscribers</h4>
+                            <i class="fas fa-sync-alt chart-refresh text-primary" data-metric="subscribers"
+                                style="cursor:pointer"></i>
                         </div>
-                        <div class="card-body p-0">
-                            <div id="subscriberChart" style="height: 300px; width: 100%;"></div>
+                        <div class="card-body">
+                            <div id="weeklySubscribersChart" style="height:300px;"></div>
                         </div>
                     </div>
                 </div>
-                <div class="col-xl-6">
+                <div class="col-xl-6 mb-4">
                     <div class="card">
-                        <div class="card-header">
-                            <h4 class="fs-20 mb-0">Notifications Sent</h4>
+                        <div class="card-header d-flex justify-content-between">
+                            <h4 class="mb-0">Weekly Notifications</h4>
+                            <i class="fas fa-sync-alt chart-refresh text-primary" data-metric="notifications"
+                                style="cursor:pointer"></i>
                         </div>
-                        <div class="card-body p-0">
-                            <div id="notificationsChart" style="height: 300px; width: 100%;"></div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Recent Campaigns Table -->
-            <div class="col-xl-12">
-                <div class="card ">
-                    <div class="card-header ">
-                        <h4 class="card-title">Recent Campaigns</h4>
-                    </div>
-                    <div class="card-body">
-                        <div class="table-responsive">
-                            <table class="table display">
-                                <thead>
-                                    <tr>
-                                        <th>#</th>
-                                        <th>Campaign Name</th>
-                                        <th>Status</th>
-                                        <th>Sent Time</th>
-                                        <th>Clicks</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr>
-                                        <td>1</td>
-                                        <td>Summer Sale</td>
-                                        <td><span class="badge light bg-success">Sent</span></td>
-                                        <td>10:30 AM, 05/28/2025</td>
-                                        <td>150</td>
-                                    </tr>
-                                    <tr>
-                                        <td>2</td>
-                                        <td>Newsletter</td>
-                                        <td><span class="badge light bg-secondary">Ongoing</span></td>
-                                        <td>11:00 AM, 05/30/2025</td>
-                                        <td>75</td>
-                                    </tr>
-                                    <tr>
-                                        <td>3</td>
-                                        <td>Product Launch</td>
-                                        <td><span class="badge light bg-warning">Pending</span></td>
-                                        <td>--</td>
-                                        <td>0</td>
-                                    </tr>
-                                    <tr>
-                                        <td>4</td>
-                                        <td>Event Invite</td>
-                                        <td><span class="badge light bg-danger">Failed</span></td>
-                                        <td>09:00 AM, 05/27/2025</td>
-                                        <td>20</td>
-                                    </tr>
-                                </tbody>
-                            </table>
+                        <div class="card-body">
+                            <div id="weeklyNotificationsChart" style="height:300px;"></div>
                         </div>
                     </div>
                 </div>
             </div>
-
         </div>
     </section>
 @endsection
-
 @push('scripts')
     <script src="{{ asset('vendor/select2/js/select2.full.min.js') }}"></script>
     <script src="https://cdn.jsdelivr.net/npm/echarts@5.5.1/dist/echarts.min.js"></script>
     <script>
-        document.addEventListener("DOMContentLoaded", function() {
-            var subscriberChart = echarts.init(document.getElementById('subscriberChart'));
-            var notificationsChart = echarts.init(document.getElementById('notificationsChart'));
+    $(function() {
+        const statsUrl = "{{ route('dashboard.domain-stats') }}";
+        const notifUrl = "{{ route('dashboard.notification-stats') }}";
+        const weeklyUrl = "{{ route('dashboard.weekly-stats') }}";
+        const LS_KEY    = 'dashboard.selectedDomain';
+        const SERVER_INITIAL_DOMAIN = @json($initialDomain);
 
-            var subscriberOption = {
-                tooltip: {
-                    trigger: 'axis'
-                },
-                xAxis: {
-                    type: 'category',
-                    data: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
-                },
-                yAxis: {
-                    type: 'value'
-                },
-                series: [{
-                    name: 'Subscribers',
-                    data: [120, 200, 150, 80, 70, 110, 130],
-                    type: 'line',
-                    smooth: true,
-                    areaStyle: {
-                        color: 'rgba(0,123,255,0.2)'
-                    },
-                    lineStyle: {
-                        color: 'rgba(0,123,255,1)',
-                        width: 3
-                    },
-                    itemStyle: {
-                        color: 'rgba(0,123,255,1)'
-                    },
-                    symbolSize: 8
-                }]
-            };
+        // ——— Rate limiter state —————————————————————————————————————
+        let refreshCount = 0;
+        let cooling      = false;
+        const COOLDOWN_MS = 60_000;
 
-            var notificationsOption = {
-                tooltip: {
-                    trigger: 'axis'
-                },
-                xAxis: {
-                    type: 'category',
-                    data: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
-                },
-                yAxis: {
-                    type: 'value'
-                },
-                series: [{
-                    name: 'Notifications Sent',
-                    data: [300, 450, 400, 350, 300, 500, 550],
-                    type: 'bar',
-                    itemStyle: {
-                        color: 'rgba(40,167,69,1)'
-                    },
-                    barWidth: '50%'
-                }]
-            };
-
-            subscriberChart.setOption(subscriberOption);
-            notificationsChart.setOption(notificationsOption);
-
-            window.addEventListener('resize', function() {
-                subscriberChart.resize();
-                notificationsChart.resize();
+        function startCooling() {
+            cooling = true;
+            iziToast.error({
+                title: 'Cooldown active',
+                message: 'Too many refreshes! Please wait 1 minute before trying again.',
+                position: 'topRight'
             });
-        });
-    </script>
-    <script>
-        $(function() {
-            const placeholder = "Search for Domain...";
-            $('#domain-select').select2({
-                placeholder: "Search for Domain…",
-                allowClear: true,
-                minimumInputLength: 0,        // ← allow AJAX to fire even when empty
-                ajax: {
-                    url: "{{ route('domain.domain-list') }}",
-                    dataType: 'json',
-                    delay: 250,
-                    data: function(params) {
-                        console.log(params);
-                        // when you open, params.term will be undefined; default to empty string
-                        return { q: params.term || '' };
-                    },
-                    processResults: function(response) {
-                        return {
-                            results: response.data.map(function(item) {
-                                return {
-                                    id: item.text,
-                                    text: item.text 
-                                };
-                            })
-                        };
-                    },
-                    cache: true
-                },
-                // optional: show globe icon
-                templateResult: function(domain) {
-                    if (domain.loading) return domain.text;
-                    return $(
-                      '<span><i class="fal fa-globe me-2"></i>' +
-                      domain.text +
-                      '</span>'
-                    );
-                },
-                escapeMarkup: function(markup) { return markup; }
-            });
-
-            // Trigger the initial load on open (some Select2 builds don’t auto-fetch on open)
-            $('#domain-select').on('select2:open', function() {
-                // if no search term, manually trigger the query
-                const select = $(this);
-                if (!select.data('select2').dropdown.$search.val()) {
-                    select.select2('trigger', 'query', { term: '' });
-                }
-            });
-        });
-
-        // $('#domain-select').on('select2:select', function(e) {
-        //     $('#preloader-cart').toggleClass('d-none d-flex');
-        //     $('#dashboardBody').removeClass('d-none');
-        //     $('#onLoading').addClass('d-none');
-
-        //     var selectedDomainId = e.params.data.id;
-
-        //     $('#currentDomain').val(e.params.data.text);
-
-        //     const domainName = $('#currentDomain').val();
-        //     $.ajax({
-        //         url: '',
-        //         type: 'GET',
-        //         data: {
-        //             domain_name: domainName
-        //         },
-        //         success: function(response) {
-        //             if (response.status) {
-        //                 $('#preloader-cart').toggleClass('d-none d-flex');
-        //                 $('#total_sub').text(response.data['total_subscribers'] || 0);
-        //                 $('#monthly_sub').text(response.data['monthly_subscribers'] || 0);
-        //                 $('#today_sub').text(response.data['today_subscribers'] || 0);
-
-        //                 if (response.data['import_data']['total'] == 0 || response.data['import_data'][
-        //                         'inactive'
-        //                     ] == response.data['import_data']['total']) {
-        //                     $('#imported_stats').addClass('d-none');
-        //                 } else {
-        //                     $('#imported_stats').removeClass('d-none');
-        //                 }
-        //                 $('#imported_sub').text(response.data['import_data']['total'] || 0);
-        //                 $('#imported_active_sub').text(response.data['import_data']['active'] || 0);
-        //                 $('#imported_inactive_sub').text(response.data['import_data']['inactive'] || 0);
-
-        //                 const notification = response.data['recent_campaigns'];
-        //                 if (notification && notification.length > 0) {
-        //                     updateNotificationTable(notification);
-        //                 } else {
-        //                     $('#dataBox').html(
-        //                         '<tr><td colspan="5">No notifications available.</td></tr>'
-        //                     );
-        //                 }
-
-        //                 updateChart(
-        //                     response.data['graph_data']['dates'],
-        //                     response.data['graph_data']['subscribers']
-        //                 );
-        //             } else {
-        //                 $('#preloader-cart').toggleClass('d-none d-flex');
-                     
-        //             }
-        //         },
-        //         error: function() {
-        //             $('#preloader-cart').toggleClass('d-none d-flex');
-        //         }
-        //     });
-        // });
-
-        // // Refresh button logic
-        $('.refresh-button').on('click', function() {
-            var selectedDomainId = $('#domain-select').val();
-
-            if (!selectedDomainId) {
-                iziToast.warning({
-                    title: 'Warning',
-                    message: 'Please select a domain first.',
+            setTimeout(() => {
+                cooling = false;
+                refreshCount = 0;
+                iziToast.success({
+                    title: 'You can refresh again',
+                    message: 'Feel free to update stats now.',
                     position: 'topRight'
                 });
+            }, COOLDOWN_MS);
+        }
+
+        function checkRateLimit() {
+            if (cooling) {
+                iziToast.warning({
+                    title: 'On cooldown',
+                    message: 'Please wait a minute before refreshing again.',
+                    position: 'topRight'
+                });
+                return false;
+            }
+            refreshCount++;
+            if (refreshCount > 7) {
+                startCooling();
+                return false;
+            }
+            return true;
+        }
+
+        // ——— State & Helpers —————————————————————————————————————
+        let currentDomain = localStorage.getItem(LS_KEY) || SERVER_INITIAL_DOMAIN;
+
+        function setDomain(dom) {
+            currentDomain = dom;
+            localStorage.setItem(LS_KEY, dom);
+        }
+
+        function animateValue(el, start, end, duration = 800) {
+            start = Number(el.textContent.replace(/,/g, '')) || start;
+            if (start === end) {
+                el.textContent = new Intl.NumberFormat().format(end);
                 return;
             }
+            const range = end - start;
+            const stepTime = Math.max(Math.floor(duration / Math.abs(range)), 50);
+            let cur = start, inc = range > 0 ? 1 : -1;
+            const timer = setInterval(() => {
+                cur += inc;
+                el.textContent = new Intl.NumberFormat().format(cur);
+                if (cur === end) clearInterval(timer);
+            }, stepTime);
+        }
 
-            $('#preloader-cart').toggleClass('d-none d-flex');
-            const domainName = $('#currentDomain').val();
-            $.ajax({
-                url: '',
-                type: 'GET',
-                data: {
-                    domain_name: domainName,
-                    refresh: 1
-                },
-                success: function(response) {
-                    $('#preloader-cart').toggleClass('d-none d-flex');
-                    if (response.status) {
-                        $('#total_sub').text(response.data['total_subscribers'] || 0);
-                        $('#monthly_sub').text(response.data['monthly_subscribers'] || 0);
-                        $('#today_sub').text(response.data['today_subscribers'] || 0);
+        const charts = {};
+        function renderChart(domId, labels, data, name) {
+            let chart = charts[domId] || echarts.init(document.getElementById(domId));
+            chart.setOption({
+                tooltip: { trigger: 'axis' },
+                xAxis: { type: 'category', data: labels },
+                yAxis: { type: 'value' },
+                series: [{ name, type: 'bar', data }]
+            });
+            window.addEventListener('resize', () => chart.resize());
+            charts[domId] = chart;
+        }
 
+        // ——— Bootstrap empty charts —————————————————————————————————
+        const defaultLabels = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+        const emptySeries   = Array(7).fill(0);
+        renderChart('weeklySubscribersChart', defaultLabels, emptySeries, 'Subscribers');
+        renderChart('weeklyNotificationsChart', defaultLabels, emptySeries, 'Notifications');
 
-                        $('#imported_sub').text(response.data['import_data']['total'] || 0);
-                        $('#imported_active_sub').text(response.data['import_data']['active'] || 0);
-                        $('#imported_inactive_sub').text(response.data['import_data']['inactive'] || 0);
+        // ——— Fetchers ———————————————————————————————————————————
+        function fetchDomainStats(refresh = false) {
+            if (!currentDomain) return $.Deferred().reject().promise();
+            return $.getJSON(statsUrl, { domain_name: currentDomain, refresh: refresh?1:0 });
+        }
+        function fetchNotificationStats(refresh = false) {
+            if (!currentDomain) return $.Deferred().reject().promise();
+            return $.getJSON(notifUrl, { domain_name: currentDomain, refresh: refresh?1:0 });
+        }
+        function fetchWeeklyStats(refresh = false, metric = null) {
+            if (!currentDomain) return $.Deferred().reject().promise();
+            const params = { domain_name: currentDomain, refresh: refresh?1:0 };
+            if (metric) params.metric = metric;
+            return $.getJSON(weeklyUrl, params);
+        }
 
-                        const notification = response.data['recent_campaigns'];
-                        if (notification && notification.length > 0) {
-                            updateNotificationTable(notification);
-                        } else {
-                            $('#dataBox').html(
-                                '<tr><td colspan="5" class="text-center text-danger">No Data Available</td></tr>'
-                            );
-                        }
+        // ——— Select2 setup ——————————————————————————————————————
+        $('#domain-select').select2({
+            placeholder: 'Search for Domain…',
+            allowClear: true,
+            ajax: {
+                url: "{{ route('domain.domain-list') }}",
+                dataType: 'json', delay: 250,
+                data: p => ({ q: p.term || '' }),
+                processResults: r => ({ results: r.data.map(i => ({ id: i.text, text: i.text })) }),
+                cache: true
+            },
+            templateResult: d => d.loading ? d.text : $(`<span><i class="fal fa-globe me-1"></i>${d.text}</span>`),
+            escapeMarkup: m => m
+        });
+        if (currentDomain) {
+            const opt = new Option(currentDomain, currentDomain, true, true);
+            $('#domain-select').append(opt).trigger('change');
+        }
 
-                        updateChart(
-                            response.data['graph_data']['dates'],
-                            response.data['graph_data']['subscribers']
-                        );
+        // ——— Event Handlers ——————————————————————————————————————
 
-                        iziToast.success({
-                            title: 'Success',
-                            message: 'Data refreshed successfully.',
-                            position: 'topRight'
-                        });
-                    } else {
-                        iziToast.error({
-                            title: 'Error',
-                            message: 'Failed to refresh data.',
-                            position: 'topRight'
-                        });
-                    }
-                },
-                error: function() {
-                    $('#preloader-cart').toggleClass('d-none d-flex');
-                    iziToast.error({
-                        title: 'Error',
-                        message: 'An error occurred while refreshing data.',
-                        position: 'topRight'
-                    });
+        // Domain selection
+        $('#domain-select').on('select2:select', e => {
+            if (!checkRateLimit()) return;
+            setDomain(e.params.data.id);
+
+            fetchDomainStats().done(res => {
+                if (res.status) {
+                    Object.entries(res.data).forEach(([k,v]) =>
+                        animateValue($(`#card-${k}`)[0], 0, v, 1000)
+                    );
+                    iziToast.success({ title:'Subscribers Updated', message:'Subscriber stats refreshed', position:'topRight' });
+                }
+            });
+
+            fetchNotificationStats().done(res => {
+                if (res.status) {
+                    Object.entries(res.data).forEach(([k,v]) =>
+                        animateValue($(`#notif-${k}`)[0], 0, v, 800)
+                    );
+                    iziToast.success({ title:'Notifications Updated', message:'Notification stats refreshed', position:'topRight' });
+                }
+            });
+
+            fetchWeeklyStats().done(res => {
+                if (res.status) {
+                    const { labels, subscribers, notifications } = res.data;
+                    renderChart('weeklySubscribersChart', labels, subscribers, 'Subscribers');
+                    renderChart('weeklyNotificationsChart', labels, notifications, 'Notifications');
+                    iziToast.success({ title:'Charts Updated', message:'Weekly charts refreshed', position:'topRight' });
                 }
             });
         });
+
+        // Per-subscriber-card refresh
+        const inFlightCard = {};
+        $('.card-refresh').click(function() {
+            if (!checkRateLimit()) return;
+            const icon   = $(this);
+            const metric = icon.data('metric');
+            if (inFlightCard[metric]) {
+                return iziToast.warning({ title:'Please wait', message:'Refresh in progress.', position:'topRight' });
+            }
+            inFlightCard[metric] = true;
+            icon.addClass('fa-spin');
+
+            fetchDomainStats(true)
+              .done(res => {
+                if (res.status) {
+                    Object.entries(res.data).forEach(([k,v]) =>
+                        animateValue($(`#card-${k}`)[0], 0, v, 1000)
+                    );
+                    iziToast.success({ title:'Subscribers Refreshed', message:'Subscriber stats updated', position:'topRight' });
+                }
+              })
+              .always(() => {
+                icon.removeClass('fa-spin');
+                setTimeout(() => inFlightCard[metric] = false, 300);
+              });
+        });
+
+        // Per-notification-card refresh
+        const inFlightNotif = {};
+        $('.notif-refresh').click(function() {
+            if (!checkRateLimit()) return;
+            const icon   = $(this);
+            const metric = icon.data('metric');
+            if (inFlightNotif[metric]) {
+                return iziToast.warning({ title:'Please wait', message:'Refresh in progress.', position:'topRight' });
+            }
+            inFlightNotif[metric] = true;
+            icon.addClass('fa-spin');
+
+            fetchNotificationStats(true)
+              .done(res => {
+                if (res.status) {
+                    Object.entries(res.data).forEach(([k,v]) =>
+                        animateValue($(`#notif-${k}`)[0], 0, v, 800)
+                    );
+                    iziToast.success({ title:'Notifications Refreshed', message:'Notification stats updated', position:'topRight' });
+                }
+              })
+              .always(() => {
+                icon.removeClass('fa-spin');
+                setTimeout(() => inFlightNotif[metric] = false, 300);
+              });
+        });
+
+        // Per-chart refresh
+        const inFlightChart = {};
+        $('.chart-refresh').click(function() {
+            if (!checkRateLimit()) return;
+            const icon   = $(this);
+            const metric = icon.data('metric');
+            if (inFlightChart[metric]) {
+                return iziToast.warning({ title:'Please wait', message:'Chart refresh in progress.', position:'topRight' });
+            }
+            inFlightChart[metric] = true;
+            icon.addClass('fa-spin');
+
+            fetchWeeklyStats(true, metric)
+              .done(res => {
+                if (res.status) {
+                    const { labels, subscribers, notifications } = res.data;
+                    if (metric==='subscribers' || !metric) {
+                        renderChart('weeklySubscribersChart', labels, subscribers, 'Subscribers');
+                    }
+                    if (metric==='notifications' || !metric) {
+                        renderChart('weeklyNotificationsChart', labels, notifications, 'Notifications');
+                    }
+                    iziToast.success({ title:'Chart Refreshed', message:'Weekly chart updated', position:'topRight' });
+                }
+              })
+              .always(() => {
+                icon.removeClass('fa-spin');
+                setTimeout(() => inFlightChart[metric] = false, 300);
+              });
+        });
+
+        // Global “Refresh All”
+        $('#refresh-all').click(() => {
+            if (!checkRateLimit()) return;
+            const btnIcon = $('#refresh-all i.fa-sync-alt');
+            btnIcon.addClass('fa-spin');
+            $.when(
+                fetchDomainStats(true),
+                fetchNotificationStats(true),
+                fetchWeeklyStats(true)
+            )
+            .done(() => {
+                iziToast.success({ title:'All Refreshed', message:'All stats updated', position:'topRight' });
+            })
+            .fail(() => {
+                iziToast.error({ title:'Error', message:'Some stats failed to refresh', position:'topRight' });
+            })
+            .always(() => {
+                btnIcon.removeClass('fa-spin');
+            });
+        });
+
+        // ——— Initial load if pre-selected —————————————————————————————————
+        if (currentDomain) {
+            fetchDomainStats().done(res => {
+                if (res.status) Object.entries(res.data).forEach(([k,v]) =>
+                    animateValue($(`#card-${k}`)[0], 0, v, 1000)
+                );
+            });
+            fetchNotificationStats().done(res => {
+                if (res.status) Object.entries(res.data).forEach(([k,v]) =>
+                    animateValue($(`#notif-${k}`)[0], 0, v, 800)
+                );
+            });
+            fetchWeeklyStats().done(res => {
+                if (res.status) {
+                    const { labels, subscribers, notifications } = res.data;
+                    renderChart('weeklySubscribersChart', labels, subscribers, 'Subscribers');
+                    renderChart('weeklyNotificationsChart', labels, notifications, 'Notifications');
+                }
+            });
+        }
+    });
     </script>
 @endpush

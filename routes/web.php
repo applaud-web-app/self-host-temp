@@ -49,9 +49,13 @@ Route::controller(AuthController::class)->group(function () {
     Route::get('login', 'login')->name('login');
     Route::post('login', 'doLogin')->name('login.doLogin');
 });
-
-// Optional: Home page (static)
-Route::get('/dashboard', [DashboardController::class, 'dashboard'])->name('dashboard')->middleware('auth');
+         
+Route::middleware('auth')->controller(DashboardController::class)->name('dashboard.')->group(function () {
+    Route::get('/','dashboard')->name('view');
+    Route::get('domain-stats','getDomainStats')->name('domain-stats');
+    Route::get('notification-stats','getNotificationStats')->name('notification-stats');
+    Route::get('weekly-stats','getWeeklyStats')->name('weekly-stats');
+});
 
 Route::middleware(['auth','ensure_push_config'])->group(function() {
       

@@ -20,10 +20,10 @@ class Controller extends \Illuminate\Routing\Controller
         return view('login');
     }
 
-    public function dashboard()
-    {
-        return view('dashboard');
-    }
+    // public function dashboard()
+    // {
+    //     return view('dashboard');
+    // }
 
     // Install Wizard View Steps Only
     public function installWelcome()

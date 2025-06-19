@@ -177,7 +177,7 @@ class DomainController extends Controller
             $response = decryptUrl($request->eq);
             $domain   = $response['domain'];
 
-            $domain = Domain::where('name', $domain)->where('status',1)->first();
+            $domain = Domain::with('license')->where('name', $domain)->where('status',1)->first();
             // Check if the domain exists and is active
             if (!$domain || $domain->status !== 1) {
                 return redirect()->route('domain.view')->with('error', 'Domain not found or inactive.');
@@ -286,8 +286,7 @@ class DomainController extends Controller
             // 4a) build raw key + salt + (optional) pepper
             $rawKey = Str::random(64);
             $salt   = Str::random(16);
-            $pepper = config('license.license_code');  // make sure this is set
-
+            $pepper = config('license.license_code');
             if (empty($pepper)) {
                 // purgeMissingPepper();
                 return response()->json([
