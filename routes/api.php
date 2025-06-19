@@ -16,3 +16,4 @@ Route::post('/push/analytics', [PushApiController::class,'analytics'])->name('ap
 
 // PLUGIN ROUTES
 Route::post('/plugin/verify', [PluginController::class,'verifyLicenseKey'])->name('api.plugin.verify')->withoutMiddleware('throttle:api');
+Route::post('/plugin/stats', [PluginController::class,'domainWiseStats'])->name('api.plugin.stats')->withoutMiddleware('throttle:api');

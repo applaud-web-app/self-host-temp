@@ -11,6 +11,19 @@ use Illuminate\Support\Facades\Schedule;
 // STOP DUE TO REDIS NOT AVAILABEL
 // Schedule::command('analytics:flush')->everyMinute();
 // Schedule::command('subscriptions:flush')->everyMinute();
-Schedule::command('notifications:dispatch-scheduled')->everyMinute()->sendOutputTo('dispatch-scheduled.log');
-Schedule::command('notifications:dispatch-scheduled-segment')->everyMinute()->withoutOverlapping()->sendOutputTo('dispatch-scheduled-segment.log');;
 
+
+// Schedule::command('notifications:dispatch-scheduled')
+// ->everyMinute()
+// ->sendOutputTo('dispatch-scheduled.log');
+
+// Schedule::command('notifications:dispatch-scheduled-segment')
+// ->everyMinute()
+// ->withoutOverlapping()
+// ->sendOutputTo('dispatch-scheduled-segment.log');
+
+Schedule::command('stats:domain-subscriptions')
+// ->dailyAt('16:38')
+->everyMinute()
+->withoutOverlapping()
+->sendOutputTo('daily-domain-sub-count');
