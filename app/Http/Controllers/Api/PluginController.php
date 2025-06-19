@@ -43,15 +43,6 @@ class PluginController extends Controller
         return Hash::check($toCheck, $license->key_hash);
     }
 
-    private function verifyHostName(string $hostName): bool
-    {
-        // Use Laravel request() helper to get current host
-        $currentHost = request()->getHost();
-
-        // Compare case-insensitively
-        return strcasecmp($hostName, $currentHost) === 0;
-    }
-
     public function verifyLicenseKey(Request $request)
     {
         $clientIp   = $request->header('CF-Connecting-IP') ?? $request->getClientIp();
@@ -74,7 +65,6 @@ class PluginController extends Controller
             $data = $request->validate([
                 'domain_name' => 'required|string|max:100',
                 'key'         => 'required|string|max:200',
-                'host_name'   => 'required|string|max:100',
             ]);
         } catch (ValidationException $e) {
             // count as a “try”
@@ -86,16 +76,7 @@ class PluginController extends Controller
         }
 
         try {
-            // 3) host name check
-            if (! $this->verifyHostName($data['host_name'])) {
-                RateLimiter::hit($limiterKey, $lockSeconds);
-                return response()->json([
-                    'status'  => false,
-                    'message' => 'Host name is not authorized.'
-                ], 401);
-            }
-
-            // 4) domain lookup
+            // 3) domain lookup
             $domain = $this->getValidDomain($data['domain_name']);
             if (! $domain) {
                 RateLimiter::hit($limiterKey, $lockSeconds);
@@ -105,7 +86,7 @@ class PluginController extends Controller
                 ], 401);
             }
 
-            // 5) license check
+            // 4) license check
             $license = DomainLicense::where('domain_id', $domain->id)->latest('created_at')->first();
 
             if (! $license || ! $this->verifyDomainKey($data['key'], $license)) {
@@ -116,7 +97,7 @@ class PluginController extends Controller
                 ], 401);
             }
             
-            // 6) already used?
+            // 5) already used?
             if($license->is_used){
                 RateLimiter::hit($limiterKey, $lockSeconds);
                 return response()->json([
@@ -125,7 +106,7 @@ class PluginController extends Controller
                 ], 401);
             }
 
-            // 7) success — mark it used and clear the throttle
+            // 6) success — mark it used and clear the throttle
             $license->markUsed();
             RateLimiter::clear($limiterKey);
 
