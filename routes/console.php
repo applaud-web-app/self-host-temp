@@ -13,14 +13,14 @@ use Illuminate\Support\Facades\Schedule;
 // Schedule::command('subscriptions:flush')->everyMinute();
 
 
-// Schedule::command('notifications:dispatch-scheduled')
-// ->everyMinute()
-// ->sendOutputTo('dispatch-scheduled.log');
+Schedule::command('notifications:dispatch-scheduled')
+->everyMinute()
+->sendOutputTo('dispatch-scheduled.log');
 
-// Schedule::command('notifications:dispatch-scheduled-segment')
-// ->everyMinute()
-// ->withoutOverlapping()
-// ->sendOutputTo('dispatch-scheduled-segment.log');
+Schedule::command('notifications:dispatch-scheduled-segment')
+->everyMinute()
+->withoutOverlapping()
+->sendOutputTo('dispatch-scheduled-segment.log');
 
 Schedule::command('stats:domain-subscriptions')
 ->dailyAt('17:22')
