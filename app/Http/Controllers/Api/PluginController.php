@@ -86,16 +86,13 @@ class PluginController extends Controller
             }
 
             // 4) license check
-            $license = DomainLicense::where('domain_id', $domain->id)
-                        // ->where('is_used', false)
-                        ->latest('created_at')
-                        ->first();
+            $license = DomainLicense::where('domain_id', $domain->id)->latest('created_at')->first();
 
             if (! $license || ! $this->verifyDomainKey($data['key'], $license)) {
                 RateLimiter::hit($limiterKey, $freezTime);
                 return response()->json([
                     'status'  => false,
-                    'message' => 'Unauthorized access.'
+                    'message' => 'The provided license key is invalid.'
                 ], 401);
             }
             
@@ -103,7 +100,7 @@ class PluginController extends Controller
                 RateLimiter::hit($limiterKey, $freezTime);
                 return response()->json([
                     'status'  => false,
-                    'message' => 'Key already used previously.'
+                    'message' => 'This license key has already been used.'
                 ], 401);
             }
 
@@ -113,11 +110,10 @@ class PluginController extends Controller
 
             return response()->json([
                 'status'  => true,
-                'message' => 'Key verified.'
+                'message' => 'License key verified successfully.'
             ], 200);
 
         } catch (\Throwable $e) {
-            // any unexpected error also counts as a try
             RateLimiter::hit($limiterKey, $freezTime);
             return response()->json([
                 'status'  => false,
