@@ -192,11 +192,13 @@ class PluginController extends Controller
                     ->get()
                     ->map(function($d) {
                         $sum = $d->subscriptionSummary;
+                        $todaySub = (int)$d->today_subscribers;
                         return [
                             'domain_name'         => $d->name,
-                            'total_subscribers'   => $sum ? (int)$sum->total_subscribers   : 0,
-                            'monthly_subscribers' => $sum ? (int)$sum->monthly_subscribers : 0,
-                            'today_subscribers'   => (int)$d->today_subscribers,
+                            'total_subscribers'   => $sum ? (int)$sum->total_subscribers + $todaySub : 0 + $todaySub,
+                            'monthly_subscribers' => $sum ? (int)$sum->monthly_subscribers + $todaySub : 0 + $todaySub,
+                            'today_subscribers'   => (int)$todaySub,
+
                         ];
                     });
             });
