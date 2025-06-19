@@ -198,11 +198,13 @@
         </a>
     </li>
     {{-- Core app menus --}}
-    {{-- @foreach (\Module::allEnabled() as $module)
+    @foreach (\Module::allEnabled() as $module)
         @includeIf(strtolower($module->getLowerName()) . '::partials.menu')
-    @endforeach --}}
-      <li>
-        <a class="ai-icon" href="{{ route('user.addons') }}" aria-expanded="false">
+    @endforeach
+
+    <!-- Addons -->
+    <li>
+        <a class="ai-icon" href="{{ route('addons.view') }}" aria-expanded="false">
             <i class="fal fa-credit-card"></i>
             <span class="nav-text">Addons</span>
         </a>
