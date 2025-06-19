@@ -11,7 +11,7 @@ use App\Http\Controllers\SettingsController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\SegmentationController;
-
+use App\Http\Controllers\AddonController; 
 
 Route::prefix('install')->group(function () {
     // welcome
@@ -65,8 +65,18 @@ Route::middleware(['auth','ensure_push_config'])->group(function() {
         Route::post('update-password', 'updatePassword')->name('update-password');
 
         Route::get('subscription', 'subscription')->name('subscription');
-        Route::get('addons', 'addons')->name('addons');
+     
     });
+
+     Route::get('/addons', [AddonController::class, 'addons'])->name('addons.view');
+    Route::get('/addons/upload', [AddonController::class, 'upload'])
+        ->name('addons.upload')
+        ->middleware(['auth', 'ensure_push_config']);
+
+    Route::post('/addons', [AddonController::class, 'store'])
+        ->name('addons.store')
+        ->middleware(['auth', 'ensure_push_config']);
+
 
     // Settings routes
     Route::controller(AuthController::class)->group(function () {

@@ -15,7 +15,7 @@
 
 @section('content')
     <section class="content-body">
-        <div class="container-fluid position-relative">
+        <div class="container-fluid ">
             <div class="d-flex flex-wrap align-items-center justify-content-between text-head">
                 <div class="me-3 d-flex align-items-center mb-2">
                     <h2 class="mb-0 me-auto applaud">Self-Hosted Admin Dashboard</h2>
