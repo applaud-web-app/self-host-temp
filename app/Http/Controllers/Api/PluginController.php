@@ -9,6 +9,8 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use App\Models\Domain;
 use App\Models\DomainLicense;
+use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Validation\ValidationException;
 
 class PluginController extends Controller
 {
@@ -43,49 +45,73 @@ class PluginController extends Controller
 
     public function verifyLicenseKey(Request $request)
     {
-        $data = $request->validate([
-            'domain_name' => 'required|string|max:100',
-            'key' => 'required|string|max:200',
-        ]);
+        $clientIp = $request->header('CF-Connecting-IP') ?? $request->getClientIp();
+        $limiterKey = 'plugin-verify:' . $clientIp;
 
+        if (RateLimiter::tooManyAttempts($limiterKey, 3)) {
+            $seconds = RateLimiter::availableIn($limiterKey);
+            $minutes = ceil($seconds / 60);
+            return response()->json([
+                'status'  => false,
+                'message' => "Too many attempts. Please try again in {$minutes} minute(s)."
+            ], 429);
+        }
+        
+          // 2) validate input (catch validation here so we can count it as a “try”)
         try {
-            // 1) Fetch and validate domain
+            $data = $request->validate([
+                'domain_name' => 'required|string|max:100',
+                'key'         => 'required|string|max:200',
+            ]);
+        } catch (ValidationException $e) {
+            RateLimiter::hit($limiterKey, 600);
+            return response()->json([
+                'status'  => false,
+                'message' => 'Unauthorized request.'
+            ], 401);
+        }
+
+          try {
+            // 3) domain lookup
             $domain = $this->getValidDomain($data['domain_name']);
             if (! $domain) {
+                RateLimiter::hit($limiterKey, 600);
                 return response()->json([
                     'status'  => false,
-                    'message' => 'Unauthorized access.',
+                    'message' => 'Unauthorized access.'
                 ], 401);
             }
 
-            // 2) Fetch the most recent unused license
+            // 4) fetch latest unused license
             $license = DomainLicense::where('domain_id', $domain->id)
                         ->where('is_used', false)
                         ->latest('created_at')
                         ->first();
 
-            // 3) Verify key or fail
             if (! $license || ! $this->verifyDomainKey($data['key'], $license)) {
+                RateLimiter::hit($limiterKey, 600);
                 return response()->json([
                     'status'  => false,
-                    'message' => 'Unauthorized access.',
+                    'message' => 'Unauthorized access.'
                 ], 401);
             }
 
-            // 4) Mark as used (one-time)
+            // 5) success—mark used & clear any throttle
             $license->markUsed();
+            RateLimiter::clear($limiterKey);
 
-            // 5) Success
             return response()->json([
                 'status'  => true,
-                'message' => 'Key verified.',
+                'message' => 'Key verified.'
             ], 200);
 
         } catch (\Throwable $e) {
+            RateLimiter::hit($limiterKey, 600);
             return response()->json([
                 'status'  => false,
-                'message' => 'Unauthorized access.',
+                'message' => 'Unauthorized access.'
             ], 500);
         }
     }
+    
 }
