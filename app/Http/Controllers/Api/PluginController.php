@@ -47,7 +47,7 @@ class PluginController extends Controller
     {
         $clientIp   = $request->header('CF-Connecting-IP') ?? $request->getClientIp();
         $limiterKey = 'plugin-verify:' . $clientIp;
-        $maxAttempts = 3;
+        $maxAttempts = 100000; // 3
         $lockSeconds = 300;
 
         // 1) block on 4th try, lock for 5 minutes
