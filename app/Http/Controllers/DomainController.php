@@ -286,7 +286,7 @@ class DomainController extends Controller
         if ($request->ajax()) {
 
             $cacheKey = "license_generation_cooldown:{$domain->id}";
-            if (! Cache::add($cacheKey, true, now()->addMinutes(5))) {
+            if (! Cache::add($cacheKey, true, now()->addMinutes(1))) {
                 return response()->json([
                     'success' => false,
                     'message' => 'You’ve just generated a key—please wait 5 minutes before generating another.',
