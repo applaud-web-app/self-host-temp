@@ -100,6 +100,7 @@ class PluginController extends Controller
             }
             
             if($license->is_used){
+                RateLimiter::hit($limiterKey, $freezTime);
                 return response()->json([
                     'status'  => false,
                     'message' => 'Key already used previously.'
