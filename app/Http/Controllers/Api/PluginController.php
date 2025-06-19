@@ -87,7 +87,7 @@ class PluginController extends Controller
 
             // 4) license check
             $license = DomainLicense::where('domain_id', $domain->id)
-                        ->where('is_used', false)
+                        // ->where('is_used', false)
                         ->latest('created_at')
                         ->first();
 
@@ -96,6 +96,13 @@ class PluginController extends Controller
                 return response()->json([
                     'status'  => false,
                     'message' => 'Unauthorized access.'
+                ], 401);
+            }
+            
+            if($license->is_used){
+                return response()->json([
+                    'status'  => false,
+                    'message' => 'Key already used previously.'
                 ], 401);
             }
 
