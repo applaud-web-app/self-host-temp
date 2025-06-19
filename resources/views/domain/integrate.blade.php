@@ -127,13 +127,9 @@
                                     </h5>
                                     <div class="d-flex align-items-center mb-3">
                                         <span class="domain-key" id="domainKey">
-                                            @if (isset($domain->license))
-                                                {{$domain->license->rawKey}}
-                                            @else
-                                                "Please Click Generate Now to create a licence key..."
-                                            @endif
+                                            "Please Click <span class="text-primary">Generate Now</span> to create a licence key..."
                                         </span>
-                                        <button class="btn px-3 py-2 btn-sm copy-btn btn-outline-dark">
+                                        <button class="btn px-3 py-2 btn-sm copy-btn btn-outline-dark d-none">
                                             <i class="fas fa-copy me-1"></i> Copy
                                         </button>
                                     </div>
@@ -279,6 +275,10 @@
                         if (res.success && res.key) {
                             // update the key on screen
                             $('#domainKey').text(res.key);
+
+                            // reveal the copy button
+                            $('#domainKey').siblings('.copy-btn').removeClass('d-none');
+
                             // remove the button so you cannot regenerate
                             $btn.remove();
                             iziToast.success({

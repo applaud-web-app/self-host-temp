@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Auth;
 use Google\Client as GoogleClient;
 use GuzzleHttp\Client as GuzzleClient;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Cache;
 use App\Models\DomainLicense;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Hash;
@@ -177,7 +178,7 @@ class DomainController extends Controller
             $response = decryptUrl($request->eq);
             $domain   = $response['domain'];
 
-            $domain = Domain::with('license')->where('name', $domain)->where('status',1)->first();
+            $domain = Domain::where('name', $domain)->where('status',1)->first();
             // Check if the domain exists and is active
             if (!$domain || $domain->status !== 1) {
                 return redirect()->route('domain.view')->with('error', 'Domain not found or inactive.');
@@ -283,12 +284,23 @@ class DomainController extends Controller
 
         // 4) only respond to AJAX here
         if ($request->ajax()) {
+
+            $cacheKey = "license_generation_cooldown:{$domain->id}";
+            if (! Cache::add($cacheKey, true, now()->addMinutes(5))) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'You’ve just generated a key—please wait 5 minutes before generating another.',
+                ], 429);
+            }
+            
             // 4a) build raw key + salt + (optional) pepper
             $rawKey = Str::random(64);
             $salt   = Str::random(16);
             $pepper = config('license.license_code');
             if (empty($pepper)) {
                 // purgeMissingPepper();
+                
+                Cache::forget($cacheKey);
                 return response()->json([
                     'success' => false,
                     'message' => 'Server misconfiguration: pepper missing.',

@@ -12,3 +12,6 @@ Route::get('/push-notify.js', [PushApiController::class, 'sdk'])->name('api.push
 Route::post('/push/subscribe', [PushApiController::class,'subscribe'])->name('api.subscribe')->withoutMiddleware('throttle:api');
 Route::post('/push/unsubscribe', [PushApiController::class,'unSubscribe'])->name('api.unsubscribe')->withoutMiddleware('throttle:api');
 Route::post('/push/analytics', [PushApiController::class,'analytics'])->name('api.analytics')->withoutMiddleware('throttle:api');
+
+
+// /api/plugin/verify
