@@ -23,7 +23,7 @@ use Illuminate\Support\Facades\Schedule;
 // ->sendOutputTo('dispatch-scheduled-segment.log');
 
 Schedule::command('stats:domain-subscriptions')
-// ->dailyAt('16:38')
-->everyMinute()
+->dailyAt('17:22')
+// ->everyMinute()
 ->withoutOverlapping()
 ->sendOutputTo('daily-domain-sub-count');
