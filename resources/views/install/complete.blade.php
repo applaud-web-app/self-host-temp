@@ -169,7 +169,7 @@ document.getElementById('dashboardBtn').addEventListener('click', function() {
     `;
     // Redirect after a short delay to allow spinner to show
     setTimeout(function() {
-        window.location.href = "{{ route('dashboard') }}";
+        window.location.href = "{{ route('dashboard.view') }}";
     }, 300);
 });
 // --------- End Button Processing State ---------

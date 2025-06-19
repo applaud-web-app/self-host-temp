@@ -4,8 +4,6 @@
     <!-- Bootstrap Date Range Picker CSS -->
     <link rel="stylesheet" href="{{ asset('/vendor/bootstrap-daterangepicker/daterangepicker.css') }}">
     <link rel="stylesheet" href="{{ asset('vendor/select2/css/select2.min.css') }}">
-
-
     <style>
         #hiddenSelect {
             display: none;
@@ -146,7 +144,7 @@
                             <span>Schedule</span>
                         </label>
                         <label class="mb-2 mb-lg-3 w-auto d-inline-block" for="campaign_type_segment">
-                            <input type="radio" name="campaign_type" id="campaign_type_segment" value="segment">
+                            <input type="radio" name="campaign_type" id="campaign_type_segment" value="particular">
                             <span>Segment</span>
                         </label>
                         <label class="mb-2 mb-lg-3 w-auto d-inline-block" for="campaign_type_api">
@@ -283,7 +281,7 @@
     <script src="{{ asset('vendor/bootstrap-daterangepicker/daterangepicker.js') }}"></script>
     <script src="{{ asset('vendor/select2/js/select2.full.min.js') }}"></script>
     <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
-    <script src="{{ asset('vendor/sweetalert2/dist/sweetalert2.min.js') }}"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
         $(function() {
             /* ------------------------------------------------- Select2 (domains) */
@@ -632,6 +630,66 @@
                         $('#modalSpinner').addClass('d-none');
                         Swal.fire('Error', 'Failed to load report', 'error');
                     });
+            });
+        });
+    </script>
+   <script>
+        $(function() {
+            // assume your DataTable instance is in a `table` variable
+            const table = $('#datatable').DataTable(); // or however you initialize
+
+            $('body').on('click', '.cancel-btn', function(e) {
+            e.preventDefault();
+
+            const $btn = $(this);
+            const url  = $btn.data('url');
+
+            // disable to prevent double-clicks
+            $btn.prop('disabled', true);
+
+            Swal.fire({
+                title: 'Cancel this scheduled notification?',
+                text: 'Once cancelled, it will no longer be sent.',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: 'Yes, cancel it',
+                cancelButtonText: 'No, keep it',
+            }).then((result) => {
+                if (result.isConfirmed) {
+                // perform AJAX GET
+                $.ajax({
+                    url: url,
+                    type: 'GET',
+                })
+                .done((res) => {
+                    if (res.status) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Cancelled',
+                        text: res.message,
+                        timer: 1500,
+                        showConfirmButton: false
+                    });
+                    table.draw(false); // redraw, staying on current page
+                    } else {
+                    Swal.fire('Error', res.message || 'Could not cancel', 'error');
+                    }
+                })
+                .fail((xhr) => {
+                    const msg = xhr.responseJSON?.message 
+                            || Object.values(xhr.responseJSON?.errors || {}).flat().join('\n')
+                            || 'Request failed';
+                    Swal.fire('Error', msg, 'error');
+                })
+                .always(() => {
+                    // re-enable regardless
+                    $btn.prop('disabled', false);
+                });
+                } else {
+                // user canceled the confirmation
+                $btn.prop('disabled', false);
+                }
+            });
             });
         });
     </script>

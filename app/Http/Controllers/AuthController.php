@@ -32,7 +32,7 @@ class AuthController extends Controller
         if (Auth::attempt($credentials, $remember)) {
             // Authentication passed. Now check role:
             $user = Auth::user();
-            return redirect()->route('dashboard')->with('success', 'Welcome back, '. $user->name . '!');
+            return redirect()->route('dashboard.view')->with('success', 'Welcome back, '. $user->name . '!');
         }
         // If neither 'admin' nor 'customer', log out immediately and send back
         Auth::logout();

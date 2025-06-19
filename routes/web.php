@@ -49,9 +49,13 @@ Route::controller(AuthController::class)->group(function () {
     Route::get('login', 'login')->name('login');
     Route::post('login', 'doLogin')->name('login.doLogin');
 });
-
-// Optional: Home page (static)
-Route::get('/dashboard', [DashboardController::class, 'dashboard'])->name('dashboard')->middleware('auth');
+         
+Route::middleware('auth')->controller(DashboardController::class)->name('dashboard.')->group(function () {
+    Route::get('/','dashboard')->name('view');
+    Route::get('domain-stats','getDomainStats')->name('domain-stats');
+    Route::get('notification-stats','getNotificationStats')->name('notification-stats');
+    Route::get('weekly-stats','getWeeklyStats')->name('weekly-stats');
+});
 
 Route::middleware(['auth','ensure_push_config'])->group(function() {
       
@@ -84,6 +88,7 @@ Route::middleware(['auth','ensure_push_config'])->group(function() {
         Route::get('/integrate', 'integrate')->name('integrate');
         Route::get('/domain-list', 'domainList')->name('domain-list');
         Route::get('/download-sw', 'downloadSW')->name('download-sw');
+        Route::post('/generate-plugin', 'generatePlugin')->name('generate-plugin');
     });
     
     // Send Notification routes
@@ -92,7 +97,7 @@ Route::middleware(['auth','ensure_push_config'])->group(function() {
         Route::get('details', 'details')->name('details');
         Route::get('/create','create')->name('create');
         Route::post('/send','store')->name('send');
-        Route::post('/{notification}/send','send')->name('resend');
+        Route::get('/cancel','cancel')->name('cancel');
         Route::post('/fetch-meta', 'fetchMeta')->name('fetchMeta');
     });
 

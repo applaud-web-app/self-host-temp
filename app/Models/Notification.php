@@ -19,11 +19,12 @@ class Notification extends Model
         'active_count',
         'success_count',
         'failed_count',
-        // CTA fields
         'btn_1_title',
         'btn_1_url',
         'btn_title_2',
-        'btn_url_2'
+        'btn_url_2',
+        'segment_type',
+        'segment_id'
     ];
 
     protected $casts = [
