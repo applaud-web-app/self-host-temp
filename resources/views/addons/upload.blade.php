@@ -26,13 +26,13 @@
 @section('content')
 <section class="content-body">
   <div class="container-fluid">
-    <div class="d-flex justify-content-between mb-3">
-      <h2>Upload Add-on</h2>
+    <div class="d-flex justify-content-between text-head mb-1">
+      <h2>Upload Add-on/ Modules</h2>
     </div>
     <div class="row">
       <!-- Upload Form -->
-      <div class="col-lg-6 mb-4">
-        <div class="card">
+      <div class="col-lg-7">
+        <div class="card h-auto">
           <div class="card-header"><h5 class="mb-0 card-title">Upload Form</h5></div>
           <div class="card-body">
             @if(session('success'))
@@ -57,7 +57,7 @@
               {{-- Styled Dropzone --}}
               <div id="zipDropzone" class="dropzone styled-dropzone mb-3">
                 <div class="dz-message text-center">
-                  <i class="fas fa-cloud-upload-alt fa-3x mb-2 text-secondary"></i>
+                  <i class="fas fa-cloud-upload-alt fa-2x mb-2 text-secondary"></i>
                   <p class="mb-1">Drop ZIP here or click to select</p>
                   <small class="text-muted">Only .zip files</small>
                 </div>
@@ -98,18 +98,45 @@
       </div>
 
       <!-- Instructions -->
-      <div class="col-lg-6 ">
+      <div class="col-lg-5 ">
         <div class="card h-auto">
           <div class="card-header"><h5 class="mb-0 card-title">Instructions</h5></div>
           <div class="card-body">
+             <p class="text-muted mb-3">
+      Follow these steps to upload and install your add-on correctly:
+    </p>
             <ul class="list-unstyled">
-              <li><i class="fas fa-check-circle text-success me-2"></i>Drag & drop or click the field to select your ZIP.</li>
-              <li><i class="fas fa-check-circle text-success me-2"></i>Ensure the ZIP contains the module folder.</li>
-              <li><i class="fas fa-check-circle text-success me-2"></i>Version must use semantic versioning (e.g. <kbd>1.0.0</kbd>).</li>
-              <li><i class="fas fa-check-circle text-success me-2"></i>Uploading replaces any existing module folder.</li>
-              <li><i class="fas fa-check-circle text-success me-2"></i>Watch the progress bar to completion.</li>
+              <li class="mb-3 d-flex">
+                <span class="badge bg-primary rounded-circle me-3 d-flex align-items-center justify-content-center" style="width:24px;height:24px;">1</span>
+                <div>
+                  <h6 class="mb-1 fw-semibold">Prepare Your Module</h6>
+                  <p class="small text-muted mb-0">Ensure the ZIP contains the module folder with all required files.</p>
+                </div>
+              </li>
+              <li class="mb-3 d-flex">
+                <span class="badge bg-primary rounded-circle me-3 d-flex align-items-center justify-content-center" style="width:24px;height:24px;">2</span>
+                <div>
+                  <h6 class="mb-1 fw-semibold">Version Format</h6>
+                  <p class="small text-muted mb-0">Use semantic versioning format (e.g. <code class="bg-light p-1 rounded">1.0.0</code>).</p>
+                </div>
+              </li>
+              <li class="mb-3 d-flex">
+                <span class="badge bg-primary rounded-circle me-3 d-flex align-items-center justify-content-center" style="width:24px;height:24px;">3</span>
+                <div>
+                  <h6 class="mb-1 fw-semibold">Upload Process</h6>
+                  <p class="small text-muted mb-0">Watch the progress bar and wait for confirmation.</p>
+                </div>
+              </li>
+              <li class="mb-3 d-flex">
+                <span class="badge bg-primary rounded-circle me-3 d-flex align-items-center justify-content-center" style="width:24px;height:24px;">4</span>
+                <div>
+                  <h6 class="mb-1 fw-semibold">After Installation</h6>
+                  <p class="small text-muted mb-0">Copy the full path shown for reference.</p>
+                </div>
+              </li>
             </ul>
-          </div>
+            
+         
         </div>
       </div>
     </div>
