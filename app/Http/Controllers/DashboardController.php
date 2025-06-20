@@ -80,7 +80,7 @@ class DashboardController extends Controller
                     'segment'   => 0,
                     'plugin'    => 0,
                 ],
-            ], 404);
+            ]);
         }
 
         // 2) Join DomainNotification → Notification to get segment_type
