@@ -68,15 +68,12 @@ Route::middleware(['auth','ensure_push_config'])->group(function() {
         Route::get('subscription', 'subscription')->name('subscription');
     });
 
-     Route::get('/addons', [AddonController::class, 'addons'])->name('addons.view');
-    Route::get('/addons/upload', [AddonController::class, 'upload'])
-        ->name('addons.upload')
-        ->middleware(['auth', 'ensure_push_config']);
-
-    Route::post('/addons', [AddonController::class, 'store'])
-        ->name('addons.store')
-        ->middleware(['auth', 'ensure_push_config']);
-
+    // Addons routes
+    Route::controller(AddonController::class)->prefix('addons')->name('addons.')->group(function () {
+        Route::get('/', 'addons')->name('view');
+        Route::get('/upload', 'upload')->name('upload');
+        Route::post('/addons', 'store')->name('store');
+    });
 
     // Settings routes
     Route::controller(AuthController::class)->group(function () {

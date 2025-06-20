@@ -16,43 +16,47 @@ class AddonController extends Controller
 {
     
 
-     public function addons()
+    public function addons()
     {
         try {
-            $installation = Installation::where('licensed_domain', request()->getHost())
-                                       ->latest('created_at')
-                                       ->firstOrFail();
+            $installation = Installation::where('licensed_domain', request()->getHost())->latest('created_at')->firstOrFail();
             $licenseKey = $installation->license_key;
 
-            // Reconstruct obfuscated constant name for Add-ons API
-            $key = implode('', [
-                base64_decode('dmVu'), 
-                chr(100),              
-                'or-',                  
-                base64_decode('YXBp'), 
-                '-addon',
-                base64_decode('LWxpc3Q='), 
-            ]);
-            $apiUrl = constant($key);
+            $url = constant('addon-push');
+            if (! $url) {
+                throw new \Exception('addon-push constant is not defined.');
+            }
 
-            // Call addons API
+            // 3) Send the request (no ->throw() so we can inspect errors ourselves)
             $response = Http::timeout(5)
-                ->post($apiUrl, [
-                    'license_key' => $licenseKey,
-                    'domain'      => request()->getHost(),
-                ])
-                ->throw()
-                ->json();
+                        ->post($url, [
+                            'license_key' => $licenseKey,
+                            'domain'      => request()->getHost(),
+                        ]);
 
-            $addons = $response['addons'] ?? [];
+            // 4) If it failed examine the status & body
+            if ($response->failed()) {
+                $status = $response->status();
+                $body   = $response->json();
 
-            return view('addons.view', ['addons' => $addons]);
+                // 5) Special case: invalid license key
+                if ($status === 404 && isset($body['error']) && $body['error'] === 'Invalid license key.') {
+                    // Installation::truncate();
+                    return back();
+                }
+                return back()->withErrors('Unable to fetch addons. Please try again later.');
+            }
 
-        } catch (\Exception $e) {
-            Log::error('Addons fetch failed: ' . $e->getMessage(), [
-                'domain' => request()->getHost(),
-            ]);
-            return back()->withErrors('Unable to fetch addons.');
+            // 7) Success: pull out the addons array
+            $data   = $response->json();
+            $addons = $data['addons'] ?? [];
+
+            return view('addons.view', compact('addons'));
+
+        } catch (\Illuminate\Http\Client\RequestException $e) {
+            return back()->withErrors('Network error while fetching addons. Please try again.');
+        } catch (\Throwable $e) {
+            return back()->withErrors('Something went wrong.');
         }
     }
 

@@ -66,7 +66,7 @@ class UserController extends Controller
 
     /**
      * Handle password update.
-     */
+    */
     public function updatePassword(Request $request)
     {
         $request->validate([
@@ -80,10 +80,9 @@ class UserController extends Controller
         return back()->with('success', 'Password updated successfully.');
     }
 
-
-     /**
+    /**
      * Show the user subscription page.
-     */
+    */
     public function subscription()
     {
         // 1) Grab your license key (this will throw a ModelNotFoundException if there’s no row)
