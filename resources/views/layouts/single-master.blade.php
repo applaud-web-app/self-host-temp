@@ -148,7 +148,7 @@
             });
         </script>
     @endif
-    @if (isset($errors->any()))
+    @if (isset($errors) && $errors->any())
         @foreach ($errors->all() as $error)
             <script>
                 iziToast.error({
