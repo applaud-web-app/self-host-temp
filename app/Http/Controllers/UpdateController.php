@@ -155,7 +155,25 @@ class UpdateController extends Controller
         }
         return response()->json(json_decode(File::get($this->progressFile), true));
     }
+        
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    
     public function restore(Request $request)
     {
         $request->validate(['date'=>'required|string']);
