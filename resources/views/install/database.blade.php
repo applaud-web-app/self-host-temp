@@ -103,15 +103,14 @@
   </div>
 </section>
 @endsection
-
-@section('scripts')
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/jquery-validation@1.19.3/dist/jquery.validate.min.js"></script>
-
+@push('scripts')
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jquery-validation@1.19.3/dist/jquery.validate.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jquery-validation@1.19.3/dist/additional-methods.min.js"></script>
   <script>
-  $(function() {
+  $(document).ready(function() {
     $('#dbForm').validate({
-      // Define validation rules
+      // Validation rules
       rules: {
         db_host: {
           required: true,
@@ -126,7 +125,6 @@
         db_name: {
           required: true,
           maxlength: 100,
-          // alpha_dash equivalent
           pattern: /^[A-Za-z0-9_-]+$/
         },
         db_username: {
@@ -136,11 +134,11 @@
         },
         db_password: {
           maxlength: 255
-          // In production, make password required:
-          // required: true,
+          // In production you can uncomment:
+          // required: true
         }
       },
-      // Custom messages (optional)
+      // Custom messages
       messages: {
         db_name: {
           pattern: 'Database name may only contain letters, numbers, underscores, and dashes.'
@@ -149,25 +147,24 @@
           pattern: 'Username may only contain letters, numbers, underscores, and dashes.'
         }
       },
-      // Highlight invalid fields
       errorClass: 'is-invalid',
       validClass: 'is-valid',
       errorPlacement: function(error, element) {
         error.addClass('invalid-feedback');
         error.insertAfter(element);
       },
-      // On successful validation
+      highlight: function(element) {
+        $(element).addClass('is-invalid').removeClass('is-valid');
+      },
+      unhighlight: function(element) {
+        $(element).addClass('is-valid').removeClass('is-invalid');
+      },
       submitHandler: function(form) {
-        const btn = $('#submitBtn');
-        btn.prop('disabled', true)
-           .html(`
-             <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-             Processing...
-           `);
-
+        var $btn = $('#submitBtn');
+        $btn.prop('disabled', true).html('Processing...');
         form.submit();
       }
     });
   });
   </script>
-@endsection
+@endpush

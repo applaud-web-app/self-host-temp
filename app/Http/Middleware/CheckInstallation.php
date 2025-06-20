@@ -12,22 +12,37 @@ class CheckInstallation
 {
     public function handle(Request $request, Closure $next)
     {
-        if (! Schema::hasTable('installations') && ! $request->is('install*')) {
-            return redirect()->route('install.welcome');
+        $isInstallRoute = $request->is('install*');
+        if (! Schema::hasTable('installations')) {
+            if (! $isInstallRoute) {
+                return redirect()->route('install.welcome');
+            }
+            return $next($request);
         }
 
-        $install = Installation::instance();
-
-        // If not yet installed, send everything (except /install/*) to the installer:
-        if (! $install->is_installed && ! $request->is('install*')) {
-            return redirect()->route('install.welcome');
+        // 2) If the table exists but there’s no installation row yet:
+        $installation = Installation::latest('created_at')->first();
+        if (! $installation) {
+            if (! $isInstallRoute) {
+                return redirect()->route('install.welcome');
+            }
+            return $next($request);
         }
 
-        // If already installed, block access to /install/*:
-        if ($install->is_installed && $request->is('install*')) {
+        // 3) If we have a row but `is_installed` is still false, keep them in installer:
+        if (! $installation->is_installed) {
+            if (! $isInstallRoute) {
+                return redirect()->route('install.welcome');
+            }
+            return $next($request);
+        }
+
+        // 4) If it *is* installed, block any future /install/* hits:
+        if ($isInstallRoute) {
             return redirect()->route('login');
         }
 
+        // 5) Otherwise let the request through:
         return $next($request);
     }
 }

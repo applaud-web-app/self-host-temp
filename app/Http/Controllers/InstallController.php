@@ -11,77 +11,31 @@ use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Session;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 
 class InstallController extends Controller
 {
-
-    // protected function checkStep($requestedStep)
-    // {
-    //     $installation = Installation::firstOrCreate([], ['completed_step' => 0]);
-        
-    //     // If installation is complete, redirect to home
-    //     if ($installation->is_installed) {
-    //         return redirect('/');
-    //     }
-
-    //     // If requested step is higher than completed step + 1, redirect to next allowed step
-    //     if ($requestedStep == $installation->completed_step) {
-    //         return redirect()->route($this->getStepRoute($installation->completed_step + 1));
-    //     }
-
-    //     if($requestedStep < $installation->completed_step) {
-    //         return redirect()->route($this->getStepRoute($installation->completed_step));
-
-    //     }
-        
-    //     // If requested step is higher than completed step + 1, redirect to next allowed step
-    //     if ($requestedStep > $installation->completed_step + 1) {
-    //         return redirect()->route($this->getStepRoute($installation->completed_step + 1));
-    //     }
-
-    //     return null;
-    // }
-
-    // protected function getStepRoute($step)
-    // {
-    //     $routes = [
-    //         1 => 'install.environment',
-    //         2 => 'install.license',
-    //         3 => 'install.database',
-    //         4 => 'install.cron',
-    //         5 => 'install.admin-setup',
-    //         6 => 'install.complete',
-    //     ];
-        
-    //     return $routes[$step] ?? 'install.welcome';
-    // }
-
-
     protected function checkStep(int $requestedStep)
     {
-        // grab-or-create our install record
-        $installation = Installation::firstOrCreate([], ['completed_step' => 0]);
+        if (! Schema::hasTable((new Installation)->getTable())) {
+            return null;
+        }
 
-        // if the app is already fully installed, kick them to /
+        $installation = Installation::firstOrCreate(['id' => 1],['completed_step' => 0]);
         if ($installation->is_installed) {
             return redirect('/');
         }
-
-        // The only step they should ever be on is the next incomplete one:
         $nextStep = $installation->completed_step + 1;
-
-        // if they try to go anywhere else, redirect them to that next step
         if ($requestedStep !== $nextStep) {
             return redirect()->route($this->getStepRoute($nextStep));
         }
-
-        // otherwise—perfectly valid!
         return null;
     }
 
-    /**
-     * Maps a numeric step to its install route.
-     */
     protected function getStepRoute(int $step): string
     {
         $routes = [
@@ -121,7 +75,7 @@ class InstallController extends Controller
         }
 
         $requirements = [
-            'installation_directory'  => is_dir(base_path()) && is_writable(base_path()),
+            'installation_directory' => is_dir(base_path()) && is_writable(base_path()),
             'fileinfo'               => extension_loaded('fileinfo'),
             'json'                   => extension_loaded('json'),
             'tokenizer'              => extension_loaded('tokenizer'),
@@ -133,8 +87,6 @@ class InstallController extends Controller
             'mbstring'               => extension_loaded('mbstring'),
             'pdo'                    => extension_loaded('pdo'),
             'allow_url_fopen'        => ini_get('allow_url_fopen'),
-            'redis'                  => true, //extension_loaded('redis')
-            'supervisor'            => true, //shell_exec('pgrep supervisord') !== null
         ];
 
         $folders = [
@@ -142,30 +94,27 @@ class InstallController extends Controller
             '/storage/framework (dir)'   => is_writable(storage_path('framework')),
         ];
 
-        // Check if all requirements are met
-        $allRequirementsMet = !in_array(false, $requirements, true) && !in_array(false, $folders, true);
-
-        return view('install.environment', compact('requirements', 'folders', 'allRequirementsMet'));
+        $allOK = ! in_array(false, $requirements, true) && ! in_array(false, $folders, true);
+        return view('install.environment', compact('requirements', 'folders', 'allOK'));
     }
 
     public function postInstallEnvironment(Request $request)
     {
         // Re-check all requirements in case someone bypasses the frontend
+        
         $requirements = [
-            'installation_directory'  => is_dir(base_path()) && is_writable(base_path()),
+            'installation_directory' => is_dir(base_path()) && is_writable(base_path()),
             'fileinfo'               => extension_loaded('fileinfo'),
             'json'                   => extension_loaded('json'),
             'tokenizer'              => extension_loaded('tokenizer'),
             'zip'                    => extension_loaded('zip'),
             'curl'                   => function_exists('curl_version'),
             'openssl'                => extension_loaded('openssl'),
-            'php_version_(min_php_version:_7.2.0)' => version_compare(PHP_VERSION, '7.2.0', '>='),
+            'php_version'            => version_compare(PHP_VERSION, '7.2.0', '>='),
             'ctype'                  => extension_loaded('ctype'),
             'mbstring'               => extension_loaded('mbstring'),
             'pdo'                    => extension_loaded('pdo'),
-            'allow_url_fopen'        => (bool)ini_get('allow_url_fopen'),
-            'redis'                  => true, // extension_loaded('redis')
-            'supervisor'             => true, // shell_exec('pgrep supervisord') !== null
+            'allow_url_fopen'        => ini_get('allow_url_fopen'),
         ];
 
         $folders = [
@@ -173,51 +122,80 @@ class InstallController extends Controller
             '/storage/framework (dir)'   => is_writable(storage_path('framework')),
         ];
 
-        // Check if all requirements are met
-        $allRequirementsMet = !in_array(false, $requirements, true) && !in_array(false, $folders, true);
+        $allOK = ! in_array(false, $requirements, true) && ! in_array(false, $folders, true);
 
-        if (!$allRequirementsMet) {
-            // Prepare error messages for failed requirements
-            $failedRequirements = array_filter($requirements, function($value) {
-                return $value === false;
-            });
-            
-            $failedFolders = array_filter($folders, function($value) {
-                return $value === false;
-            });
-
-            $errorMessages = [];
-            
-            // Add failed requirements to messages
-            foreach ($failedRequirements as $requirement => $status) {
-                $errorMessages[] = ucwords(str_replace('_', ' ', $requirement)) . ' requirement not met';
-            }
-            
-            // Add failed folders to messages
-            foreach ($failedFolders as $folder => $status) {
-                $errorMessages[] = $folder . ' is not writable';
-            }
-
-            return redirect()->route('install.environment')
-                ->with('error', 'Please fix all requirements before continuing.')
-                ->with('error_details', $errorMessages);
+        if (! $allOK) {
+            return redirect()->route('install.environment')->with('error', 'Please fix all requirements before continuing.');
         }
 
-        Installation::firstOrCreate([], [])->update(['completed_step' => max(1, Installation::first()->completed_step)]);
+        setInstallerData(['step' => 1]);
     
-        // All requirements met - proceed to next step
-        return redirect()->route('install.license')
-            ->with('success', 'Environment requirements successfully validated.');
+        return redirect()->route('install.database')->with('success', 'Environment looks good!');
     }
 
-    public function installLicense()
+    public function installDatabase()
     {
         if ($redirect = $this->checkStep(2)) {
             return $redirect;
         }
+
+        return view('install.database');
+    }
+
+    public function postInstallDatabase(Request $request)
+    {
+        $validated = $request->validate([
+            'db_host'     => 'required|string',
+            'db_port'     => 'required|integer',
+            'db_name'     => 'required|string',
+            'db_username' => 'required|string',
+            'db_password' => 'nullable|string',
+        ]);
+
+        $envUpdates = [
+            'DB_HOST'     => $validated['db_host'],
+            'DB_PORT'     => $validated['db_port'],
+            'DB_DATABASE' => $validated['db_name'],
+            'DB_USERNAME' => $validated['db_username'],
+        ];
+
+        if (isset($validated['db_password'])) {
+            $envUpdates['DB_PASSWORD'] = $validated['db_password'];
+        }
+        
+        $this->updateEnvFile($envUpdates);
+
+        Artisan::call('config:clear');
+        if (app()->environment('production')) {
+            Artisan::call('config:cache');
+        }
+        
+        try {
+            Artisan::call('migrate', ['--force' => true]);
+        } catch (\Exception $e) {
+            \Log::error("Migration failed during installer: ".$e->getMessage());
+            return back()->withInput()->withErrors(['db' => 'Database migration failed: '.$e->getMessage()]);
+        }
+
+        // 6) Mark step complete and redirect
+        setInstallerData(['step' => 2]);
+        $installer = getInstallerData();
+        Installation::updateOrCreate(
+            ['id' => 1],
+            ['completed_step' => $installer['step'] ?? 2]
+        );
+        clearInstallerData();
+
+        return redirect()->route('install.license')->with('success', 'Database configured and migrations complete.');
+    }
+
+    public function installLicense()
+    {
+        if ($redirect = $this->checkStep(3)) {
+            return $redirect;
+        }
         $url = constant('license-push');
         if(! $url){
-            // Installation::truncate();
             return redirect()->back();
         }
         return view('install.license',compact('url'));
@@ -249,7 +227,7 @@ class InstallController extends Controller
                 'LICENSE_CODE' => $validated['license_code']
             ]);
 
-            return redirect()->route('install.database')->with('success', 'License verified and saved successfully!');
+            return redirect()->route('install.cron')->with('success', 'License verified and saved successfully!');
 
         } catch (\Exception $e) {
             return back()->withInput()
@@ -315,67 +293,6 @@ class InstallController extends Controller
         }
 
         return $value;
-    }
-
-    //
-    // STEP 3: Database Configuration
-    //
-    public function installDatabase()
-    {
-        if ($redirect = $this->checkStep(3)) {
-            return $redirect;
-        }
-        return view('install.database');
-    }
-
-    public function postInstallDatabase(Request $request)
-    {
-        // Define strong validation rules
-        $rules = [
-            'db_host'     => ['required', 'string', 'max:255'],
-            'db_port'     => ['required', 'integer', 'min:1', 'max:65535'],
-            'db_name'     => ['required', 'string', 'alpha_dash', 'max:100'],
-            'db_username' => ['required', 'string', 'alpha_dash', 'max:100'],
-            'db_password' => ['nullable', 'string', 'max:255'],
-            // In production, uncomment the next line and comment out the nullable rule above:
-            // 'db_password' => ['required', 'string', 'max:255'],
-        ];
-
-        $validated = $request->validate($rules);
-
-        try {
-            $envUpdates = [
-                'DB_HOST'     => $validated['db_host'],
-                'DB_PORT'     => $validated['db_port'],
-                'DB_DATABASE' => $validated['db_name'],
-                'DB_USERNAME' => $validated['db_username'],
-            ];
-
-            if (isset($validated['db_password'])) {
-                $envUpdates['DB_PASSWORD'] = $validated['db_password'];
-            }
-
-            // Update .env
-            $this->updateEnvFile($envUpdates);
-
-            // Refresh config
-            Artisan::call('config:clear');
-            if (app()->environment('production')) {
-                Artisan::call('config:cache');
-            }
-
-            Installation::updateOrCreate(
-                ['id' => 1],
-                ['completed_step' => 3]
-            );
-
-            return redirect()->route('install.cron')
-                            ->with('success', 'Database configured successfully!');
-
-        } catch (\Exception $e) {
-            Log::error("Env write error: " . $e->getMessage());
-            return back()->with('error', 'Database configuration failed: ' . $e->getMessage());
-        }
     }
 
     //

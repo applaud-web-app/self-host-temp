@@ -106,7 +106,7 @@
         </div>
       </div>
 
-      @if(!$allRequirementsMet)
+      @if(!$requirements)
         <div class="requirements-error">
           <i class="fas fa-exclamation-circle me-2"></i>
           Please fix all requirements before continuing.
@@ -116,8 +116,8 @@
       <form method="POST" action="{{ route('install.environment.post') }}" id="environmentForm">
         @csrf
         <button type="submit" id="continueBtn"
-                class="btn btn-primary w-100 btn-continue {{ !$allRequirementsMet ? 'btn-disabled' : '' }}" 
-                {{ !$allRequirementsMet ? 'disabled' : '' }}>
+                class="btn btn-primary w-100 btn-continue {{ !$requirements ? 'btn-disabled' : '' }}" 
+                {{ !$requirements ? 'disabled' : '' }}>
           Continue Setup
         </button>
       </form>
@@ -130,7 +130,7 @@
         const continueBtn = document.getElementById('continueBtn');
         
         form.addEventListener('submit', function(e) {
-            @if(!$allRequirementsMet)
+            @if(!$requirements)
                 e.preventDefault();
                 alert('Please fix all requirements before continuing.');
                 return;

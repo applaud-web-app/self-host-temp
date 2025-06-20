@@ -14,8 +14,6 @@ use ZipArchive;
 
 class AddonController extends Controller
 {
-    
-
     public function addons()
     {
         try {

@@ -8,6 +8,38 @@ use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\File;
 
+if (! function_exists('installerDataPath')) {
+    function installerDataPath(): string
+    {
+        return storage_path('install_data.json');
+    }
+}
+
+if (! function_exists('setInstallerData')) {
+    function setInstallerData($data): void
+    {
+        Storage::disk('local')->put('install_data.json', json_encode($data, JSON_PRETTY_PRINT));
+    }
+}
+
+if (! function_exists('getInstallerData')) {
+    function getInstallerData(): array
+    {
+        $path = installerDataPath();
+        if (! file_exists($path)) {
+            return [];
+        }
+        return json_decode(file_get_contents($path), true) ?: [];
+    }
+}
+
+if (! function_exists('clearInstallerData')) {
+    function clearInstallerData(): void
+    {
+        Storage::disk('local')->delete('install_data.json');
+    }
+}
+
 if (! function_exists('xor_decrypt')) {
     function xor_decrypt(string $hex, int $key): string
     {

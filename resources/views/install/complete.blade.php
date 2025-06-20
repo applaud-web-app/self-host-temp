@@ -160,18 +160,18 @@ document.addEventListener('DOMContentLoaded', function() {
 // --------- End Confetti Animation ---------
 
 // --------- Button Processing State -----------
-document.getElementById('dashboardBtn').addEventListener('click', function() {
-    const btn = this;
-    btn.disabled = true;
-    btn.innerHTML = `
-        <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-        Redirecting...
-    `;
-    // Redirect after a short delay to allow spinner to show
-    setTimeout(function() {
-        window.location.href = "{{ route('dashboard.view') }}";
-    }, 300);
-});
+// document.getElementById('dashboardBtn').addEventListener('click', function() {
+//     const btn = this;
+//     btn.disabled = true;
+//     btn.innerHTML = `
+//         <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+//         Redirecting...
+//     `;
+//     // Redirect after a short delay to allow spinner to show
+//     setTimeout(function() {
+//         window.location.href = "{{ route('dashboard.view') }}";
+//     }, 300);
+// });
 // --------- End Button Processing State ---------
 </script>
 @endsection

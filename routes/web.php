@@ -15,7 +15,7 @@ use App\Http\Controllers\AddonController;
 use App\Http\Controllers\UpdateController;
 
 
-Route::prefix('install')->group(function () {
+Route::prefix('install')->withoutMiddleware('install')->group(function () {
     // welcome
     Route::get('/',             [InstallController::class, 'installWelcome'])->name('install.welcome');
     Route::post('/',            [InstallController::class, 'postInstallWelcome']);
@@ -24,13 +24,13 @@ Route::prefix('install')->group(function () {
     Route::get('/environment',  [InstallController::class, 'installEnvironment'])->name('install.environment');
     Route::post('/environment', [InstallController::class, 'postInstallEnvironment'])->name('install.environment.post');
 
-    // license
-    Route::get('/license',      [InstallController::class, 'installLicense'])->name('install.license');
-    Route::post('/license',     [InstallController::class, 'postInstallLicense'])->name('install.license.post');
-
     // database
     Route::get('/database',     [InstallController::class, 'installDatabase'])->name('install.database');
     Route::post('/database',    [InstallController::class, 'postInstallDatabase'])->name('install.database.post');
+
+    // license
+    Route::get('/license',      [InstallController::class, 'installLicense'])->name('install.license');
+    Route::post('/license',     [InstallController::class, 'postInstallLicense'])->name('install.license.post');
 
     // cron
     Route::get('/cron',         [InstallController::class, 'installCron'])->name('install.cron');
@@ -40,7 +40,7 @@ Route::prefix('install')->group(function () {
     Route::get('/admin-setup',  [InstallController::class, 'adminSetup'])->name('install.admin-setup');
     Route::post('/admin-setup', [InstallController::class, 'postAdminSetup'])->name('install.admin-setup.post');
 
-    // complete (GET only)
+    // complete 
     Route::get('/complete',     [InstallController::class, 'installComplete'])->name('install.complete');
 });
 

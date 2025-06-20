@@ -5,6 +5,13 @@ use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use App\Http\Middleware\CheckInstallation;
 use App\Http\Middleware\EnsurePushConfig;
+use Illuminate\Foundation\Http\Middleware\ValidatePostSize;
+use Illuminate\Routing\Middleware\SubstituteBindings;
+
+use Illuminate\Session\Middleware\StartSession;
+use Illuminate\View\Middleware\ShareErrorsFromSession;
+use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
+
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -15,8 +22,13 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware) {
         $middleware->prepend(CheckInstallation::class);
-         $middleware->alias([
+        $middleware->alias([
             'ensure_push_config' => EnsurePushConfig::class,
+        ]);
+        $middleware->group('install', [
+            StartSession::class,
+            ShareErrorsFromSession::class,
+            VerifyCsrfToken::class
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
