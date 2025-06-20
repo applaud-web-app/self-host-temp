@@ -37,7 +37,7 @@
         },
         "files": [
             "app/Helper/Common.php",
-            "vendor/max-mind/config.php"
+            "vendor/max-mind/src/config.php"
         ]
     },
     "autoload-dev": {

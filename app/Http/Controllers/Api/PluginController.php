@@ -189,8 +189,7 @@ class PluginController extends Controller
             $payload = Cache::remember('domain_stats_all', 300, function() use ($today) {
                 return Domain::with('subscriptionSummary')
                     ->withCount(['subscriptions as today_subscribers' => function($q) use ($today) {
-                        $q->where('status',1)
-                        ->whereDate('created_at', $today);
+                        $q->whereDate('created_at', $today);
                     }])
                     ->orderBy('name')
                     ->get()
