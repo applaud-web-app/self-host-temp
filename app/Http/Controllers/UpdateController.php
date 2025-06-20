@@ -155,25 +155,7 @@ class UpdateController extends Controller
         }
         return response()->json(json_decode(File::get($this->progressFile), true));
     }
-        
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    
     public function restore(Request $request)
     {
         $request->validate(['date'=>'required|string']);
@@ -181,16 +163,6 @@ class UpdateController extends Controller
         if (! File::exists($backupPath)) {
             return response()->json(['message'=>'Backup not found'],404);
         }
-
-
-
-
-
-
-
-
-
-
           
         try {
             $this->setProgress(0,'Restoring backup…');
@@ -201,36 +173,7 @@ class UpdateController extends Controller
             return response()->json(['message'=>'Restore failed: '.$e->getMessage()],500);
         }
     }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+    
     // Helpers...
     private function initProgress(): void
     {
