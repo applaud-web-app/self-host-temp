@@ -173,6 +173,12 @@ class UpdateController extends Controller
             return response()->json(['message'=>'Restore failed: '.$e->getMessage()],500);
         }
     }
+
+
+
+
+
+
     
     // Helpers...
     private function initProgress(): void
