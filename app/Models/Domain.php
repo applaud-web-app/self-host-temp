@@ -9,18 +9,11 @@ class Domain extends Model
 {
    protected $fillable = ['name','status'];
 
-   /**
-    * Notifications associated with this domain.
-    */
    public function notifications()
    {
-      return $this->belongsToMany(Notification::class, 'domain_notification')
-                ->using(DomainNotification::class);
+      return $this->belongsToMany(Notification::class, 'domain_notification')->using(DomainNotification::class);
    }
 
-   /**
-    * Subscribers under this domain.
-    */
    public function subscriptions()
    {
       return $this->hasMany(PushSubscriptionHead::class, 'domain', 'name');

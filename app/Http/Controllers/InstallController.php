@@ -175,20 +175,19 @@ class InstallController extends Controller
             $envUpdates['DB_PASSWORD'] = $validated['db_password'];
         }
         
-        $this->updateEnvFile($envUpdates);
-
-        Artisan::call('config:clear');
         if (app()->environment('production')) {
-            Artisan::call('config:cache');
-        }
-        
-        try {
-            Artisan::call('migrate', ['--force' => true]);
-        } catch (\Exception $e) {
-            \Log::error("Migration failed during installer: ".$e->getMessage());
-            return back()->withInput()->withErrors(['db' => 'Database migration failed: '.$e->getMessage()]);
+            $this->updateEnvFile($envUpdates);
+            Artisan::call('optimize:clear');
+
+            try {
+                Artisan::call('migrate', ['--force' => true]);
+            } catch (\Exception $e) {
+                \Log::error("Migration failed during installer: ".$e->getMessage());
+                return back()->withInput()->withErrors(['db' => 'Database migration failed: '.$e->getMessage()]);
+            }
         }
 
+        
         // 6) Mark step complete and redirect
         setInstallerData(['step' => 2]);
         $installer = getInstallerData();
