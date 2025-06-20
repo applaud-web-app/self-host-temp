@@ -16,20 +16,25 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Database\QueryException;
 
 class InstallController extends Controller
 {
     protected function checkStep(int $requestedStep)
     {
 
-        try {  
-            $tableExists = Schema::hasTable('installations');
+        // 1) If they’re already in the installer, let them through
+        if (request()->is('install*')) {
+            return null;
+        }
+
+        // 2) Try to connect + check for the table; any exception = installer
+        try {
+            if (! Schema::hasTable('installations')) {   
+                return null;
+            }
         } catch (QueryException $e) {
            return null;
-        }
-        
-        if (! Schema::hasTable((new Installation)->getTable())) {
-            return null;
         }
 
         $installation = Installation::firstOrCreate(['id' => 1],['completed_step' => 0]);
