@@ -74,7 +74,6 @@ class InstallController extends Controller
 
     public function postInstallWelcome(Request $request)
     {
-        ensureEnvExists();
         return redirect()->route('install.environment');
     }
 
