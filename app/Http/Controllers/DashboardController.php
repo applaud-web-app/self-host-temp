@@ -69,7 +69,7 @@ class DashboardController extends Controller
         $refresh    = $request->get('refresh', 0);
 
         // 1) Find the domain
-        $domain = Domain::where('name', $domainName)->firstOrFail();
+        $domain = Domain::where('name', $domainName)->first();
 
         if (! $domain) {
             return response()->json([
