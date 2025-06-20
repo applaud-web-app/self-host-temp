@@ -173,6 +173,9 @@ class UpdateController extends Controller
         }
     }
 
+
+    
+
     // Helpers...
     private function initProgress(): void
     {
