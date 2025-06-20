@@ -22,8 +22,7 @@ class CheckInstallation
         }
 
         // 2) Try to connect to the DB and check for the table.
-        try {
-            DB::connection()->getPdo();                       // throws if no DB or bad creds
+        try {                   // throws if no DB or bad creds
             $tableExists = Schema::hasTable('installations'); // throws if DB exists but no rights
         } catch (QueryException $e) {
             // Couldn’t connect or no rights or no database → go to installer
@@ -52,7 +51,7 @@ class CheckInstallation
         if (! $installation->is_installed) {
             return redirect()->route('install.welcome');
         }
-        
+
         return $next($request);
     }
 }
