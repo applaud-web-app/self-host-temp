@@ -358,30 +358,27 @@ class InstallController extends Controller
             'is_admin' => true,
         ]);
 
-        // Mark the application as installed
-        Installation::firstOrCreate([], [])->update(['is_installed' => true]);
+        Installation::firstOrCreate([], [])->update(['is_installed' => true,'completed_step' => max(1, Installation::first()->completed_step)]);
 
-        // Pass credentials to the final step
-        session([
-            'installed_admin_email'    => $u['admin_email'],
-            'installed_admin_password' => $u['admin_password'],
+        return view('install.complete', [
+            'admin_email'    => $u['admin_email'],
+            'admin_password' => $u['admin_password'],
         ]);
-
-        Installation::firstOrCreate([], [])->update(['completed_step' => max(1, Installation::first()->completed_step)]);
-        return redirect()->route('install.complete');
     }
 
     //
     // STEP 6: Completion Screen
     //
-    public function installComplete()
+    public function installComplete(Request $request)
     {
-        $email    = session('installed_admin_email');
-        $password = session('installed_admin_password');
-
         return view('install.complete', [
             'admin_email'    => $email,
             'admin_password' => $password,
         ]);
+    }
+
+    public function getInstallComplete()
+    {
+        return redirect()->route('home')->with('success', '🎉 Account Created Successfully!! 🎉');
     }
 }

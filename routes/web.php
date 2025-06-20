@@ -39,9 +39,6 @@ Route::prefix('install')->withoutMiddleware('install')->group(function () {
     // admin
     Route::get('/admin-setup',  [InstallController::class, 'adminSetup'])->name('install.admin-setup');
     Route::post('/admin-setup', [InstallController::class, 'postAdminSetup'])->name('install.admin-setup.post');
-
-    // complete 
-    Route::get('/complete',     [InstallController::class, 'installComplete'])->name('install.complete');
 });
 
 Route::get('/', [Controller::class, 'index'])->name('home');

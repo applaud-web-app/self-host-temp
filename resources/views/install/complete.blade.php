@@ -75,8 +75,8 @@
                         Your Aplu self-hosted platform has been successfully installed. Enjoy your app!
                     </p>
 
-                    <p class="info-text">Your Super Admin email: <span class="info-strong">{{ $admin_email ?? 'admin@example.com' }}</span></p>
-                    <p class="info-text mb-4">Your Super Admin password: <span class="info-strong">{{ $admin_password ?? 'password123' }}</span></p>
+                    <p class="info-text">Your Super Admin email: <span class="info-strong">{{ $admin_email }}</span></p>
+                    <p class="info-text mb-4">Your Super Admin password: <span class="info-strong">{{ $admin_password }}</span></p>
 
                     <button id="dashboardBtn" class="btn btn-primary w-100 btn-dashboard">
                         Go to Dashboard
