@@ -173,7 +173,7 @@ class UpdateController extends Controller
 
 
 
-        
+          
         try {
             $this->setProgress(0,'Restoring backup…');
             $this->restoreFromBackup($backupPath);
