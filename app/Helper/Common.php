@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Crypt;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Artisan;
 
 if (! function_exists('installerDataPath')) {
     function installerDataPath(): string
@@ -137,5 +138,27 @@ if (! function_exists('ensureEnvExists')) {
             'success' => true,
             'message' => '.env file created successfully'
         ];
+    }
+}
+
+if (! function_exists('generateAppKey')) {
+    function generateAppKey($data): array
+    {
+        try {
+            Artisan::call('key:generate', [
+                '--force' => true,
+                '--show' => false
+            ]);
+            
+            return [
+                'success' => true,
+                'message' => 'Application key generated successfully'
+            ];
+        } catch (\Exception $e) {
+            return [
+                'success' => false,
+                'message' => 'Failed to generate application key: ' . $e->getMessage()
+            ];
+        }
     }
 }

@@ -69,6 +69,8 @@ class InstallController extends Controller
     //
     public function installWelcome()
     {
+        ensureEnvExists();
+        generateAppKey();
         return view('install.welcome');
     }
 
