@@ -58,7 +58,7 @@ class InstallController extends Controller
             3 => 'install.database',
             4 => 'install.cron',
             5 => 'install.admin-setup',
-            6 => 'install.complete',
+            // 6 => 'install.complete',
         ];
 
         // fallback to welcome if something weird happens
