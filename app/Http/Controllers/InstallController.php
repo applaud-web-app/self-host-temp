@@ -365,20 +365,4 @@ class InstallController extends Controller
             'admin_password' => $u['admin_password'],
         ]);
     }
-
-    //
-    // STEP 6: Completion Screen
-    //
-    public function installComplete(Request $request)
-    {
-        return view('install.complete', [
-            'admin_email'    => $email,
-            'admin_password' => $password,
-        ]);
-    }
-
-    public function getInstallComplete()
-    {
-        return redirect()->route('home')->with('success', '🎉 Account Created Successfully!! 🎉');
-    }
 }
