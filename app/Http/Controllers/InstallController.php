@@ -177,7 +177,6 @@ class InstallController extends Controller
         
         if (app()->environment('production')) {
             $this->updateEnvFile($envUpdates);
-            Artisan::call('optimize:clear');
 
             try {
                 Artisan::call('migrate', ['--force' => true]);
