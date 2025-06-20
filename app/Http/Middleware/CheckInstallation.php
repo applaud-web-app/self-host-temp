@@ -21,7 +21,7 @@ class CheckInstallation
             return $next($request);
         }
 
-        // 2) Try to connect to the DB and check for the table.
+        // 2)  Try to connect to the DB and check for the table.
         try {                   // throws if no DB or bad creds
             $tableExists = Schema::hasTable('installations'); // throws if DB exists but no rights
         } catch (QueryException $e) {
