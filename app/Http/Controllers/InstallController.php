@@ -17,6 +17,7 @@ use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Database\QueryException;
+use Illuminate\Support\Facades\Crypt;
 
 class InstallController extends Controller
 {
@@ -24,9 +25,9 @@ class InstallController extends Controller
     {
 
         // 1) If they’re already in the installer, let them through
-        if (request()->is('install*')) {
-            return null;
-        }
+        // if (request()->is('install*')) {
+        //     return null;
+        // }
 
         // 2) Try to connect + check for the table; any exception = installer
         try {
@@ -222,19 +223,23 @@ class InstallController extends Controller
         ]);
 
         try {
+
+            $encryptedLicense = Crypt::encryptString($validated['license_code']);
+            $encryptedDomain  = Crypt::encryptString($validated['domain_name']);
+
             // Store license info in database
             Installation::updateOrCreate(
-                ['id' => 1], // Assuming you only have one installation record
+                ['id' => 1], // single installation record
                 [
-                    'license_key' => $validated['license_code'],
-                    'licensed_domain' => $validated['domain_name'],
-                    'completed_step' => 2
+                    'license_key'     => $encryptedLicense,
+                    'licensed_domain' => $encryptedDomain,
+                    'completed_step'  => 3,
                 ]
             );
 
             // define in config file that is more safer
             $this->updateEnvFile([
-                'LICENSE_CODE' => $validated['license_code']
+                'LICENSE_CODE' => $encryptedLicense
             ]);
 
             return redirect()->route('install.cron')->with('success', 'License verified and saved successfully!');
@@ -354,8 +359,7 @@ class InstallController extends Controller
         ]);
 
         // Mark the application as installed
-        Installation::firstOrCreate([], [])
-            ->update(['is_installed' => true]);
+        Installation::firstOrCreate([], [])->update(['is_installed' => true]);
 
         // Pass credentials to the final step
         session([
