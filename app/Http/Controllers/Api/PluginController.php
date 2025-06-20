@@ -13,6 +13,9 @@ use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Validation\ValidationException;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Str;
+use App\Models\Notification;
+use App\Jobs\SendNotificationJob;
 
 class PluginController extends Controller
 {
@@ -220,43 +223,48 @@ class PluginController extends Controller
     }
 
     // SEND NOTIFICATION
-    public function sendNotification(Request $request){
+    public function sendNotification(Request $request)
+    {
+        $clientIp    = $request->header('CF-Connecting-IP') ?? $request->getClientIp();
+        $limiterKey  = 'plugin-send-notification:' . $clientIp;
+        $maxAttempts = 2; 
+        $lockSeconds = 60;
 
-        $clientIp   = $request->header('CF-Connecting-IP') ?? $request->getClientIp();
-        $limiterKey = 'plugin-domain-stats:' . $clientIp;
-        $maxAttempts = 30;
-        $lockSeconds = 300;
-
-        // 1) block on 4th try, lock for 5 minutes
+        // 1) if they've already sent one in the last minute, block
         if (RateLimiter::tooManyAttempts($limiterKey, $maxAttempts)) {
-            $available = RateLimiter::availableIn($limiterKey);
-            $minutes   = ceil($available / 60);
+            $seconds = RateLimiter::availableIn($limiterKey);
             return response()->json([
                 'status'  => false,
-                'message' => "Too many attempts. Try again in {$minutes} minute(s)."
+                'message' => "Sending too quickly! Try again in {$seconds} second(s)."
             ], 429);
         }
+
+        // record this attempt
+        RateLimiter::hit($limiterKey, $lockSeconds);
 
         // 2) validation
         try {
             $data = $request->validate([
                 'domain_name' => 'required|string|max:100',
                 'key'         => 'required|string|max:200',
+                'domains'     => 'required|array|max:5',
+                'domains.*'   => 'string|max:100', 
+                'target_url'   => 'required|url|max:255',
+                'title'        => 'required|string|max:150',
+                'description'  => 'required|string|max:500',
+                'banner_image' => 'nullable|url|max:255',
             ]);
         } catch (ValidationException $e) {
-            // count as a “try”
-            RateLimiter::hit($limiterKey, $lockSeconds);
             return response()->json([
                 'status'  => false,
-                'message' => 'Unauthorized request.'
-            ], 401);
+                'message' => 'Invalid request payload.'
+            ], 422);
         }
 
         try {
             // 3) domain lookup
             $domain = $this->getValidDomain($data['domain_name']);
             if (! $domain) {
-                RateLimiter::hit($limiterKey, $lockSeconds);
                 return response()->json([
                     'status'  => false,
                     'message' => 'Unauthorized access.'
@@ -265,51 +273,67 @@ class PluginController extends Controller
 
             // 4) license check
             $license = DomainLicense::where('domain_id', $domain->id)->latest('created_at')->first();
-
             if (! $license || ! $this->verifyDomainKey($data['key'], $license)) {
-                RateLimiter::hit($limiterKey, $lockSeconds);
                 return response()->json([
                     'status'  => false,
                     'message' => 'The provided license key is invalid.'
                 ], 401);
             }
 
-            // 5) success  --- cache for 5 minutes ---
-            $today = Carbon::today()->toDateString();
-            $payload = Cache::remember('domain_stats_all', 300, function() use ($today) {
-                return Domain::with('subscriptionSummary')
-                    ->withCount(['subscriptions as today_subscribers' => function($q) use ($today) {
-                        $q->where('status',1)
-                        ->whereDate('created_at', $today);
-                    }])
-                    ->orderBy('name')
-                    ->get()
-                    ->map(function($d) {
-                        $sum = $d->subscriptionSummary;
-                        $todaySub = (int)$d->today_subscribers;
-                        return [
-                            'domain_name'         => $d->name,
-                            'total_subscribers'   => $sum ? (int)$sum->total_subscribers + $todaySub : 0 + $todaySub,
-                            'monthly_subscribers' => $sum ? (int)$sum->monthly_subscribers + $todaySub : 0 + $todaySub,
-                            'today_subscribers'   => (int)$todaySub,
+            if ($license->is_used) {
+                return response()->json([
+                    'status'  => false,
+                    'message' => 'This license key has already been used.'
+                ], 401);
+            }
 
-                        ];
-                    });
-            });
+            // 4) build notification
+            $iconUrl = asset('images/push/icons/alarm-1.png');
+            $notification = Notification::create([
+                'target_url'        => $data['target_url'],
+                'campaign_name'     => 'CAMP#'.random_int(1000,9999),
+                'title'             => $data['title'],
+                'description'       => $data['description'],
+                'banner_image'      => $data['banner_image'] ?? null,
+                'banner_icon'       => $iconUrl,
+                'schedule_type'     => 'instant',
+                'message_id'        => Str::uuid(),
+                'segment_type'      => 'api',
+            ]);
 
-            RateLimiter::clear($limiterKey);
+            // 5) attach domains by name → id
+            $domainIds = Domain::whereIn('name', $data['domains'])->where('status', 1)->pluck('id')->toArray();
+
+            if (empty($domainIds)) {
+                // no valid target domains
+                return response()->json([
+                    'status'  => false,
+                    'message' => 'No valid target domains found.'
+                ], 422);
+            }
+
+            $notification->domains()->sync($domainIds);
+            
+            // 6) dispatch your job
+            SendNotificationJob::dispatch($notification->id);
+
             return response()->json([
                 'status' => true,
-                'data'   => $payload,
+                'message' => 'Notification queued successfully.',
             ], 200);
 
         } catch (\Throwable $e) {
-           RateLimiter::hit($limiterKey, $lockSeconds);
+            Log::error('sendNotification failed', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+
             return response()->json([
                 'status'  => false,
-                'message' => 'Unauthorized access.'
+                'message' => 'An internal error occurred.'
             ], 500);
         }
     }
+
     
 }

@@ -398,7 +398,7 @@ class NotificationController extends Controller
             ]);
 
             if ($data['segment_type'] === 'all') {
-                $ids = Domain::whereIn('name', $data['domain_name'])->pluck('id')->all();
+                $ids = Domain::whereIn('name', $data['domain_name'])->where('status', 1)->pluck('id')->all();
                 $notification->domains()->sync($ids);
             }else{
                 // particular segment → attach its single domain
