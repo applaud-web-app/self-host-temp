@@ -21,6 +21,15 @@ class InstallController extends Controller
 {
     protected function checkStep(int $requestedStep)
     {
+
+        try {      
+            if (! Schema::hasTable((new Installation)->getTable())) {
+                return null;
+            }
+        } catch (QueryException $e) {
+            return null;
+        }
+
         if (! Schema::hasTable((new Installation)->getTable())) {
             return null;
         }
