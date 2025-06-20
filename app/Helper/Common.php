@@ -142,8 +142,17 @@ if (! function_exists('ensureEnvExists')) {
 }
 
 if (! function_exists('generateAppKey')) {
-    function generateAppKey($data): array
+    function generateAppKey(): array
     {
+        // Check if APP_KEY already exists and is not empty
+        if (env('APP_KEY') && trim(env('APP_KEY')) !== '') {
+            return [
+                'success' => true,
+                'message' => 'Application key already exists',
+                'already_exists' => true
+            ];
+        }
+
         try {
             Artisan::call('key:generate', [
                 '--force' => true,
@@ -152,12 +161,14 @@ if (! function_exists('generateAppKey')) {
             
             return [
                 'success' => true,
-                'message' => 'Application key generated successfully'
+                'message' => 'Application key generated successfully',
+                'already_exists' => false
             ];
         } catch (\Exception $e) {
             return [
                 'success' => false,
-                'message' => 'Failed to generate application key: ' . $e->getMessage()
+                'message' => 'Failed to generate application key: ' . $e->getMessage(),
+                'already_exists' => false
             ];
         }
     }

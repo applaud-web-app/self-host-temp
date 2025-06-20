@@ -14,6 +14,8 @@ class CheckInstallation
 {
    public function handle(Request $request, Closure $next)
     {
+        ensureEnvExists();
+        generateAppKey();
         $isInstallRoute = $request->is('install*');
 
         // 1) If they’re already hitting /install/*, just let them through.
