@@ -223,7 +223,7 @@ class PluginController extends Controller
     }
 
     // SEND NOTIFICATION
-    public function sendNotification(Request $request)
+    public function pluginNotify(Request $request)
     {
         $clientIp    = $request->header('CF-Connecting-IP') ?? $request->getClientIp();
         $limiterKey  = 'plugin-send-notification:' . $clientIp;
