@@ -163,6 +163,10 @@ class UpdateController extends Controller
         if (! File::exists($backupPath)) {
             return response()->json(['message'=>'Backup not found'],404);
         }
+
+
+
+        
         try {
             $this->setProgress(0,'Restoring backup…');
             $this->restoreFromBackup($backupPath);
@@ -200,7 +204,7 @@ class UpdateController extends Controller
 
 
 
-    
+
 
     // Helpers...
     private function initProgress(): void
