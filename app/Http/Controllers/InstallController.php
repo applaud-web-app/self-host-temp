@@ -215,7 +215,12 @@ class InstallController extends Controller
         if ($redirect = $this->checkStep(2)) {
             return $redirect;
         }
-        return view('install.license');
+        $url = constant('license-push');
+        if(! $url){
+            // Installation::truncate();
+            return redirect()->back();
+        }
+        return view('install.license',compact('url'));
     }
 
     public function postInstallLicense(Request $request)
@@ -322,57 +327,6 @@ class InstallController extends Controller
         }
         return view('install.database');
     }
-
-    // public function postInstallDatabase(Request $request)
-    // {
-    //     // Validate the request
-    //     $validated = $request->validate([
-    //         'db_host'     => 'required|string|max:255',
-    //         'db_port'     => 'required|numeric|min:1|max:65535',
-    //         'db_name'     => 'required|string|max:100',
-    //         'db_username' => 'required|string|max:100',
-    //         'db_password' => 'nullable|string|max:255',
-    //     ]);
-
-    //     try {
-    //         $envUpdates = [
-    //             'DB_HOST'     => $validated['db_host'],
-    //             'DB_PORT'     => $validated['db_port'],
-    //             'DB_DATABASE' => $validated['db_name'],
-    //             'DB_USERNAME' => $validated['db_username'],
-    //         ];
-
-    //         // Only add password to updates if it exists in the validated data
-    //         if (isset($validated['db_password'])) {
-    //             $envUpdates['DB_PASSWORD'] = $validated['db_password'];
-    //         }
-
-    //         // Update .env file with database credentials
-    //         $this->updateEnvFile($envUpdates);
-            
-    //         // Clear configuration cache to reload new values
-    //         Artisan::call('config:clear');
-            
-    //         // Optional: Cache the new configuration
-    //         if (app()->environment('production')) {
-    //             Artisan::call('config:cache');
-    //         }
-            
-    //         // Update installation progress
-    //         Installation::updateOrCreate(
-    //             ['id' => 1], // Assuming you only have one installation record
-    //             [
-    //                 'completed_step' => 3
-    //             ]
-    //         );
-            
-    //         return redirect()->route('install.cron')->with('success', 'Database configured successfully!');
-            
-    //     } catch (\Exception $e) {
-    //         Log::error("message :" . $e->getMessage());
-    //         return back()->with('error', 'Database configuration failed: ' . $e->getMessage());
-    //     }
-    // }
 
     public function postInstallDatabase(Request $request)
     {

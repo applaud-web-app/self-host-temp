@@ -179,7 +179,7 @@
                 };
 
                 $.ajax({
-                    url: 'https://selfhost.awmtab.in/api/license/verify',
+                    url: "{{$url}}",
                     type: 'POST',
                     contentType: 'application/json',
                     data: JSON.stringify(requestData),
