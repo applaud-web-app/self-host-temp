@@ -104,3 +104,38 @@ if (! function_exists('purgeMissingPepper')) {
         }
     }
 }
+
+
+if (! function_exists('ensureEnvExists')) {
+    function ensureEnvExists(): array
+    {
+        $envPath = base_path('.env');
+        $envExamplePath = base_path('.env.example');
+
+        if (file_exists($envPath)) {
+            return [
+                'success' => true,
+                'message' => '.env already exists'
+            ];
+        }
+
+        if (!file_exists($envExamplePath)) {
+            return [
+                'success' => false,
+                'message' => '.env.example not found'
+            ];
+        }
+
+        if (!copy($envExamplePath, $envPath)) {
+            return [
+                'success' => false,
+                'message' => 'Failed to create .env file (check permissions)'
+            ];
+        }
+
+        return [
+            'success' => true,
+            'message' => '.env file created successfully'
+        ];
+    }
+}
