@@ -58,7 +58,6 @@ class InstallController extends Controller
             3 => 'install.database',
             4 => 'install.cron',
             5 => 'install.admin-setup',
-            // 6 => 'install.complete',
         ];
 
         // fallback to welcome if something weird happens
@@ -224,22 +223,19 @@ class InstallController extends Controller
 
         try {
 
-            $encryptedLicense = Crypt::encryptString($validated['license_code']);
-            $encryptedDomain  = Crypt::encryptString($validated['domain_name']);
-
             // Store license info in database
             Installation::updateOrCreate(
                 ['id' => 1], // single installation record
                 [
-                    'license_key'     => $encryptedLicense,
-                    'licensed_domain' => $encryptedDomain,
+                    'license_key'     => $validated['license_code'],
+                    'licensed_domain' => $validated['domain_name'],
                     'completed_step'  => 3,
                 ]
             );
 
             // define in config file that is more safer
             $this->updateEnvFile([
-                'LICENSE_CODE' => $encryptedLicense
+                'LICENSE_CODE' => $validated['license_code']
             ]);
 
             return redirect()->route('install.cron')->with('success', 'License verified and saved successfully!');
