@@ -71,6 +71,18 @@ class DashboardController extends Controller
         // 1) Find the domain
         $domain = Domain::where('name', $domainName)->firstOrFail();
 
+        if (! $domain) {
+            return response()->json([
+               'status' => true,
+                'data'   => [
+                    'total'     => 0,
+                    'broadcast' => 0,
+                    'segment'   => 0,
+                    'plugin'    => 0,
+                ],
+            ], 404);
+        }
+
         // 2) Join DomainNotification → Notification to get segment_type
         $stats = DomainNotification::query()
             ->join('notifications as n', 'domain_notification.notification_id', '=', 'n.id')
