@@ -84,51 +84,50 @@ class UserController extends Controller
      /**
      * Show the user subscription page.
      */
-   public function subscription()
-{
-    try {
-      
+    public function subscription()
+    {
+        // 1) Grab your license key (this will throw a ModelNotFoundException if there’s no row)
         $installation = Installation::select('license_key')->firstOrFail();
-        if (! $installation) {
-            throw new \Exception('No installation record found for this domain.');
+        $licenseKey   = $installation->license_key;
+        $url = constant('subscription-push');
+        if (! $url) {
+            throw new \Exception('subscription-push constant is not defined.');
         }
 
-        $licenseKey = $installation->license_key;
+        try {
+            // 3) Call your subscription API
+            $response = Http::timeout(5)
+                ->post($url, [
+                    'license_key' => $licenseKey,
+                    'domain'      => request()->getHost(),
+                ]);
 
-        $key = implode('', [
-            base64_decode('dmVu'), 
-            chr(100),               
-            'or-',                  
-            base64_decode('YXBp'),  
-            '-',
-            'sub',
-            base64_decode('c2NpcmJlcg=='), 
-        ]);
-        $apiUrl = constant($key);
+            if (! $response->successful()) {
+                $status = $response->status();
+                $body = $response->json();
+                if ($response->status() === 404 && isset($body['error']) && $body['error'] === 'Invalid license key.'){
+                    // Installation::truncate();
+                    return back();
+                }
+            }
 
-        // 3) Call your subscription API
-        $resp = Http::timeout(5)
-            ->post($apiUrl, [
-                'license_key' => $licenseKey,
-                'domain'      => request()->getHost(),
-            ])
-            ->throw()
-            ->json('data');
+            // 5) Pull out your data payload
+            $resp = $response->json('data');
 
+            // 6) Normalize the purchase date
+            $resp['purchase_date'] = Carbon::createFromFormat('d-M-Y', $resp['purchase_date']);
 
-        // 4) Normalize the purchase date
-        $resp['purchase_date'] = Carbon::createFromFormat('d-M-Y', $resp['purchase_date']);
+            // 7) Render the view
+            return view('user.subscription', ['sub' => $resp]);
 
-        // 5) Render the Blade view with the subscription data
-        return view('user.subscription', [
-            'sub' => $resp,
-        ]);
-
-    } catch (\Throwable $e) {
-        Log::error('Subscription fetch failed: ' . $e->getMessage());
-        return back()->withErrors('Unable to fetch subscription details.');
+        } catch (\Illuminate\Http\Client\RequestException $e) {
+            return back()->withErrors('Something went wrong.');
+        } catch (\Throwable $e) {
+            Log::error('Unexpected error fetching subscription: ' . $e->getMessage());
+            return back()->withErrors('Something went wrong..');
+        }
     }
-}
+
 
 
 

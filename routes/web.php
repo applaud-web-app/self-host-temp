@@ -63,9 +63,7 @@ Route::middleware(['auth','ensure_push_config'])->group(function() {
         Route::get('profile', 'profile')->name('profile');
         Route::post('update', 'updateProfile')->name('update');
         Route::post('update-password', 'updatePassword')->name('update-password');
-
         Route::get('subscription', 'subscription')->name('subscription');
-     
     });
 
      Route::get('/addons', [AddonController::class, 'addons'])->name('addons.view');
