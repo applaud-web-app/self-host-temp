@@ -43,6 +43,18 @@ class CheckInstallation
             // Something went wrong querying the table → installer
             return redirect()->route('install.welcome');
         }
+        
+
+        if (
+            $installation
+            && empty($installation->license_key)
+            && empty($installation->licensed_domain)
+            && $installation->completed_step >= 3
+        ) {
+            // delete only the bad record(s)
+            Installation::truncate(); 
+            return redirect()->route('install.welcome');
+        }
 
         // 5) If no record yet, installer
         if (! $installation) {
