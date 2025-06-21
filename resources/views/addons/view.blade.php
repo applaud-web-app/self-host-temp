@@ -63,13 +63,35 @@
                 <h5 class="addon-title">{{ $addon['name'] }} <small class="text-secondary">({{ $addon['version'] }})</small></h5>
                 <p class="addon-desc mb-3">{{ $addon['description'] ?: 'No description available.' }}</p>
                 <div class="fw-bold fs-4 text-primary mb-3">{{ $addon['price'] }}</div>
-                @isset($addon['purchase_url'])
-                  <div class="addon-actions">
-                      <a href="{{$addon['purchase_url']}}" target="_blank" class="btn btn-primary btn-sm w-100">
-                      <i class="fas fa-shopping-cart me-1"></i> {{$addon['btn_text']}}
-                      </a>
-                  </div>
-                @endisset
+                 @if (isset($addon['status']) && $addon['status'] != 'available')
+                    {{-- Show Upload/Activate button when addon is not available --}}
+                    <div class="addon-actions">
+                        <div class="row gx-2">
+                            <div class="col-6">
+                                <a href="" class="btn btn-info btn-sm w-100">
+                                    <i class="fas fa-play me-1"></i> Activate
+                                </a>
+                            </div>
+                            @php
+                              $param = ['key' => $addon['key'], 'name' => $addon['name'], 'version' => $addon['version']];
+                              $uploadUrl = encryptUrl(route('addons.upload'), $param);
+                            @endphp
+                            <div class="col-6">
+                                <a href="{{$uploadUrl}}" class="btn btn-warning btn-sm w-100">
+                                    <i class="fas fa-upload me-1"></i> Upload
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                @else
+                    {{-- Show Purchase button when addon is available --}}
+                    <div class="addon-actions">
+                        <a href="{{ $addon['purchase_url'] }}" target="_blank" class="btn btn-primary btn-sm w-100">
+                            <i class="fas fa-shopping-cart me-1"></i> Purchase Now
+                        </a>
+                    </div>
+                @endif
+
               </div>
             </div>
           </div>

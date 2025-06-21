@@ -54,7 +54,22 @@
               <label for="zipDropzone" class="form-label">Add-on ZIP File <span class="text-danger">*</span></label>
               @csrf
 
+              {{-- NAME --}}
+              <div class="mb-3">
+                <label for="name">Name <span class="text-danger">*</span></label>
+                <input id="name" name="name" value="@isset($data['name']){{$data['name']}}@endisset" type="text" class="form-control" readonly required>
+                <div class="invalid-feedback">Please enter a name.</div>
+              </div>
+              
+              {{-- Version --}}
+              <div class="mb-3">
+                <label for="version">Version <span class="text-danger">*</span></label>
+                <input id="version" name="version" value="@isset($data['version']){{$data['version']}}@endisset" type="text" class="form-control" readonly required>
+                <div class="invalid-feedback">Please enter a version.</div>
+              </div>
+
               {{-- Styled Dropzone --}}
+              <label for="version">Upload <span class="text-danger">*</span></label>
               <div id="zipDropzone" class="dropzone styled-dropzone mb-3">
                 <div class="dz-message text-center">
                   <i class="fas fa-cloud-upload-alt fa-2x mb-2 text-secondary"></i>
@@ -63,13 +78,6 @@
                 </div>
               </div>
 
-              {{-- Version --}}
-              <div class="mb-3">
-                <label for="version">Version <span class="text-danger">*</span></label>
-                <input id="version" name="version" type="text"
-                       class="form-control" placeholder="e.g. 1.0.0" required>
-                <div class="invalid-feedback">Please enter a version.</div>
-              </div>
                 
               {{-- Progress --}}
               <div class="mb-3">
@@ -117,7 +125,7 @@
                 <span class="badge bg-primary rounded-circle me-3 d-flex align-items-center justify-content-center" style="width:24px;height:24px;">2</span>
                 <div>
                   <h6 class="mb-1 fw-semibold">Version Format</h6>
-                  <p class="small text-muted mb-0">Use semantic versioning format (e.g. <code class="bg-light p-1 rounded">1.0.0</code>).</p>
+                  <p class="small text-muted mb-0">Use semantic versioning format .</p>
                 </div>
               </li>
               <li class="mb-3 d-flex">
@@ -153,7 +161,7 @@
 <script>
   Dropzone.autoDiscover = false;
   const dz = new Dropzone('#zipDropzone', {
-    url: '{{ route("addons.store") }}',
+    url: '{{ route("$data['store']") }}',
     paramName: 'zip',
     maxFiles: 1,
     acceptedFiles: '.zip',

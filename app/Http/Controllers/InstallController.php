@@ -177,15 +177,14 @@ class InstallController extends Controller
         
         if (app()->environment('production')) {
             $this->updateEnvFile($envUpdates);
-
-            try {
-                Artisan::call('migrate', ['--force' => true]);
-            } catch (\Exception $e) {
-                \Log::error("Migration failed during installer: ".$e->getMessage());
-                return back()->withInput()->withErrors(['db' => 'Database migration failed: '.$e->getMessage()]);
-            }
         }
 
+        try {
+            Artisan::call('migrate', ['--force' => true]);
+        } catch (\Exception $e) {
+            \Log::error("Migration failed during installer: ".$e->getMessage());
+            return back()->withInput()->withErrors(['db' => 'Database migration failed: '.$e->getMessage()]);
+        }
         
         // 6) Mark step complete and redirect
         setInstallerData(['step' => 2]);

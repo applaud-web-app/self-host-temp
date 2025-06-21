@@ -279,13 +279,6 @@ class PluginController extends Controller
                 ], 401);
             }
 
-            if ($license->is_used) {
-                return response()->json([
-                    'status'  => false,
-                    'message' => 'This license key has already been used.'
-                ], 401);
-            }
-
             // 4) build notification
             $iconUrl = asset('images/push/icons/alarm-1.png');
             $notification = Notification::create([

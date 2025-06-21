@@ -69,7 +69,7 @@ Route::middleware(['auth','ensure_push_config'])->group(function() {
     Route::controller(AddonController::class)->prefix('addons')->name('addons.')->group(function () {
         Route::get('/', 'addons')->name('view');
         Route::get('/upload', 'upload')->name('upload');
-        Route::post('/addons', 'store')->name('store');
+        Route::post('/store', 'store')->name('store');
     });
 
     // Settings routes

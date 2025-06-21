@@ -58,15 +58,24 @@ class AddonController extends Controller
         }
     }
 
-    /**
-     * Show the form to upload a new add-on ZIP.
-     */
-    /**
-     * Show the upload form.
-     */
-    public function upload()
+    public function upload(Request $request)
     {
-        return view('addons.upload');
+        try {
+            // Validate request with proper error messages
+            $validated = $request->validate([
+                'eq' => 'required|string',
+            ]);
+
+            // Decrypt ID with error handling
+            $data = decryptUrl($request->eq);
+
+            $param = ['key' => $data['key'], 'name' => $data['name'], 'version' => $data['version']];
+            $data['store'] = encryptUrl(route('addons.store'), $param);
+
+            return view('addons.upload',compact('data'));
+        } catch (\Throwable $th) {
+            return redirect()->back();
+        }
     }
 
     /**
