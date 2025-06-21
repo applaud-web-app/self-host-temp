@@ -78,15 +78,20 @@ class AddonController extends Controller
         }
     }
 
-    /**
-     * Handle the uploaded ZIP; extract, cleanup, and record.
-     */
     public function store(Request $request)
     {
         $request->validate([
-            'zip'     => 'required|file|mimes:zip',
-            'version' => 'required|string|max:20',
+            'zip' => 'required|file|mimes:zip',
+            'eq'  => 'required|string',
         ]);
+
+        // Decrypt ID with error handling
+        $data = decryptUrl($request->eq);
+        $param = [
+            'key'     => $data['key'],
+            'name'    => $data['name'],
+            'version' => $data['version'],
+        ];
 
         $file        = $request->file('zip');
         $zipName     = $file->getClientOriginalName();
@@ -95,45 +100,43 @@ class AddonController extends Controller
         $zipPath     = "{$modulesDir}/{$zipName}";
         $extractPath = "{$modulesDir}/{$moduleName}";
 
-        if (! is_dir($modulesDir)) {
+        if (!is_dir($modulesDir)) {
             mkdir($modulesDir, 0755, true);
         }
 
-        // Replace existing folder
+        // Replace existing module folder if it exists
         $wasReplaced = false;
         if (is_dir($extractPath)) {
             File::deleteDirectory($extractPath);
             $wasReplaced = true;
         }
 
-        // Move ZIP and extract
+        // Move ZIP to module dir and extract it
         $file->move($modulesDir, $zipName);
         $zip = new ZipArchive;
+
         if ($zip->open($zipPath) === true) {
-            if (! is_dir($extractPath)) {
+            if (!is_dir($extractPath)) {
                 mkdir($extractPath, 0755, true);
             }
             $zip->extractTo($extractPath);
             $zip->close();
-
-            // Delete the ZIP file after successful extraction
-            File::delete($zipPath);
+            File::delete($zipPath); // Clean up the ZIP
         } else {
             Log::error("Failed to extract module ZIP: {$zipPath}");
             return back()->withErrors('Module uploaded but extraction failed.');
         }
 
-        // Database upsert by file_path
+        // Save to DB using name and version from decrypted params
         $addon = Addon::updateOrCreate(
             ['file_path' => "Modules/{$zipName}"],
             [
-                'name'    => $moduleName,
-                'version' => $request->version,
-                'status'  => 'installed',
+                'name'    => $param['name'],
+                'version' => $param['version'],
+                'status'  => 'uploaded',
             ]
         );
 
-        // AJAX response
         if ($request->ajax()) {
             return response()->json([
                 'replaced'     => $wasReplaced,
@@ -141,12 +144,13 @@ class AddonController extends Controller
             ]);
         }
 
-        // Fallback redirect
         $msg = $wasReplaced
-            ? "Module '{$moduleName}' replaced at Modules/{$moduleName}."
-            : "Module '{$moduleName}' installed at Modules/{$moduleName}.";
+            ? "Module '{$param['name']}' replaced at Modules/{$moduleName}."
+            : "Module '{$param['name']}' uploaded at Modules/{$moduleName}.";
+
         return redirect()
             ->route('addons.upload')
             ->with('success', $msg);
     }
+
 }
