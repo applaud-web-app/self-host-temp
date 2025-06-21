@@ -10,71 +10,107 @@ use Illuminate\Support\Facades\Log;
 use App\Models\Installation;
 use App\Models\Addon;
 use ZipArchive;
-
+use Illuminate\Support\Facades\DB;
+use Illuminate\Http\Client\RequestException;
 
 class AddonController extends Controller
 {
     public function addons()
     {
         try {
-            $installation = Installation::where('licensed_domain', request()->getHost())->latest('created_at')->firstOrFail();
+            // grab current host via the request() helper
+            $host = request()->getHost();
+
+            // find the matching installation record
+            $installation = Installation::where('licensed_domain', $host)
+                                ->latest('created_at')
+                                ->firstOrFail();
+
             $licenseKey = $installation->license_key;
 
+            // your remote endpoint constant
             $url = constant('addon-push');
             if (! $url) {
                 throw new \Exception('addon-push constant is not defined.');
             }
 
-            // 3) Send the request (no ->throw() so we can inspect errors ourselves)
+            // fetch remote addons
             $response = Http::timeout(5)
                         ->post($url, [
                             'license_key' => $licenseKey,
-                            'domain'      => request()->getHost(),
+                            'domain'      => $host,
                         ]);
 
-            // 4) If it failed examine the status & body
+            // handle HTTP errors
             if ($response->failed()) {
-                $status = $response->status();
-                $body   = $response->json();
-
-                // 5) Special case: invalid license key
-                if ($status === 404 && isset($body['error']) && $body['error'] === 'Invalid license key.') {
-                    // Installation::truncate();
+                $body = $response->json();
+                if ($response->status() === 404
+                    && isset($body['error'])
+                    && $body['error'] === 'Invalid license key.'
+                ) {
                     return back();
                 }
                 return back()->withErrors('Unable to fetch addons. Please try again later.');
             }
 
-            // 7) Success: pull out the addons array
-            $data   = $response->json();
-            $addons = $data['addons'] ?? [];
+            // parse and enrich
+            $rawAddons = $response->json()['addons'] ?? [];
+            $addons = collect($rawAddons)->map(function($addon) {
+                $local = Addon::where('name', $addon['name'])
+                              ->where('version', $addon['version'])
+                              ->first();
+
+                $addon['is_local']     = (bool) $local;
+                $addon['local_status'] = $local->status ?? null;
+
+                return $addon;
+            });
 
             return view('addons.view', compact('addons'));
-
-        } catch (\Illuminate\Http\Client\RequestException $e) {
+        }
+        catch (RequestException $e) {
             return back()->withErrors('Network error while fetching addons. Please try again.');
-        } catch (\Throwable $e) {
+        }
+        catch (\Throwable $e) {
             return back()->withErrors('Something went wrong.');
         }
     }
-
+    
     public function upload(Request $request)
     {
         try {
-            // Validate request with proper error messages
-            $validated = $request->validate([
+            // 1) Validate incoming 'eq' parameter
+            $request->validate([
                 'eq' => 'required|string',
             ]);
 
-            // Decrypt ID with error handling
+            // 2) Decrypt the payload
             $data = decryptUrl($request->eq);
+            $param = [
+                'key'     => $data['key'],
+                'name'    => $data['name'],
+                'version' => $data['version'],
+            ];
 
-            $param = ['key' => $data['key'], 'name' => $data['name'], 'version' => $data['version']];
+            // 3) If an add-on with this name+version already exists, bail out
+            if (Addon::where('name', $param['name'])
+                    ->where('version', $param['version'])
+                    ->exists()) {
+                return redirect()
+                    ->back()
+                    ->withErrors(['addon' => "The add-on “{$param['name']}” (v{$param['version']}) is already uploaded."]);
+            }
+
+            // 4) Build the encrypted store URL and pass to view
             $data['store'] = encryptUrl(route('addons.store'), $param);
 
-            return view('addons.upload',compact('data'));
-        } catch (\Throwable $th) {
-            return redirect()->back();
+            return view('addons.upload', compact('data'));
+        }
+        catch (\Throwable $th) {
+            // You might want to log $th->getMessage() here
+            return redirect()
+                ->back()
+                ->withErrors(['upload' => 'Invalid or expired upload link.']);
         }
     }
 
@@ -85,7 +121,7 @@ class AddonController extends Controller
             'eq'  => 'required|string',
         ]);
 
-        // Decrypt ID with error handling
+        // Decrypt parameters
         $data = decryptUrl($request->eq);
         $param = [
             'key'     => $data['key'],
@@ -93,64 +129,96 @@ class AddonController extends Controller
             'version' => $data['version'],
         ];
 
+        // File paths
         $file        = $request->file('zip');
         $zipName     = $file->getClientOriginalName();
         $moduleName  = pathinfo($zipName, PATHINFO_FILENAME);
         $modulesDir  = base_path('Modules');
         $zipPath     = "{$modulesDir}/{$zipName}";
         $extractPath = "{$modulesDir}/{$moduleName}";
+        $fileSize = $file->getSize();
 
-        if (!is_dir($modulesDir)) {
+        // Ensure base Modules directory exists
+        if (! is_dir($modulesDir)) {
             mkdir($modulesDir, 0755, true);
         }
 
-        // Replace existing module folder if it exists
-        $wasReplaced = false;
-        if (is_dir($extractPath)) {
-            File::deleteDirectory($extractPath);
-            $wasReplaced = true;
-        }
+        DB::beginTransaction();
+        try {
+            // 1) Check & delete existing module folder
+            $wasReplaced = false;
+            if (is_dir($extractPath)) {
+                File::deleteDirectory($extractPath);
+                $wasReplaced = true;
+            }
 
-        // Move ZIP to module dir and extract it
-        $file->move($modulesDir, $zipName);
-        $zip = new ZipArchive;
+            // 2) Move the uploaded ZIP into the Modules folder
+            $file->move($modulesDir, $zipName);
 
-        if ($zip->open($zipPath) === true) {
-            if (!is_dir($extractPath)) {
+            // 3) Extract it
+            $zip = new ZipArchive;
+            if ($zip->open($zipPath) !== true) {
+                throw new \Exception("Failed to open ZIP for extraction.");
+            }
+            // Create target folder (will exist only if not replaced)
+            if (! is_dir($extractPath)) {
                 mkdir($extractPath, 0755, true);
             }
             $zip->extractTo($extractPath);
             $zip->close();
-            File::delete($zipPath); // Clean up the ZIP
-        } else {
-            Log::error("Failed to extract module ZIP: {$zipPath}");
-            return back()->withErrors('Module uploaded but extraction failed.');
+
+            // 4) Write to database
+            $addon = Addon::updateOrCreate(
+                ['file_path' => "Modules/{$zipName}"],
+                [
+                    'name'      => $param['name'],
+                    'version'   => $param['version'],
+                    'status'    => 'uploaded',
+                    'file_size' => $fileSize,
+                ]
+            );
+
+            // 5) All good—commit!
+            DB::commit();
+
+            // 6) Clean up the ZIP (we no longer need the archive)
+            File::delete($zipPath);
+
+            // 7) Respond
+            if ($request->ajax()) {
+                return response()->json([
+                    'replaced'     => $wasReplaced,
+                    'install_path' => "Modules/{$moduleName}",
+                ]);
+            }
+
+            $msg = $wasReplaced
+                ? "Module '{$param['name']}' replaced at Modules/{$moduleName}."
+                : "Module '{$param['name']}' uploaded at Modules/{$moduleName}.";
+
+            return redirect()->route('addons.view')->with('success', $msg);
         }
+        catch (\Exception $e) {
+            // Roll back the DB
+            DB::rollBack();
 
-        // Save to DB using name and version from decrypted params
-        $addon = Addon::updateOrCreate(
-            ['file_path' => "Modules/{$zipName}"],
-            [
-                'name'    => $param['name'],
-                'version' => $param['version'],
-                'status'  => 'uploaded',
-            ]
-        );
+            // Clean up any partial work
+            if (file_exists($zipPath)) {
+                File::delete($zipPath);
+            }
+            if (is_dir($extractPath)) {
+                File::deleteDirectory($extractPath);
+            }
 
-        if ($request->ajax()) {
-            return response()->json([
-                'replaced'     => $wasReplaced,
-                'install_path' => "Modules/{$moduleName}",
-            ]);
+            Log::error("Addon upload failed: {$e->getMessage()}");
+
+            // Return error
+            $errorMsg = 'Upload failed: ' . $e->getMessage();
+            if ($request->ajax()) {
+                return response()->json(['error' => $errorMsg], 500);
+            }
+            return back()->withErrors($errorMsg);
         }
-
-        $msg = $wasReplaced
-            ? "Module '{$param['name']}' replaced at Modules/{$moduleName}."
-            : "Module '{$param['name']}' uploaded at Modules/{$moduleName}.";
-
-        return redirect()
-            ->route('addons.upload')
-            ->with('success', $msg);
     }
 
 }

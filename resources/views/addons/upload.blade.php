@@ -100,7 +100,7 @@
 
                                 {{-- Actions --}}
                                 <div class="text-end">
-                                    <button type="button" id="submitBtn" class="btn btn-primary" disabled>
+                                    <button type="button" id="submitBtn" class="btn btn-primary">
                                         <i class="fas fa-upload me-2"></i>
                                         <span id="btnText">Upload Module</span>
                                     </button>
@@ -171,8 +171,10 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/dropzone/5.9.3/min/dropzone.min.js"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/izitoast/dist/css/iziToast.min.css">
     <script src="https://cdn.jsdelivr.net/npm/izitoast/dist/js/iziToast.min.js"></script>
+
     <script>
         Dropzone.autoDiscover = false;
+
         const dz = new Dropzone('#zipDropzone', {
             url: @json($data['store']),
             paramName: 'zip',
@@ -188,6 +190,7 @@
         });
 
         const versionInput = document.getElementById('version');
+        const nameInput = document.getElementById('name');
         const submitBtn = document.getElementById('submitBtn');
         const btnText = document.getElementById('btnText');
         const wrapper = document.getElementById('uploadProgressWrapper');
@@ -195,19 +198,27 @@
         const form = document.getElementById('uploadForm');
 
         function updateButton() {
-            submitBtn.disabled = !(dz.getAcceptedFiles().length && versionInput.value.trim());
+            const hasVersion = versionInput.value.trim();
+            const hasName = nameInput.value.trim();
+            const hasFile = dz.getAcceptedFiles().length;
+            // submitBtn.disabled = !(hasVersion && hasName && hasFile);
         }
 
         dz.on('addedfile', updateButton);
         dz.on('removedfile', updateButton);
         versionInput.addEventListener('input', updateButton);
+        nameInput.addEventListener('input', updateButton);
+
+        // Run initial check on load
+        updateButton();
 
         submitBtn.addEventListener('click', () => dz.processQueue());
 
         dz.on('sending', (file, xhr, formData) => {
             formData.append('version', versionInput.value);
+            formData.append('name', nameInput.value);
             btnText.textContent = 'Processing…';
-            submitBtn.disabled = true;
+            // submitBtn.disabled = true;
             wrapper.style.display = 'block';
             bar.style.width = '0%';
         });
@@ -217,34 +228,36 @@
         });
 
         dz.on('success', (file) => {
-          iziToast.success({
-              title: 'Upload Complete',
-              message: 'Your module has been installed.',
-              position: 'topRight'
-          });
+            iziToast.success({
+                title: 'Upload Complete',
+                message: 'Your module has been installed.',
+                position: 'topRight'
+            });
 
-          // Reset and reload
-          dz.removeAllFiles();
-          versionInput.value = '';
-          form.classList.remove('was-validated');
-          wrapper.style.display = 'none';
-          btnText.textContent = 'Upload Module';
-          submitBtn.disabled = true;
+            dz.removeAllFiles();
+            form.classList.remove('was-validated');
+            wrapper.style.display = 'none';
+            btnText.textContent = 'Upload Module';
+            // submitBtn.disabled = true;
 
-          setTimeout(() => window.location.reload(), 1500);
+            setTimeout(() => {
+                window.location.href = "{{ route('addons.view') }}";
+            }, 1000);
+
         });
-
 
         dz.on('error', (file, err) => {
             iziToast.error({
                 title: 'Error',
-                message: err,
+                message: typeof err === 'string' ? err : 'An error occurred during upload.',
                 position: 'topRight'
             });
+
             dz.removeFile(file);
             wrapper.style.display = 'none';
             btnText.textContent = 'Upload Module';
-            submitBtn.disabled = true;
+            updateButton(); // re-enable button if conditions are met
         });
     </script>
 @endpush
+
