@@ -178,15 +178,7 @@ class InstallController extends Controller
         if (app()->environment('production')) {
             $this->updateEnvFile($envUpdates);
         }
-        
-        setInstallerData(['step' => 2]);
 
-        return redirect()->route('install.license')->with('success', 'Database configured and migrations complete.');
-    }
-
-    public function installLicense()
-    {
-        
         try {
             Artisan::call('migrate', ['--force' => true]);
         } catch (\Exception $e) {
@@ -194,6 +186,8 @@ class InstallController extends Controller
             return back()->withInput()->withErrors(['db' => 'Database migration failed: '.$e->getMessage()]);
         }
         
+        // 6) Mark step complete and redirect
+        setInstallerData(['step' => 2]);
         $installer = getInstallerData();
         Installation::updateOrCreate(
             ['id' => 1],
@@ -201,6 +195,11 @@ class InstallController extends Controller
         );
         clearInstallerData();
 
+        return redirect()->route('install.license')->with('success', 'Database configured and migrations complete.');
+    }
+
+    public function installLicense()
+    {
         if ($redirect = $this->checkStep(3)) {
             return $redirect;
         }
@@ -208,7 +207,6 @@ class InstallController extends Controller
         if(! $url){
             return redirect()->back();
         }
-
         return view('install.license',compact('url'));
     }
 
