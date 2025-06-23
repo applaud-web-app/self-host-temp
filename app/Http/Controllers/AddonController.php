@@ -65,8 +65,8 @@ class AddonController extends Controller
 
                 return $addon;
             });
-
-            return view('addons.view', compact('addons'));
+            $url = constant('addon-licence-push');
+            return view('addons.view', compact('addons','url'));
         }
         catch (RequestException $e) {
             return back()->withErrors('Network error while fetching addons. Please try again.');
@@ -219,6 +219,156 @@ class AddonController extends Controller
             }
             return back()->withErrors($errorMsg);
         }
+    }
+
+    // public function activate(Request $request)
+    // {
+    //     try {
+
+    //         // Validate the 'eq' parameter (encrypted data)
+    //         $req = $request->validate([
+    //             'eq' => 'required|string',
+    //             'license_key' => 'required|string|min:3|max:225',
+    //             'username' => 'required|string|min:3|max:225',
+    //             'email' => 'required|string|min:3|max:225',
+    //         ]);
+
+    //         // Decrypt the 'eq' parameter to get the data
+    //         $data = decryptUrl($request->eq);
+
+    //         // Ensure the decrypted data contains the required parameters
+    //         if (!isset($data['key'], $data['name'], $data['version'])) {
+    //             return response()->json(['error' => 'Invalid addon data.'], 400);
+    //         }
+
+    //         // Prepare the addon verification parameters
+    //         $payload = [
+    //             'key'     => $data['key'],
+    //             'name'    => $data['name'],
+    //             'version' => $data['version'],
+    //             'license_key' => $req['license_key'],
+    //             'username' => $req['username'],
+    //             'email' => $req['email'],
+    //         ];
+
+    //         $url = constant('addon-licence-push');
+    //         if (! $url) {
+    //             throw new \Exception('addon-push constant is not defined.');
+    //         }
+
+    //         // fetch remote addons
+    //         $response = Http::timeout(5)->post($url,$payload);
+    //         if ($response->successful()) {
+    //             dd($response->json());
+    //             // Check if the response has the 'validat' field set to 'success'
+    //             if ($response->json('validat') === 'success') {
+    //                 return response()->json(['message' => 'Addon verified successfully!'], 200);
+    //             } else {
+    //                 return response()->json(['error' => 'Verification failed!'], 400);
+    //             }
+    //         } else {
+    //             return response()->json(['error' => 'Request failed with status: ' . $response->status()], 500);
+    //         }
+    //     } catch (\Exception $e) {
+    //         // Handle any unexpected errors
+    //         return response()->json(['error' => 'An error occurred: ' . $e->getMessage()], 500);
+    //     }
+    // }
+    
+    public function activate(Request $request)
+    {
+        $validated = $request->validate([
+            'license_key' => 'required|string',
+            'username' => 'required|string',
+            'email' => 'required|email',
+            'addon_name' => 'required|string',
+            'addon_version' => 'required|string',
+        ]);
+
+        // First, find the addon
+        $addon = Addon::where('name', $validated['addon_name'])
+                      ->where('version', $validated['addon_version'])
+                      ->first();
+
+        if (!$addon) {
+            return response()->json([
+                'valid' => false,
+                'message' => 'Addon not found in local system'
+            ], 404);
+        }
+
+        // Save the license key to .env file
+        $envKey = strtoupper(str_replace(' ', '_', $validated['addon_name'])) . '_LICENSE_KEY';
+        $this->updateEnvFile([
+            $envKey => $validated['license_key']
+        ]);
+
+        $addon->update(['status' => 'installed', 'variable' => $envKey]);
+
+        return response()->json([
+            'valid' => true,
+            'message' => 'Addon activated successfully!'
+        ]);
+    }
+
+    protected function updateEnvFile(array $values)
+    {
+        $envPath = base_path('.env');
+
+        // Ensure .env exists
+        if (!file_exists($envPath)) {
+            if (file_exists(base_path('.env.example'))) {
+                copy(base_path('.env.example'), $envPath);
+            } else {
+                touch($envPath);
+            }
+        }
+
+        $envContent = file_get_contents($envPath);
+
+        foreach ($values as $key => $value) {
+            // Normalize null to empty string
+            $raw = $value === null ? '' : (string)$value;
+
+            // Force quoting for DB_PASSWORD, else use normal escaping
+            if ($key === 'DB_PASSWORD') {
+                // escape backslashes and double-quotes, then wrap
+                $escapedValue = '"' . str_replace(['\\', '"'], ['\\\\', '\\"'], $raw) . '"';
+            } else {
+                $escapedValue = $this->escapeEnvValue($raw);
+            }
+
+            // Safely escape key for regex
+            $quotedKey = preg_quote($key, '/');
+            $pattern    = "/^{$quotedKey}=.*/m";
+            $replacement = "{$key}={$escapedValue}";
+
+            if (preg_match($pattern, $envContent)) {
+                $envContent = preg_replace($pattern, $replacement, $envContent);
+            } else {
+                // Append with proper newline
+                $envContent .= PHP_EOL . $replacement;
+            }
+        }
+
+        // Write atomically
+        file_put_contents($envPath, $envContent, LOCK_EX);
+    }
+
+    protected function escapeEnvValue(string $value): string
+    {
+        // Empty becomes ""
+        if ($value === '') {
+            return '""';
+        }
+
+        // If it has whitespace or special chars, wrap and escape
+        if (preg_match('/[\s"\'\\\\$`]/', $value)) {
+            $escaped = str_replace(['\\', '"'], ['\\\\', '\\"'], $value);
+            return "\"{$escaped}\"";
+        }
+
+        return $value;
     }
 
 }

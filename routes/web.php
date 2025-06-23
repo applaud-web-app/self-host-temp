@@ -14,7 +14,6 @@ use App\Http\Controllers\SegmentationController;
 use App\Http\Controllers\AddonController; 
 use App\Http\Controllers\UpdateController;
 
-
 Route::prefix('install')->withoutMiddleware('install')->group(function () {
     // welcome
     Route::get('/',             [InstallController::class, 'installWelcome'])->name('install.welcome');
@@ -70,6 +69,7 @@ Route::middleware(['auth','ensure_push_config'])->group(function() {
         Route::get('/', 'addons')->name('view');
         Route::get('/upload', 'upload')->name('upload');
         Route::post('/store', 'store')->name('store');
+        Route::post('/activate', 'activate')->name('activate');
     });
 
     // Settings routes
@@ -121,9 +121,7 @@ Route::middleware(['auth','ensure_push_config'])->group(function() {
     Route::get('/send-notification', [Controller::class, 'sendNotification'])->name('send-notification');
     Route::get('/campaign-reports', [Controller::class, 'campaignReports'])->name('campaign-reports');
 
-    
-
-   Route::middleware(['auth','ensure_push_config'])->group(function() {
+    Route::middleware(['auth','ensure_push_config'])->group(function() {
         Route::prefix('settings')->controller(SettingsController::class)->name('settings.')->group(function () {
             Route::get('/general', 'generalSettings')->name('general');
             Route::post('/general', 'updateGeneralSettings');
@@ -144,12 +142,12 @@ Route::middleware(['auth','ensure_push_config'])->group(function() {
     });
 
     Route::prefix('update')->group(function () {
-    Route::get('/',         [UpdateController::class, 'index'])->name('update.index');
-    Route::post('/upload',  [UpdateController::class, 'upload'])->name('update.upload');
-    Route::post('/install', [UpdateController::class, 'install'])->name('update.install');
-    Route::get('/progress', [UpdateController::class, 'progress'])->name('update.progress');
-    Route::post('/restore', [UpdateController::class, 'restore'])->name('update.restore');
-});
+        Route::get('/',         [UpdateController::class, 'index'])->name('update.index');
+        Route::post('/upload',  [UpdateController::class, 'upload'])->name('update.upload');
+        Route::post('/install', [UpdateController::class, 'install'])->name('update.install');
+        Route::get('/progress', [UpdateController::class, 'progress'])->name('update.progress');
+        Route::post('/restore', [UpdateController::class, 'restore'])->name('update.restore');
+    });
 
 });
 

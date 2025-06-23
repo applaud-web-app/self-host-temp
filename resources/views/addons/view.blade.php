@@ -101,9 +101,9 @@
                                         @if ($addon['is_local'])
                                             {{-- Already in DB --}}
                                             @if ($addon['local_status'] === 'installed')
-                                                <span class="badge bg-success w-100">Activated</span>
+                                                <span class="btn btn-success btn-sm w-100">Activated</span>
                                             @else
-                                                <button type="button" data-bs-toggle="modal" data-bs-target="#purchaseModal" class="btn btn-info btn-sm w-100">
+                                                <button type="button" data-name="{{$addon['name']}}" data-version="{{$addon['version']}}" data-bs-toggle="modal" data-bs-target="#purchaseModal" class="btn btn-info btn-sm w-100">
                                                     <i class="fas fa-play me-1"></i> Activate
                                                 </button>
                                             @endif
@@ -142,38 +142,187 @@
             <div class="modal-dialog modal-dialog-centered">
                 <div class="modal-content">
                     <form id="purchaseForm" autocomplete="off">
+                        @csrf
                         <div class="modal-header">
                             <h5 class="modal-title" id="purchaseModalLabel">Activate Module</h5>
                             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                         </div>
                         <div class="modal-body">
-                            <input type="hidden" id="purchaseModuleName" name="module">
+                            {{-- Username Field --}}
                             <div class="mb-3">
-                                <label for="purchaseCode" class="form-label">Purchase Code <span
-                                        class="text-danger">*</span></label>
-                                <input type="text" class="form-control" id="purchaseCode" name="purchase_code"
-                                    placeholder="Enter your purchase code" required>
+                                <label for="username" class="form-label">Username <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="username" name="username" placeholder="Enter your username" required>
                             </div>
+
+                            {{-- License Key Field --}}
                             <div class="mb-3">
-                                <label for="licenseKey" class="form-label">License Key <span
-                                        class="text-danger">*</span></label>
-                                <input type="text" class="form-control" id="licenseKey" name="license_key"
-                                    placeholder="Enter your license key" required>
+                                <label for="licenseKey" class="form-label">License Key <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="licenseKey" name="license_key" placeholder="Enter your license key" required>
                             </div>
+
+                            {{-- Email Field --}}
                             <div class="mb-3">
-                                <label for="installation_path" class="form-label">Installation Path <span
-                                        class="text-danger">*</span></label>
-                                <input type="text" class="form-control" id="installation_path" name="installation_path"
-                                    placeholder="Enter your installation path" value="{{ base_path() }}" required>
+                                <label for="email" class="form-label">Email <span class="text-danger">*</span></label>
+                                <input type="email" class="form-control" id="email" name="email" placeholder="Enter your email" required>
                             </div>
                         </div>
                         <div class="modal-footer">
-                            <button type="submit" class="btn btn-primary w-100"><i class="fas fa-unlock me-1"></i>
-                                Submit</button>
+                            <button type="submit" class="btn btn-primary w-100"><i class="fas fa-unlock me-1"></i> Submit</button>
                         </div>
                     </form>
                 </div>
             </div>
         </div>
+
     </section>
 @endsection
+@push('scripts')
+<script>
+    $(document).ready(function() {
+        // Initialize iziToast settings (you can customize these)
+        iziToast.settings({
+            timeout: 5000,
+            resetOnHover: true,
+            position: 'topRight',
+            transitionIn: 'flipInX',
+            transitionOut: 'flipOutX'
+        });
+
+        // When Activate button is clicked
+        $('button[data-bs-toggle="modal"]').on('click', function() {
+            var addonName = $(this).data('name');
+            var addonVersion = $(this).data('version');
+            
+            $('#purchaseForm').data('addonName', addonName);
+            $('#purchaseForm').data('addonVersion', addonVersion);
+            
+            // Reset form when modal is shown
+            $('#purchaseForm')[0].reset();
+            $('#purchaseForm').find('.is-invalid').removeClass('is-invalid');
+        });
+
+        // Form validation and submission
+        $('#purchaseForm').validate({
+            rules: {
+                username: { required: true },
+                license_key: { required: true },
+                email: { required: true, email: true }
+            },
+            messages: {
+                username: { required: "Please enter your username" },
+                license_key: { required: "Please enter your license key" },
+                email: { 
+                    required: "Please enter your email",
+                    email: "Please enter a valid email address"
+                }
+            },
+            errorElement: 'span',
+            errorPlacement: function(error, element) {
+                error.addClass('invalid-feedback');
+                element.closest('.mb-3').append(error);
+            },
+            highlight: function(element, errorClass, validClass) {
+                $(element).addClass('is-invalid');
+            },
+            unhighlight: function(element, errorClass, validClass) {
+                $(element).removeClass('is-invalid');
+            },
+            submitHandler: function(form) {
+                var form = $('#purchaseForm');
+                var url = "{{$url}}";
+                var addonName = form.data('addonName');
+                var addonVersion = form.data('addonVersion');
+                
+                var formData = {
+                    _token: $('input[name="_token"]').val(),
+                    license_key: $('#licenseKey').val(),
+                    username: $('#username').val(),
+                    email: $('#email').val(),
+                    addon_name: addonName,
+                    addon_version: addonVersion
+                };
+
+                var submitBtn = form.find('button[type="submit"]');
+                submitBtn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i> Processing...');
+
+                $.ajax({
+                    url: url,
+                    method: 'POST',
+                    data: formData,
+                    success: function(response) {
+                        submitBtn.prop('disabled', false).html('<i class="fas fa-unlock me-1"></i> Submit');
+                        
+                        if (response.valid) {
+
+                            // If external validation succeeds, call local activation
+                            $.ajax({
+                                url: "{{route('addons.activate')}}",
+                                method: 'POST',
+                                data: formData,
+                                success: function(activateResponse) {
+                                    submitBtn.prop('disabled', false).html('<i class="fas fa-unlock me-1"></i> Submit');
+                                    
+                                    iziToast.success({
+                                        title: 'Success',
+                                        message: 'Addon activated successfully!',
+                                        onClosed: function() {
+                                            $('#purchaseModal').modal('hide');
+                                            location.reload();
+                                        }
+                                    });
+                                },
+                                error: function(xhr) {
+                                    submitBtn.prop('disabled', false).html('<i class="fas fa-unlock me-1"></i> Submit');
+                                    
+                                    var errorMsg = 'Activation failed. Please try again.';
+                                    if (xhr.responseJSON && xhr.responseJSON.message) {
+                                        errorMsg = xhr.responseJSON.message;
+                                    }
+                                    
+                                    iziToast.error({
+                                        title: 'Error',
+                                        message: errorMsg
+                                    });
+                                }
+                            });
+                            
+                            // Success response
+                            // iziToast.success({
+                            //     title: 'Success',
+                            //     message: response.message || 'Addon activated successfully!',
+                            //     onClosed: function() {
+                            //         $('#purchaseModal').modal('hide');
+                            //         location.reload();
+                            //     }
+                            // });
+                        } else {
+                            // Error response (invalid license)
+                            iziToast.error({
+                                title: 'Error',
+                                message: response.message || 'Addon license not found or not eligible for activation.'
+                            });
+                        }
+                    },
+                    error: function(xhr) {
+                        submitBtn.prop('disabled', false).html('<i class="fas fa-unlock me-1"></i> Submit');
+                        
+                        var errorMsg = 'An unexpected error occurred. Please try again.';
+                        if (xhr.responseJSON && xhr.responseJSON.message) {
+                            errorMsg = xhr.responseJSON.message;
+                        } else if (xhr.statusText) {
+                            errorMsg = xhr.statusText;
+                        }
+                        
+                        iziToast.error({
+                            title: 'Error',
+                            message: errorMsg
+                        });
+                    }
+                });
+            }
+        });
+    });
+</script>
+@endpush
+
+

@@ -14,6 +14,7 @@ class CreateAddonsTable extends Migration
             $table->string('version', 20);
             $table->string('file_path');
             $table->unsignedInteger('file_size');
+            $table->string('variable')->nullable();
             $table->enum('status', ['uploaded', 'installed'])->default('uploaded');
             $table->timestamps();
         });
