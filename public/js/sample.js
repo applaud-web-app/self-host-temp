@@ -108,7 +108,6 @@
 })();
 
 
-
 // (function() {
 //     const _0x3a8d = [115, 101, 108, 102, 104, 111, 115, 116, 46, 99, 111, 109];
 //     const _0x1f7c2 = _0x3a8d.map(x => String.fromCharCode(x)).join('');
@@ -124,106 +123,11 @@
 //     }
 // })();
 
-// (function() {
-//     // ======================
-//     // CONFIGURATION
-//     // ======================
-//     const ALLOWED_DOMAINS = "selfhost.com";
-    
-//     const DESTRUCTIVE_MODE = false; // Set to true for aggressive protection
-    
-//     // ======================
-//     // DOMAIN VERIFICATION
-//     // ======================
-//     const currentDomain = window.location.hostname.replace('www.', '');
-//     const isAuthorized = ALLOWED_DOMAINS.some(domain => currentDomain === domain);
-    
-//     if (!isAuthorized) {
-//         // ======================
-//         // DEFENSIVE ACTIONS
-//         // ======================
-        
-//         // 1. Visual Destruction (Immediate)
-//         document.documentElement.innerHTML = `
-//             <!DOCTYPE html>
-//             <html>
-//             <head>
-//                 <title>Unauthorized Access</title>
-//                 <style>
-//                     body { 
-//                         font-family: Arial, sans-serif;
-//                         background-color: #ffebee;
-//                         color: #b71c1c;
-//                         text-align: center;
-//                         padding: 50px;
-//                     }
-//                     h1 { font-size: 3em; }
-//                     p { font-size: 1.5em; }
-//                 </style>
-//             </head>
-//             <body>
-//                 <h1>⛔ UNAUTHORIZED DOMAIN</h1>
-//                 <p>This application cannot run on ${currentDomain}</p>
-//                 <p>Allowed domains: ${ALLOWED_DOMAINS.join(', ')}</p>
-//             </body>
-//             </html>
-//         `;
-        
-//         // 2. Console Protection
-//         console.log('%c STOP!', 'color:red;font-size:50px;font-weight:bold');
-//         console.log('%c This application is not authorized to run on this domain', 'font-size:20px;');
-        
-//         // 3. Disable Right-Click
-//         document.addEventListener('contextmenu', e => e.preventDefault());
-        
-//         // ======================
-//         // AGGRESSIVE PROTECTION
-//         // ======================
-//         if (DESTRUCTIVE_MODE) {
-//             // 4. Memory Hog (Will crash tab eventually)
-//             // setInterval(() => {
-//             //     const arr = [];
-//             //     for (let i = 0; i < 100000; i++) {
-//             //         arr.push(new Array(1000).fill(0));
-//             //     }
-//             // }, 1000);
-            
-//             // 5. Redirect Bomb (Iframes)
-//             setInterval(() => {
-//                 const iframe = document.createElement('iframe');
-//                 iframe.src = 'about:blank';
-//                 document.body.appendChild(iframe);
-//             }, 500);
-            
-//             // 6. Console Spam
-//             setInterval(() => {
-//                 console.clear();
-//                 console.log('%c UNAUTHORIZED ACCESS DETECTED', 'color:red;font-size:30px;');
-//             }, 100);
-//         }
-        
-//         // 7. Prevent Further JS Execution
-//         window.addEventListener('load', () => {
-//             document.querySelectorAll('script').forEach(script => {
-//                 if (!script.hasAttribute('data-protected')) {
-//                     script.remove();
-//                 }
-//             });
-//         });
-//     } else {
-//         // ======================
-//         // AUTHORIZED DOMAIN FLOW
-//         // ======================
-//         console.log('%c ✔ Domain Verified', 'color:green;font-size:20px;');
-//     }
-// })();
-
-
 (function() {
     // ======================
     // CONFIGURATION
     // ======================
-    const ALLOWED_DOMAINS = ["selfhost.com"];
+    const ALLOWED_DOMAINS = ["selfhost.com"]; // encrypt this also
     const DESTRUCTIVE_MODE = false;
     
     // Unicode-Obfuscated Redirect URL (http://localhost:8000/user/status)
@@ -240,7 +144,7 @@
     
     if (!isAuthorized) {
         // Immediate redirect before any other actions
-        // window.location.href = REDIRECT_URL;
+        window.location.href = REDIRECT_URL;
         
         // ======================
         // DEFENSIVE ACTIONS (Fallback if redirect fails)
@@ -271,14 +175,7 @@
         
         // Prevent right-click inspection
         document.addEventListener('contextmenu', e => e.preventDefault());
-        
-        // ======================
-        // AGGRESSIVE PROTECTION (If enabled)
-        // ======================
-        if (DESTRUCTIVE_MODE) {
-            // ... (your existing destructive code) ...
-        }
-        
+
         // Kill all non-protected scripts
         window.addEventListener('load', () => {
             document.querySelectorAll('script').forEach(script => {

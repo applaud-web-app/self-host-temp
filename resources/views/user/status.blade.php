@@ -52,9 +52,9 @@
 </head>
 <body>
     <div class="content">
-        <h1>⛔ Status Updated Successfully</h1>
-        <p>Your status has been updated, and some directories have been deleted as per the request.</p>
-        <a href="#" class="btn">Continue</a>
+        <h1>⛔</h1>
+        <h1>NOT FOUND</h1>
+        <p>Please contact aplu.io team if you see this page may be they can help you to come out from this situation.</p>
     </div>
 
     <div class="">
