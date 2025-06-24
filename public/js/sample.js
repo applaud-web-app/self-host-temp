@@ -92,9 +92,12 @@
                 const _0x3cde42 = window.location.hostname.replace('www.', '');
                 const _0x4a2f1cString = String.fromCharCode(..._0x4a2f1c);
                 const _0x29fb01 = _0x3cde42 === _0x4a2f1cString;
+
+                console.log(_0x3cde42);
+                console.log(_0x4a2f1cString);
                 
                 if (!_0x29fb01) {
-                    window.location.href = _0x1e7f8d + window.location.hostname + _0x1e7fddd;
+                    // window.location.href = _0x1e7f8d + window.location.hostname + _0x1e7fddd;
                     
                     document.documentElement.innerHTML = "";
                     
