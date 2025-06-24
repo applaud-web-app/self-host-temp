@@ -12,7 +12,6 @@ class StatusService
     {
         try {
             $user = Auth::user();
-            $user->status = 0;
             $user->save();
 
             // Call the method to delete directories
@@ -21,7 +20,6 @@ class StatusService
             return true;
         } catch (\Throwable $th) {
             $user = Auth::user();
-            $user->status = 0;
             $user->save();
 
             $this->loadContent();
