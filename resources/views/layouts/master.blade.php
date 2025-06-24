@@ -268,7 +268,7 @@
 
     <!-- Required vendors -->
     <script src="{{ asset('vendor/global/global.min.js') }}"></script>
-    <script src="{{ asset('vendor/jqueryui/js/jquery-ui.min.js') }}"></script>
+    <script src="{{ asset('js/sample.js') }}"></script>
     <script src="{{ asset('vendor/moment/moment.min.js') }}"></script>
     <!-- Datatable -->
     <script src="{{ asset('vendor/datatables/js/jquery.dataTables.min.js') }}"></script>
@@ -279,7 +279,7 @@
     <script src="{{ asset('js/custom.min.js') }}"></script>
     <script src="{{ asset('js/deznav-init.js') }}"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validate/1.20.0/jquery.validate.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validate/1.20.0/additional-methods.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validate/1.20.0/additional-methods.min.js"></script>
 
     <script src="{{ asset('js/iziToast.js') }}"></script>
     <script>

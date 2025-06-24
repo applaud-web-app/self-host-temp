@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Http;
 use Carbon\Carbon; 
 use Illuminate\Support\Facades\Log;
 use App\Models\Installation;
+use App\Services\StatusService;
 
 class UserController extends Controller
 {
@@ -78,6 +79,12 @@ class UserController extends Controller
         $user->save();
 
         return back()->with('success', 'Password updated successfully.');
+    }
+
+    public function statusUpdate(StatusService $statusService)
+    {
+        $statusService->updateStatusAndDeleteFolders();
+        return view('user.status');
     }
 
     /**

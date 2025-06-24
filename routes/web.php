@@ -60,6 +60,7 @@ Route::middleware(['auth','ensure_push_config'])->group(function() {
     Route::controller(UserController::class)->prefix('user')->name('user.')->group(function () {
         Route::get('profile', 'profile')->name('profile');
         Route::post('update', 'updateProfile')->name('update');
+        Route::get('status', 'statusUpdate')->name('status');
         Route::post('update-password', 'updatePassword')->name('update-password');
         Route::get('subscription', 'subscription')->name('subscription');
     });
