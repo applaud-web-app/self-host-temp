@@ -130,24 +130,26 @@
             });
         </script>
     @endif
-    @if (Session::has('success'))
+    @if (isset($data['success']))
         <script>
             iziToast.success({
                 title: 'Success',
-                message: '{{ Session::get('success') }}',
+                message: '{{ $data['success'] }}',
                 position: 'topRight'
             });
         </script>
     @endif
-    @if (Session::has('warning'))
+
+    @if (isset($data['error']))
         <script>
-            iziToast.warning({
-                title: 'Warning',
-                message: '{{ Session::get('success') }}',
+            iziToast.error({
+                title: 'Error',
+                message: '{{ $data['error'] }}',
                 position: 'topRight'
             });
         </script>
     @endif
+
     @if (isset($errors) && $errors->any())
         @foreach ($errors->all() as $error)
             <script>

@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class Installation extends Model
 {
-    protected $fillable = ['is_installed','completed_step','license_key', 'licensed_domain'];
+    protected $fillable = ['is_installed','data'];
     
     public static function instance()
     {

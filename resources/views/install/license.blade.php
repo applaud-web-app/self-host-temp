@@ -103,9 +103,6 @@
                             <button type="button" id="verifyBtn" class="btn btn-primary text-white w-100">
                                 <span>Verify License</span>
                             </button>
-                            
-                            <div class="alert alert-danger mt-3" id="licenseError" style="display:none;"></div>
-                            <div class="alert alert-success mt-3" id="licenseSuccess" style="display:none;"></div>
                         </form>
                     </div>
                 </div>
@@ -167,8 +164,6 @@
                 btn.prop('disabled', true).addClass('btn-loading');
                 btn.text('Verifying...');
 
-                $("#licenseError").hide();
-                $("#licenseSuccess").hide();
 
                 // Prepare request data
                 var requestData = {
@@ -185,11 +180,9 @@
                     data: JSON.stringify(requestData),
                     dataType: 'json',
                     success: function(data) {
-                        btn.prop('disabled', false).removeClass('btn-loading');
-                        btn.find('span').text('Verify License');
-
                         if (!data.valid) {
-                            $("#licenseError").text(data.message || 'License is not valid.').show();
+                            btn.prop('disabled', false).removeClass('btn-loading');
+                            btn.text('Verify License');
                             iziToast.error({
                                 title: 'Error',
                                 message: data.message || 'License is not valid.',
@@ -198,7 +191,6 @@
                             $("#license_verified").val(0);
                             $("#installBtn").hide();
                         } else {
-                            $("#licenseSuccess").text('License verified! Continue installation.').show();
                             iziToast.success({
                                 title: 'Success',
                                 message: 'License verified! Continue installation.',
@@ -208,11 +200,9 @@
                             $("#installBtn").show();
                         }
 
-
                         if (!data.valid) {
                             btn.prop('disabled', false).removeClass('btn-loading');
-                            btn.find('span').text('Verify License');
-                            $("#licenseError").text(data.message || 'License is not valid.').show();
+                            btn.text('Verify License');
                             iziToast.error({
                                 title: 'Error',
                                 message: data.message || 'License is not valid.',
@@ -220,9 +210,6 @@
                             });
                             return;
                         }
-
-                        // On success, prepare form data and submit
-                        $("#licenseSuccess").text('License verified! Redirecting...').show();
                         
                         setTimeout(() => {
                             // Create a hidden form and submit it
@@ -247,7 +234,6 @@
                             message: errorMessage,
                             position: 'topRight'
                         });
-                        $("#licenseError").text(errorMessage).show();
                     }
                 });
             });
@@ -256,7 +242,6 @@
             $("#licenseForm").submit(function(e) {
                 if ($("#license_verified").val() !== "1") {
                     e.preventDefault();
-                    $("#licenseError").text("Please verify your license first.").show();
                     return false;
                 }
 

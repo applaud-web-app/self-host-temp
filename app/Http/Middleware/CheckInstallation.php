@@ -12,58 +12,38 @@ use Illuminate\Database\QueryException;
 
 class CheckInstallation
 {
-   public function handle(Request $request, Closure $next)
+    public function handle(Request $request, Closure $next)
     {
-        ensureEnvExists();
-        generateAppKey();
-        $isInstallRoute = $request->is('install*');
-
-        // 1) If they’re already hitting /install/*, just let them through.
-        if ($isInstallRoute) {
+        if ($request->is('install/*')) {
             return $next($request);
         }
-
-        // 2)  Try to connect to the DB and check for the table.
-        try {                   // throws if no DB or bad creds
-            $tableExists = Schema::hasTable('installations'); // throws if DB exists but no rights
-        } catch (QueryException $e) {
-            // Couldn’t connect or no rights or no database → go to installer
-            return redirect()->route('install.welcome');
-        }
-
-        // 3) If the table simply doesn’t exist, installer
-        if (! $tableExists) {
-            return redirect()->route('install.welcome');
-        }
-
-        // 4) If table exists, try to fetch your installation record
-        try {
-            $installation = Installation::latest('created_at')->first();
-        } catch (\Throwable $e) {
-            // Something went wrong querying the table → installer
-            return redirect()->route('install.welcome');
-        }
         
+        try {
+            $installation = Installation::updateOrCreate(
+                ['id' => 1]
+            );
+        } catch (\Throwable $e) {   
+            Installation::truncate(); 
+            return redirect()->route('install.license');
+        }
 
         if (
             $installation
-            && empty($installation->license_key)
-            && empty($installation->licensed_domain)
-            && $installation->completed_step >= 3
+            && $installation->is_installed != 1
+            && empty($installation->data)
         ) {
-            // delete only the bad record(s)
-            Installation::truncate(); 
-            return redirect()->route('install.welcome');
+            // dd("1",$installation);
+            return redirect()->route('install.license');
         }
 
-        // 5) If no record yet, installer
         if (! $installation) {
-            return redirect()->route('install.welcome');
+             dd("1",$installation);
+            return redirect()->route('install.license');
         }
 
-        // 6) If the record says is_installed = false, installer
         if (! $installation->is_installed) {
-            return redirect()->route('install.welcome');
+             dd("1",$installation);
+            return redirect()->route('install.license');
         }
 
         return $next($request);

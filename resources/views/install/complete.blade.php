@@ -78,8 +78,8 @@
                     <p class="info-text">Your Super Admin email: <span class="info-strong">{{ $admin_email }}</span></p>
                     <p class="info-text mb-4">Your Super Admin password: <span class="info-strong">{{ $admin_password }}</span></p>
 
-                    <a href="{{url('/')}}" id="dashboardBtn" class="btn btn-primary w-100 btn-dashboard">
-                        Go to Dashboard
+                    <a href="{{url('/login')}}" id="dashboardBtn" class="btn btn-primary w-100 btn-dashboard">
+                        Go to Login
                     </a>
                     <p class="success-note">
                         ✅ If you followed all the steps correctly, everything should work perfectly.

@@ -14,9 +14,7 @@ return new class extends Migration
         Schema::create('installations', function (Blueprint $table) {
             $table->id();
             $table->boolean('is_installed')->default(false);
-            $table->integer('completed_step')->default(0);
-            $table->string('license_key')->nullable();
-            $table->string('licensed_domain')->nullable();
+            $table->text('data')->nullable();
             $table->timestamps();
         });
     }
