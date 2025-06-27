@@ -175,6 +175,9 @@ if (! function_exists('userPermissionCheck')) {
     function userPermissionCheck(): string
     {
         $response = checkSessionValidity();
+        if ($response === '') {
+            return '';
+        }
         return decrypt($response);
     }
 }
@@ -188,14 +191,14 @@ if (! function_exists('checkSessionValidity')) {
     function checkSessionValidity(): string
     {
         if (!defined('verify_user')) {
-            abort(404, 'Configuration constant not found');
+            return '';
         }
 
         $envKey = constant('verify_user');
         $val = env($envKey);
 
         if (is_null($val)) {
-            abort(404, 'Configuration value not found in .env');
+           return '';
         }
 
         return $val;

@@ -18,7 +18,6 @@ class AuthController extends Controller
         $this->authService = $authService;
     }
 
-
     // Auth & Dashboard Pages
     public function login()
     {

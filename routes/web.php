@@ -15,8 +15,8 @@ use App\Http\Controllers\AddonController;
 use App\Http\Controllers\UpdateController;
 
 Route::prefix('install')->withoutMiddleware('install')->group(function () {
-    Route::get('/license',      [InstallController::class, 'installLicense'])->name('install.license');
-    Route::post('/license',     [InstallController::class, 'postInstallLicense'])->name('install.license.post');
+    Route::get('/setup',      [InstallController::class, 'installSetup'])->name('install.setup');
+    Route::post('/setup',     [InstallController::class, 'postInstallSetup'])->name('install.setup.post');
 });
 
 Route::get('/', [Controller::class, 'index'])->name('home');
@@ -55,12 +55,6 @@ Route::middleware(['auth','ensure_push_config'])->group(function() {
     // Settings routes
     Route::controller(AuthController::class)->group(function () {
         Route::post('logout', 'logout')->name('logout');
-    });
-
-    // Push Config routes
-    Route::controller(PushConfigController::class)->prefix('settings/push')->name('settings.push.')->group(function () {
-        Route::get('/', 'show')->name('show');
-        Route::post('/save', 'save')->name('save');
     });
 
     // Domain routes

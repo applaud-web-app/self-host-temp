@@ -24,7 +24,7 @@ class CheckInstallation
             );
         } catch (\Throwable $e) {   
             Installation::truncate(); 
-            return redirect()->route('install.license');
+            return redirect()->route('install.setup');
         }
 
         if (
@@ -32,7 +32,7 @@ class CheckInstallation
             && $installation->is_installed != 1
             && empty($installation->data)
         ) {
-            return redirect()->route('install.license');
+            return redirect()->route('install.setup');
         }
 
         return $next($request);

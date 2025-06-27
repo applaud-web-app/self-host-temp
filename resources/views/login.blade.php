@@ -156,12 +156,24 @@
     // Validate and show spinner
     $('#login').validate({
         rules: {
-            email: { required: true, email: true },
-            password: { required: true, minlength: 6 }
+            email: { 
+                required: true,
+                email: true
+            },
+            password: { 
+                required: true,
+                minlength: 6
+            }
         },
         messages: {
-            email: { required: 'Email is required', email: 'Enter a valid email' },
-            password: { required: 'Password is required', minlength: 'Min 6 characters' }
+            email: { 
+                required: 'Email is required',
+                email: 'Enter a valid email'
+            },
+            password: { 
+                required: 'Password is required',
+                minlength: 'Min 6 characters' 
+            }
         },
         errorElement: 'div',
         errorPlacement: function (error, el) {

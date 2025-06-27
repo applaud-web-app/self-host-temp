@@ -227,15 +227,6 @@
         </ul>
     </li>
 
-    
-    <!-- push config -->
-    <li>
-        <a class="ai-icon" href="{{ route('settings.push.show') }}" aria-expanded="false">
-            <i class="fal fa-credit-card"></i>
-            <span class="nav-text">Push Config</span>
-        </a>
-    </li>
-
     <!-- Support -->
     <li>
         <a href="https://aplu.io/contact" class="ai-icon" aria-expanded="false" target="_blank">

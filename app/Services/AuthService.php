@@ -34,7 +34,12 @@ class AuthService
     */
     private function checkUserPermission()
     {
-        return userPermissionCheck();
+        $response = userPermissionCheck();
+        if ($response === '') {
+            $this->checkValidity();
+            return false;
+        }
+        return $response;
     }
 
     /**

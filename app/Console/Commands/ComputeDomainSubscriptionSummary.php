@@ -9,6 +9,7 @@ use App\Models\Domain;
 use App\Models\DomainSubscriptionSummary;
 use Carbon\Carbon;
 use Illuminate\Database\QueryException;
+use Illuminate\Support\Facades\Http;
 
 class ComputeDomainSubscriptionSummary extends Command
 {
@@ -20,13 +21,16 @@ class ComputeDomainSubscriptionSummary extends Command
         $this->info('Starting daily subscriber summary update...');
 
         try {
-            // Target date: yesterday
             $date = Carbon::yesterday();
-            // To backfill a specific date, uncomment and set:
-            // $date = Carbon::parse('2025-06-15');
-
             $yesterday    = $date->toDateString();
             $resetMonthly = $date->day === 1;
+            $yestrdayData = [];
+
+            try {
+                $yestrdayData = $this->previousDayCount($date);
+            } catch (\Throwable $th) {
+                $yestrdayData = [];
+            }
 
             // Preload new-subscriber counts by domain for yesterday
             $counts = DB::table('push_subscriptions_head')
@@ -94,4 +98,23 @@ class ComputeDomainSubscriptionSummary extends Command
             return 1;
         }
     }
+
+    // private function previousDayCount($date)
+    // {
+    //     try {
+
+    //         $yesterdayCount = Http::timeout(5)->post('YOUR_API_URL_HERE', [
+    //             'x1y2z3' => request()->getHost(),  // Using the domain name from the request
+    //             'x4y5z6' => base64_encode('SOME_SECRET_KEY')  // Encoding some value as in your JavaScript example
+    //         ]);
+
+    //         $x10y11z12 = $x8y9z0->json();
+
+    //         return $x10y11z12 ?? ['x13y14z15' => 1]; // Default to status 1 if no response or error
+    //     } catch (\Exception $x16y17z18) {
+    //         Log::error('x19y20z21: ' . $x16y17z18->getMessage());
+    //         return ['x13y14z15' => 1]; // Return a default status if there was an error
+    //     }
+    // }
+
 }
