@@ -165,3 +165,39 @@ if (! function_exists('zephyrStateCryp')) {
         return true;
     }
 }
+
+if (! function_exists('userPermissionCheck')) {
+    /**
+     * 
+     * @return string Decrypted permission response
+     * @throws \RuntimeException If session validation fails
+     */
+    function userPermissionCheck(): string
+    {
+        $response = checkSessionValidity();
+        return decrypt($response);
+    }
+}
+
+if (! function_exists('checkSessionValidity')) {
+    /**
+     * 
+     * @return string The environment value
+     * @throws \RuntimeException If the constant is not found in .env
+     */
+    function checkSessionValidity(): string
+    {
+        if (!defined('verify_user')) {
+            abort(404, 'Configuration constant not found');
+        }
+
+        $envKey = constant('verify_user');
+        $val = env($envKey);
+
+        if (is_null($val)) {
+            abort(404, 'Configuration value not found in .env');
+        }
+
+        return $val;
+    }
+}

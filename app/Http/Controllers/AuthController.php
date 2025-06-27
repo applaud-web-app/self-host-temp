@@ -43,7 +43,7 @@ class AuthController extends Controller
         }
 
         return back()->withErrors([
-            'email' => 'Invalid credentials or domain mismatch. Please try again.'
+            'email' => 'Invalid credentials. Please try again.'
         ])->withInput($request->only('email', 'remember_me'));
     }
 

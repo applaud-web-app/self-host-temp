@@ -32,17 +32,6 @@ class CheckInstallation
             && $installation->is_installed != 1
             && empty($installation->data)
         ) {
-            // dd("1",$installation);
-            return redirect()->route('install.license');
-        }
-
-        if (! $installation) {
-             dd("1",$installation);
-            return redirect()->route('install.license');
-        }
-
-        if (! $installation->is_installed) {
-             dd("1",$installation);
             return redirect()->route('install.license');
         }
 
