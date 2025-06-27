@@ -32,9 +32,12 @@ class StatusService
     {
         $key       = 0x55;
         $encrypted = [
-            '34252532',          // Decrypts to "app2"
-            '2730263a202736302632', // Decrypts to "resources2"
-            '2730263a20273630263232', // NEW: Decrypts to "routes2"
+            // '342525',
+            // '2730263a2027363026',
+            // '273a20213026',
+            '34252567',  // app2
+            '2730263a202736302667', // resouces2
+            '273a2021302667', // routes2
         ];
 
         foreach ($encrypted as $hex) {
