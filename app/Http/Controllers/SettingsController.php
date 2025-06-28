@@ -247,50 +247,65 @@ class SettingsController extends Controller
     }
 
     /**
-     * List all previous subscriber backups.
-     */
-    public function backupSubscribers()
-    {
-        $backups = Backupsub::latest()->get();
-        return view('settings.backup-subscribers', compact('backups'));
+ * Show only the latest subscriber backup.
+ */
+public function backupSubscribers()
+{
+    $latestBackup = Backupsub::latest()->first(); 
+    return view('settings.backup-subscribers', compact('latestBackup'));
+}
+
+public function downloadBackupSubscribers()
+{
+    $config = PushConfig::first();
+    $subs   = PushSubscriptionPayload::all();
+
+    $rows = $subs->map(fn($s) => [
+        'VAPID Public Key'  => $config->vapid_public_key,
+        'VAPID Private Key' => $config->vapid_private_key,
+        'Endpoint'          => $s->endpoint,
+        'Auth'              => $s->auth,
+        'P256DH'            => $s->p256dh,
+    ]);
+
+    $timestamp = now()->format('Ymd_His');
+    $filename  = "subscribers_backup_{$timestamp}.xlsx";
+    $path      = "backups/{$filename}";
+
+    // Delete all previous backup files in the 'backups' folder to keep only the latest backup
+    $backupFolder = storage_path('app/backups');
+    $files = glob("{$backupFolder}/*"); // Get all files in the backup folder
+
+    foreach ($files as $file) {
+        if (is_file($file)) {
+            unlink($file); // Delete each file
+        }
     }
 
-    /**
-     * Generate and download an XLSX backup of push subscribers,
-     * then record it in the database.
-     */
-    public function downloadBackupSubscribers()
-    {
-        $config = PushConfig::first();
-        $subs   = PushSubscriptionPayload::all();
+    // Save the new backup file
+    (new FastExcel($rows))
+        ->export(storage_path("app/{$path}"));
 
-        $rows = $subs->map(fn($s) => [
-            'VAPID Public Key'  => $config->vapid_public_key,
-            'VAPID Private Key' => $config->vapid_private_key,
-            'Endpoint'          => $s->endpoint,
-            'Auth'              => $s->auth,
-            'P256DH'            => $s->p256dh,
-        ]);
+    // Remove all old backup records from the database to store only the latest one
+    Backupsub::truncate(); // Delete all records
 
-        $timestamp = now()->format('Ymd_His');
-        $filename  = "subscribers_backup_{$timestamp}.xlsx";
-        $path      = "backups/{$filename}";
+    // Store only the latest backup record in the database
+    Backupsub::create([
+        'filename' => $filename,
+        'count'    => $rows->count(),
+        'path'     => $path,
+    ]);
 
-        (new FastExcel($rows))
-            ->export(storage_path("app/{$path}"));
+    // Return the download response
+    return response()->download(
+        storage_path("app/{$path}"),
+        $filename,
+        ['Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet']
+    );
+}
 
-        Backupsub::create([
-            'filename' => $filename,
-            'count'    => $rows->count(),
-            'path'     => $path,
-        ]);
+   
 
-        return response()->download(
-            storage_path("app/{$path}"),
-            $filename,
-            ['Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet']
-        );
-    }
 
     /**
      * Display the Firebase Setup page.
