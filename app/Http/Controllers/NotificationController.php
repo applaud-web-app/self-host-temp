@@ -100,7 +100,7 @@ class NotificationController extends Controller
                 } elseif ($row->segment_type === "segment") {
                     $segment = '<small class="ms-1 text-secondary text-capitalize">[Segment]</small>';
                 } elseif ($row->segment_type === "api") {
-                    $segment = '<small class="ms-1 text-success text-capitalize">[API]</small>';
+                    $segment = '<small class="ms-1 text-secondary text-capitalize">[API]</small>';
                 }
                 
                 return '<div>'.e($row->campaign_name).' <small class="ms-1 text-primary text-capitalize">['.e($row->schedule_type).']</small>'.$segment.'<br><small> '.e($truncated).'</small></div>';
