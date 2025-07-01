@@ -151,9 +151,9 @@
                                         <span class="step-number">2</span>
                                         <span>Download the Plugin</span>
                                     </h5>
-                                    <a href="{{route('domain.download-plugin')}}" class="btn download-plugin btn-outline-primary w-100 py-2">
+                                    <button data-url="{{route('domain.download-plugin')}}" type="button" class="btn download-plugin btn-outline-primary w-100 py-2">
                                         <i class="fas fa-download me-2"></i> Download Aplu Push Plugin
-                                    </a>
+                                    </button>
                                     <p class="mt-3 mb-0 text-muted">Once activated, the plugin is ready to use on your
                                         website.</p>
                                 </div>
