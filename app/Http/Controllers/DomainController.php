@@ -336,136 +336,42 @@ class DomainController extends Controller
         ], 400);
     }
 
-    // public function downloadPlugin()
-    // {
-    //     try {
-    //         // Step 1: Define paths
-    //         $zipFilePath = storage_path('app/self-host-plugin.zip');
-    //         $extractPath = storage_path('app/temp/plugin-extract');
-    //         $newZipFilePath = storage_path('app/self-host-plugin-modified.zip');
-            
-    //         // Verify ZipArchive is available
-    //         if (!class_exists('ZipArchive')) {
-    //             throw new \Exception('ZipArchive PHP extension is not installed or enabled');
-    //         }
+    public function verifyIntegration(Request $request)
+    {
+        try {
+            // Sample URL and target URLs (adjust accordingly)
+            $clientSite = "https://{$request->domain}";
+            $targetScriptUrl = route('api.push.notify'); // Assuming you're looking for this script in the <head> tag
+            $swFileUrl = "https://{$request->domain}/apluselfhost-messaging-sw.js";
 
-    //         // Step 2: Verify source ZIP exists
-    //         if (!File::exists($zipFilePath)) {
-    //             throw new \Exception("Source plugin ZIP not found at: {$zipFilePath}");
-    //         }
+            // Verify head script
+            $isHeadScriptValid = verifyHeadScript($clientSite, $targetScriptUrl);
+            $isSwFileValid = verifySwFile($swFileUrl);
 
-    //         // Clean up any previous temp files
-    //         if (File::exists($extractPath)) {
-    //             File::deleteDirectory($extractPath);
-    //         }
-    //         if (File::exists($newZipFilePath)) {
-    //             File::delete($newZipFilePath);
-    //         }
+            // Return response based on validation
+            if (!$isHeadScriptValid) {
+                return response()->json(['error' => 'The required script is missing from the head tag.'], 200);
+            }
 
-    //         // Create extraction directory
-    //         if (!File::makeDirectory($extractPath, 0755, true)) {
-    //             throw new \Exception("Failed to create temp directory: {$extractPath}");
-    //         }
+            if (!$isSwFileValid) {
+                return response()->json(['error' => 'Service Worker file is missing or invalid.'], 200);
+            }
 
-    //         // Step 3: Extract the ZIP
-    //         $zip = new \ZipArchive;
-    //         if ($zip->open($zipFilePath) !== true) {
-    //             throw new \Exception("Failed to open ZIP file (Error: {$zip->getStatusString()})");
-    //         }
-
-    //         if (!$zip->extractTo($extractPath)) {
-    //             $zip->close();
-    //             throw new \Exception("Failed to extract ZIP contents");
-    //         }
-    //         $zip->close();
-
-    //         // Step 4: Modify the config file
-    //         $configFile = $extractPath . '/self-host-aplu-tabs.php';
-    //         $currentSiteUrl = url('/'); // Dynamically get current site URL
-
-    //         if (!File::exists($configFile)) {
-    //             throw new \Exception("Config file not found in plugin: self-host-aplu-tabs.php");
-    //         }
-
-    //         $contents = File::get($configFile);
-    //         $modifiedContents = preg_replace(
-    //             "/define\('API_BASE',\s*'[^']*'\);/", 
-    //             "define('API_BASE', '{$currentSiteUrl}');", 
-    //             $contents
-    //         );
-
-    //         if ($modifiedContents === null) {
-    //             throw new \Exception("Failed to modify config file (regex error)");
-    //         }
-
-    //         if (!File::put($configFile, $modifiedContents)) {
-    //             throw new \Exception("Failed to save modified config file");
-    //         }
-
-    //         // Step 5: Create new ZIP
-    //         $zip = new \ZipArchive;
-    //         if ($zip->open($newZipFilePath, \ZipArchive::CREATE | \ZipArchive::OVERWRITE) !== true) {
-    //             throw new \Exception("Failed to create new ZIP file");
-    //         }
-
-    //         $files = new \RecursiveIteratorIterator(
-    //             new \RecursiveDirectoryIterator($extractPath),
-    //             \RecursiveIteratorIterator::LEAVES_ONLY
-    //         );
-
-    //         foreach ($files as $file) {
-    //             if (!$file->isDir()) {
-    //                 $filePath = $file->getRealPath();
-    //                 $relativePath = substr($filePath, strlen($extractPath) + 1);
-                    
-    //                 if (!$zip->addFile($filePath, $relativePath)) {
-    //                     $zip->close();
-    //                     throw new \Exception("Failed to add file to ZIP: {$relativePath}");
-    //                 }
-    //             }
-    //         }
-
-    //         if (!$zip->close()) {
-    //             throw new \Exception("Failed to finalize ZIP file");
-    //         }
-
-    //         // Step 6: Verify new ZIP was created
-    //         if (!File::exists($newZipFilePath)) {
-    //             throw new \Exception("Modified ZIP file was not created");
-    //         }
-
-    //         // Step 7: Clean up
-    //         File::deleteDirectory($extractPath);
-
-    //         // Step 8: Send download response
-    //         return response()->download($newZipFilePath, 'self-host-plugin.zip')
-    //             ->deleteFileAfterSend(true);
-
-    //     } catch (\Exception $e) {
-    //         // Clean up on error
-    //         if (isset($extractPath) && File::exists($extractPath)) {
-    //             File::deleteDirectory($extractPath);
-    //         }
-    //         if (isset($newZipFilePath) && File::exists($newZipFilePath)) {
-    //             File::delete($newZipFilePath);
-    //         }
-
-    //         Log::error('Plugin download failed: ' . $e->getMessage());
-            
-    //         return response()->json([
-    //             'error' => 'Failed to prepare plugin download',
-    //             'message' => $e->getMessage()
-    //         ], 500);
-    //     }
-    // }
+            // If both checks pass
+            return response()->json(['success' => 'Both script and service worker file are correctly integrated.'], 200);
+        } catch (\Exception $e) {
+            // Catch any unexpected errors
+            return response()->json(['error' => 'An error occurred during verification: ' . $e->getMessage()], 500);
+        }
+    }
 
     public function downloadPlugin()
     {
         try {
             // Step 1: Define paths
-            $zipFilePath = storage_path('app/self-host-plugin.zip');
-            $extractPath = storage_path('app/temp/plugin-extract');
-            $newZipFilePath = storage_path('app/self-host-plugin-modified.zip');
+            $zipFilePath = storage_path('app/self-host-plugin.zip'); // Original plugin ZIP
+            $extractPath = storage_path('app/temp/plugin-extract'); // Temporary extraction folder
+            $newZipFilePath = storage_path('app/self-host-plugin-modified.zip'); // New modified ZIP file
             
             // Verify ZipArchive is available
             if (!class_exists('ZipArchive')) {
@@ -499,7 +405,7 @@ class DomainController extends Controller
             $zip->close();
 
             // Step 4: Find and modify the main plugin file
-            $pluginFiles = File::glob($extractPath . '/*.php');
+            $pluginFiles = File::glob($extractPath . '/self-host-plugin/*.php'); // Assuming the main plugin file is inside 'self-host-plugin' directory
             $mainPluginFile = null;
 
             // Find the main plugin file by checking for the plugin header
@@ -515,9 +421,11 @@ class DomainController extends Controller
                 throw new \Exception("Main plugin file not found in ZIP");
             }
 
-            $currentSiteUrl = url('/'); // Get current site URL
+            // Step 5: Get the current site URL
+            $currentSiteUrl = url('/');  // Use the current site's URL
+            $apiBaseUrl = $currentSiteUrl . '/api';  // Construct the API base URL
 
-            // Three possible replacement patterns to cover different formatting
+            // Step 6: Modify the API_BASE constant in the plugin file
             $patterns = [
                 "/const\s+API_BASE\s*=\s*'[^']*'/",
                 "/define\('API_BASE',\s*'[^']*'\);/",
@@ -531,7 +439,7 @@ class DomainController extends Controller
                 if (preg_match($pattern, $contents)) {
                     $contents = preg_replace(
                         $pattern,
-                        "const API_BASE = '{$currentSiteUrl}/api'", // Modified to add /api
+                        "const API_BASE = '{$apiBaseUrl}';",  // Replace with the dynamic API URL
                         $contents
                     );
                     $modified = true;
@@ -547,12 +455,13 @@ class DomainController extends Controller
                 throw new \Exception("Failed to save modified plugin file");
             }
 
-            // Step 5: Create new ZIP with all files
+            // Step 7: Create new ZIP with all files (including the modified plugin file)
             $zip = new \ZipArchive;
             if ($zip->open($newZipFilePath, \ZipArchive::CREATE | \ZipArchive::OVERWRITE) !== true) {
                 throw new \Exception("Failed to create new ZIP file");
             }
 
+            // Add all files from the extracted directory into the new ZIP
             $files = new \RecursiveIteratorIterator(
                 new \RecursiveDirectoryIterator($extractPath),
                 \RecursiveIteratorIterator::LEAVES_ONLY
@@ -574,10 +483,10 @@ class DomainController extends Controller
                 throw new \Exception("Failed to finalize ZIP file");
             }
 
-            // Step 6: Clean up
+            // Step 8: Clean up temporary extracted files
             File::deleteDirectory($extractPath);
 
-            // Step 7: Send download response
+            // Step 9: Send the modified ZIP for download
             return response()->download($newZipFilePath, 'self-host-plugin-modified.zip')
                 ->deleteFileAfterSend(true);
 
@@ -596,35 +505,6 @@ class DomainController extends Controller
                 'error' => 'Failed to prepare plugin download',
                 'message' => $e->getMessage()
             ], 500);
-        }
-    }
-
-    public function verifyIntegration(Request $request)
-    {
-        try {
-            // Sample URL and target URLs (adjust accordingly)
-            $clientSite = "https://{$request->domain}";
-            $targetScriptUrl = route('api.push.notify'); // Assuming you're looking for this script in the <head> tag
-            $swFileUrl = "https://{$request->domain}/apluselfhost-messaging-sw.js";
-
-            // Verify head script
-            $isHeadScriptValid = verifyHeadScript($clientSite, $targetScriptUrl);
-            $isSwFileValid = verifySwFile($swFileUrl);
-
-            // Return response based on validation
-            if (!$isHeadScriptValid) {
-                return response()->json(['error' => 'The required script is missing from the head tag.'], 200);
-            }
-
-            if (!$isSwFileValid) {
-                return response()->json(['error' => 'Service Worker file is missing or invalid.'], 200);
-            }
-
-            // If both checks pass
-            return response()->json(['success' => 'Both script and service worker file are correctly integrated.'], 200);
-        } catch (\Exception $e) {
-            // Catch any unexpected errors
-            return response()->json(['error' => 'An error occurred during verification: ' . $e->getMessage()], 500);
         }
     }
 
