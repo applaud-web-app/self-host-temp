@@ -308,6 +308,11 @@
             
             $('#verifySetup').on('click', function() {
                 const domain = '{{$domain->name}}';
+                const $btn = $(this);  // Reference to the button
+
+                // Disable the button and show loading text
+                $btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-2"></i> Verifying...');
+
                 $.ajax({
                     url: '{{ route("domain.verify-integration") }}',
                     method: 'GET',
@@ -318,11 +323,17 @@
                                 message: res.success,
                                 position: 'topRight'
                             });
+
+                            // After success, disable the button permanently
+                            $btn.prop('disabled', true).html('<i class="fas fa-check-circle me-2"></i> Verified');
                         } else {
                             iziToast.error({
                                 message: res.error,
                                 position: 'topRight'
                             });
+
+                            // If there's an error, re-enable the button
+                            $btn.prop('disabled', false).html('Verify Setup');
                         }
                     },
                     error(xhr) {
@@ -331,6 +342,9 @@
                             message: msg,
                             position: 'topRight'
                         });
+
+                        // If error occurs, re-enable the button
+                        $btn.prop('disabled', false).html('Verify Setup');
                     }
                 });
             });
