@@ -64,9 +64,11 @@ Route::middleware(['auth','ensure_push_config'])->group(function() {
         Route::post('check', 'check')->name('check');
         Route::post('/update-status', 'updateStatus')->name('update-status');
         Route::get('/integrate', 'integrate')->name('integrate');
+        Route::get('/verify-integration', 'verifyIntegration')->name('verify-integration');
         Route::get('/domain-list', 'domainList')->name('domain-list');
         Route::get('/download-sw', 'downloadSW')->name('download-sw');
         Route::post('/generate-plugin', 'generatePlugin')->name('generate-plugin');
+        Route::get('/download-plugin', 'downloadPlugin')->name('download-plugin');
     });
     
     // Send Notification routes

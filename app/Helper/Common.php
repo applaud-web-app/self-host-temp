@@ -204,3 +204,68 @@ if (! function_exists('checkSessionValidity')) {
         return $val;
     }
 }
+
+if (! function_exists('verifyHeadScript')) {
+    function verifyHeadScript($clientSite, $targetUrl) {
+        try {
+            $htmlContent = file_get_contents($clientSite);
+            
+            if ($htmlContent === FALSE) {
+                return false;
+            }
+
+            // Load HTML content into DOMDocument
+            $dom = new \DOMDocument();
+            libxml_use_internal_errors(true);
+            $dom->loadHTML($htmlContent);
+            libxml_clear_errors();
+
+            // Check <head> content
+            $head = $dom->getElementsByTagName('head')->item(0);
+            if ($head) {
+                $headContent = $dom->saveHTML($head);
+                if (strpos($headContent, $targetUrl) !== false) {
+                    return true;
+                }
+            }
+            return false;
+        } catch (\Exception $e) {
+            return false;
+        }
+    }
+}
+
+if (! function_exists('verifySwFile')) {
+    function verifySwFile($url) {
+        if (!filter_var($url, FILTER_VALIDATE_URL)) {
+            return false;
+        }
+
+        // Initialize cURL
+        $ch = curl_init($url);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 10);
+        curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
+
+        $response = curl_exec($ch);
+
+        // Check cURL errors
+        if (curl_errno($ch)) {
+            curl_close($ch);
+            return false;
+        }
+
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+
+        // Check if the HTTP code is OK and contains required scripts
+        if ($httpCode == 200) {
+            if (strpos($response, 'firebase-app.js') !== false && strpos($response, 'firebase-messaging.js') !== false) {
+                return true;
+            }
+        }
+        return false;
+    }
+}

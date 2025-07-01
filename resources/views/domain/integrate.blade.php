@@ -92,13 +92,18 @@
         <div class="container-fluid">
             <div class="row">
                 <div class="col-12">
-                    <div class="d-flex align-items-center mb-3">
-                        <h2 class="mb-0 me-3">Configuration</h2>
-                        <span class="text-primary"><a class="text-primary" target="_blank"
-                                href="https://{{ $domain->name }}">[{{ $domain->name }}]</a></span>
+                    <div class="d-flex align-items-center justify-content-between mb-3">
+                        <div class="site-content">
+                            <h2 class="mb-0 me-3">Configuration</h2>
+                            <span class="text-primary"><a class="text-primary" target="_blank" href="https://{{ $domain->name }}">[{{ $domain->name }}]</a></span>
+                        </div>
+                        <div class="site-content">
+                            <button type="button" class="btn btn-secondary" id="verifySetup">
+                                <i class="fas fa-check-circle me-2"></i> Verify Setup ?
+                            </button>
+                        </div>
                     </div>
-                    <p class="text-muted">Clear cache after installing plugin or script from everywhere like Cloudflare,
-                        LiteSpeed, etc.</p>
+                    <p class="text-muted">Clear cache after installing plugin or script from everywhere like Cloudflare, LiteSpeed, etc.</p>
                 </div>
             </div>
             @php
@@ -141,15 +146,14 @@
                                         <button type="button" class="generate-key-btn text-dark border-0 bg-primary px-2 rounded-md text-white" data-url="{{$generatePluginEncryptUrl}}">Generate Now</button>
                                     </div>
                                 </div>
-
                                 <div class="step-card">
                                     <h5 class="d-flex align-items-center mb-3">
                                         <span class="step-number">2</span>
                                         <span>Download the Plugin</span>
                                     </h5>
-                                    <button class="btn download-btn btn-outline-primary w-100 py-2">
+                                    <a href="{{route('domain.download-plugin')}}" class="btn download-btn btn-outline-primary w-100 py-2">
                                         <i class="fas fa-download me-2"></i> Download Aplu Push Plugin
-                                    </button>
+                                    </a>
                                     <p class="mt-3 mb-0 text-muted">Once activated, the plugin is ready to use on your
                                         website.</p>
                                 </div>
@@ -157,7 +161,6 @@
                         </div>
                     </div>
                 </div>
-
                 <div class="col-lg-12">
                     <div class="card config-card h-auto">
                         <div class="config-card-header d-flex justify-content-between align-items-center"
@@ -186,7 +189,6 @@
                                     <p class="text-muted mb-0">Paste this code in the &lt;head&gt; section of your website.
                                     </p>
                                 </div>
-
                                 <div class="step-card">
                                     <h5 class="d-flex align-items-center mb-3">
                                         <span class="step-number">2</span>
@@ -303,6 +305,36 @@
                     }
                 });
             });
+            
+            $('#verifySetup').on('click', function() {
+                const domain = '{{$domain->name}}';
+                $.ajax({
+                    url: '{{ route("domain.verify-integration") }}',
+                    method: 'GET',
+                    data: { domain: domain },
+                    success(res) {
+                        if (res.success) {
+                            iziToast.success({
+                                message: res.success,
+                                position: 'topRight'
+                            });
+                        } else {
+                            iziToast.error({
+                                message: res.error,
+                                position: 'topRight'
+                            });
+                        }
+                    },
+                    error(xhr) {
+                        const msg = xhr.responseJSON?.message || 'There was an error verifying the integration.';
+                        iziToast.error({
+                            message: msg,
+                            position: 'topRight'
+                        });
+                    }
+                });
+            });
+
         });
     </script>
 @endpush
