@@ -380,7 +380,8 @@ class DomainController extends Controller
             // Step 3: Find the main plugin file
             $mainPluginFile = $pluginDirPath . '/self-host-aplu-tabs.php'; // Full path to the main plugin file
 
-            // dd($mainPluginFile);
+            // Debug: Check file paths
+            dd($mainPluginFile);  // Check the full path to the plugin file
 
             // Check if the plugin file exists
             if (!File::exists($mainPluginFile)) {
@@ -470,6 +471,8 @@ class DomainController extends Controller
             ], 500);
         }
     }
+
+
 
 
 
