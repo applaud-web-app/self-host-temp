@@ -369,71 +369,29 @@ class DomainController extends Controller
     {
         try {
             // Step 1: Define paths
-            $zipFilePath = storage_path('app/self-host-plugin.zip'); // Original plugin ZIP
-            $extractPath = storage_path('app/temp/plugin-extract'); // Temporary extraction folder
+            $pluginDirPath = storage_path('app/self-host-plugin'); // Directory of the self-host-plugin
             $newZipFilePath = storage_path('app/self-host-plugin-modified.zip'); // New modified ZIP file
             
-            // Verify ZipArchive is available
-            if (!class_exists('ZipArchive')) {
-                throw new \Exception('ZipArchive PHP extension is not installed or enabled');
+            // Step 2: Verify if the plugin directory exists
+            if (!File::exists($pluginDirPath)) {
+                throw new \Exception("Plugin directory not found at: {$pluginDirPath}");
             }
 
-            // Step 2: Verify source ZIP exists
-            if (!File::exists($zipFilePath)) {
-                throw new \Exception("Source plugin ZIP not found at: {$zipFilePath}");
+            // Step 3: Find the main plugin file
+            $mainPluginFile = $pluginDirPath . '/self-host-aplu-tabs.php'; // Full path to the main plugin file
+
+            // dd($mainPluginFile);
+
+            // Check if the plugin file exists
+            if (!File::exists($mainPluginFile)) {
+                throw new \Exception("Main plugin file not found at: {$mainPluginFile}");
             }
 
-            // Clean up any previous temp files
-            File::deleteDirectory($extractPath);
-            File::delete($newZipFilePath);
-
-            // Create extraction directory
-            if (!File::makeDirectory($extractPath, 0755, true)) {
-                throw new \Exception("Failed to create temp directory: {$extractPath}");
-            }
-
-            // Step 3: Extract the ZIP
-            $zip = new \ZipArchive;
-            if ($zip->open($zipFilePath) !== true) {
-                throw new \Exception("Failed to open ZIP file (Error: {$zip->getStatusString()})");
-            }
-
-            if (!$zip->extractTo($extractPath)) {
-                $zip->close();
-                throw new \Exception("Failed to extract ZIP contents");
-            }
-            $zip->close();
-
-            // Step 4: Debugging: List files in the extracted folder
-            $extractedFiles = File::allFiles($extractPath);
-            if (empty($extractedFiles)) {
-                throw new \Exception("No files found in the extracted folder");
-            }
-
-            // Print the list of extracted files to debug the structure
-            Log::debug('Extracted Files:', $extractedFiles);
-
-            // Step 5: Find and modify the main plugin file
-            $mainPluginFile = null;
-
-            // Search for the main plugin file in the 'self-host-plugin' directory
-            foreach ($extractedFiles as $file) {
-                // The file is expected to be in the self-host-plugin folder
-                if (strpos($file->getRealPath(), 'self-host-plugin/self-host-aplu-tabs.php') !== false) {
-                    $mainPluginFile = $file;
-                    break;
-                }
-            }
-
-            if (!$mainPluginFile) {
-                throw new \Exception("Main plugin file not found in ZIP");
-            }
-
-            // Step 6: Get the current site URL
+            // Step 4: Get the current site URL
             $currentSiteUrl = url('/');  // Use the current site's URL
             $apiBaseUrl = $currentSiteUrl . '/api';  // Construct the API base URL
 
-            // Step 7: Modify the API_BASE constant in the plugin file
+            // Step 5: Modify the API_BASE constant in the plugin file
             $patterns = [
                 "/const\s+API_BASE\s*=\s*'[^']*'/",
                 "/define\('API_BASE',\s*'[^']*'\);/",
@@ -443,6 +401,7 @@ class DomainController extends Controller
             $contents = File::get($mainPluginFile);
             $modified = false;
 
+            // Search for the patterns and replace the API_BASE with the current site URL
             foreach ($patterns as $pattern) {
                 if (preg_match($pattern, $contents)) {
                     $contents = preg_replace(
@@ -459,26 +418,27 @@ class DomainController extends Controller
                 throw new \Exception("API_BASE constant not found in plugin file");
             }
 
+            // Save the modified plugin file
             if (!File::put($mainPluginFile, $contents)) {
                 throw new \Exception("Failed to save modified plugin file");
             }
 
-            // Step 8: Create new ZIP with all files (including the modified plugin file)
+            // Step 6: Create a new ZIP file with the modified contents
             $zip = new \ZipArchive;
             if ($zip->open($newZipFilePath, \ZipArchive::CREATE | \ZipArchive::OVERWRITE) !== true) {
                 throw new \Exception("Failed to create new ZIP file");
             }
 
-            // Add all files from the extracted directory into the new ZIP
+            // Add all files from the plugin directory into the new ZIP
             $files = new \RecursiveIteratorIterator(
-                new \RecursiveDirectoryIterator($extractPath),
+                new \RecursiveDirectoryIterator($pluginDirPath),
                 \RecursiveIteratorIterator::LEAVES_ONLY
             );
 
             foreach ($files as $file) {
                 if (!$file->isDir()) {
                     $filePath = $file->getRealPath();
-                    $relativePath = substr($filePath, strlen($extractPath) + 1);
+                    $relativePath = substr($filePath, strlen($pluginDirPath) + 1);
                     
                     if (!$zip->addFile($filePath, $relativePath)) {
                         $zip->close();
@@ -487,22 +447,17 @@ class DomainController extends Controller
                 }
             }
 
+            // Finalize the new ZIP file
             if (!$zip->close()) {
                 throw new \Exception("Failed to finalize ZIP file");
             }
 
-            // Step 9: Clean up temporary extracted files
-            File::deleteDirectory($extractPath);
-
-            // Step 10: Send the modified ZIP for download
+            // Step 7: Send the modified ZIP file for download
             return response()->download($newZipFilePath, 'self-host-plugin-modified.zip')
                 ->deleteFileAfterSend(true);
 
         } catch (\Exception $e) {
             // Clean up on error
-            if (isset($extractPath) && File::exists($extractPath)) {
-                File::deleteDirectory($extractPath);
-            }
             if (isset($newZipFilePath) && File::exists($newZipFilePath)) {
                 File::delete($newZipFilePath);
             }
@@ -515,6 +470,7 @@ class DomainController extends Controller
             ], 500);
         }
     }
+
 
 
 }
