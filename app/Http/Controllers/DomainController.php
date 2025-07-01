@@ -404,14 +404,22 @@ class DomainController extends Controller
             }
             $zip->close();
 
-            // Step 4: Find and modify the main plugin file
-            $pluginFiles = File::glob($extractPath . '/self-host-plugin/*.php'); // Assuming the main plugin file is inside 'self-host-plugin' directory
+            // Step 4: Debugging: List files in the extracted folder
+            $extractedFiles = File::allFiles($extractPath);
+            if (empty($extractedFiles)) {
+                throw new \Exception("No files found in the extracted folder");
+            }
+
+            // Print the list of extracted files to debug the structure
+            Log::debug('Extracted Files:', $extractedFiles);
+
+            // Step 5: Find and modify the main plugin file
             $mainPluginFile = null;
 
-            // Find the main plugin file by checking for the plugin header
-            foreach ($pluginFiles as $file) {
-                $contents = File::get($file);
-                if (strpos($contents, 'Plugin Name: Aplu Self') !== false) {
+            // Search for the main plugin file in the 'self-host-plugin' directory
+            foreach ($extractedFiles as $file) {
+                // The file is expected to be in the self-host-plugin folder
+                if (strpos($file->getRealPath(), 'self-host-plugin/self-host-aplu-tabs.php') !== false) {
                     $mainPluginFile = $file;
                     break;
                 }
@@ -421,11 +429,11 @@ class DomainController extends Controller
                 throw new \Exception("Main plugin file not found in ZIP");
             }
 
-            // Step 5: Get the current site URL
+            // Step 6: Get the current site URL
             $currentSiteUrl = url('/');  // Use the current site's URL
             $apiBaseUrl = $currentSiteUrl . '/api';  // Construct the API base URL
 
-            // Step 6: Modify the API_BASE constant in the plugin file
+            // Step 7: Modify the API_BASE constant in the plugin file
             $patterns = [
                 "/const\s+API_BASE\s*=\s*'[^']*'/",
                 "/define\('API_BASE',\s*'[^']*'\);/",
@@ -455,7 +463,7 @@ class DomainController extends Controller
                 throw new \Exception("Failed to save modified plugin file");
             }
 
-            // Step 7: Create new ZIP with all files (including the modified plugin file)
+            // Step 8: Create new ZIP with all files (including the modified plugin file)
             $zip = new \ZipArchive;
             if ($zip->open($newZipFilePath, \ZipArchive::CREATE | \ZipArchive::OVERWRITE) !== true) {
                 throw new \Exception("Failed to create new ZIP file");
@@ -483,10 +491,10 @@ class DomainController extends Controller
                 throw new \Exception("Failed to finalize ZIP file");
             }
 
-            // Step 8: Clean up temporary extracted files
+            // Step 9: Clean up temporary extracted files
             File::deleteDirectory($extractPath);
 
-            // Step 9: Send the modified ZIP for download
+            // Step 10: Send the modified ZIP for download
             return response()->download($newZipFilePath, 'self-host-plugin-modified.zip')
                 ->deleteFileAfterSend(true);
 
@@ -507,5 +515,6 @@ class DomainController extends Controller
             ], 500);
         }
     }
+
 
 }
