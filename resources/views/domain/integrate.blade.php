@@ -151,7 +151,7 @@
                                         <span class="step-number">2</span>
                                         <span>Download the Plugin</span>
                                     </h5>
-                                    <a href="{{route('domain.download-plugin')}}" class="btn download-btn btn-outline-primary w-100 py-2">
+                                    <a href="{{route('domain.download-plugin')}}" class="btn download-plugin btn-outline-primary w-100 py-2">
                                         <i class="fas fa-download me-2"></i> Download Aplu Push Plugin
                                     </a>
                                     <p class="mt-3 mb-0 text-muted">Once activated, the plugin is ready to use on your
@@ -234,8 +234,7 @@
 
             $('.download-btn').click(function() {
                 // btn processing on click
-                $(this).prop('disabled', true).html(
-                    '<i class="fas fa-spinner fa-spin me-2"></i> Processing...');
+                $(this).prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-2"></i> Processing...');
                 const url = $(this).data('url');
                 if (url) {
                     window.location.href = url;
@@ -248,6 +247,42 @@
                         );
                 }, 1000);
             });
+
+            $('.download-plugin').click(function() {
+                // btn processing on click
+                $(this).prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-2"></i> Processing...');
+
+                const url = $(this).data('url');
+                
+                if (url) {
+                    // Show a success message with IziToast
+                    iziToast.success({
+                        title: 'Success',
+                        message: 'Preparing your download...',
+                        position: 'topRight',
+                        timeout: 3000, // duration in ms
+                    });
+
+                    // Redirect to the download URL
+                    window.location.href = url;
+                } else {
+                    // Show an error message with IziToast if the URL is not set
+                    iziToast.error({
+                        title: 'Error',
+                        message: 'Download URL is not set.',
+                        position: 'topRight',
+                        timeout: 3000, // duration in ms
+                    });
+                }
+
+                // After a short delay, reset the button state
+                setTimeout(() => {
+                    $(this).prop('disabled', false).html(
+                        '<i class="fas fa-download me-2"></i> Download apluselfhost-messaging-sw.js'
+                    );
+                }, 1000);
+            });
+
         });
     </script>
     <script>
