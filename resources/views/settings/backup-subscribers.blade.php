@@ -1,4 +1,3 @@
-{{-- resources/views/settings/backup-subscribers.blade.php --}}
 @extends('layouts.master')
 
 @section('content')
@@ -19,67 +18,81 @@
 
   <div class="container-fluid">
     <div class="text-head mb-3">
-      <h2>Backup Subscribers</h2>
+      <h2 class="mb-0">Backup Management</h2>
     </div>
 
-    {{-- Download New Backup --}}
-    <div class="card mb-4">
+    {{-- New Backup Card --}}
+    <div class="card h-auto mb-4">
+      <div class="card-header">
+         <h5 class="mb-0"><i class="fas fa-plus-circle me-2"></i> Generate New Backup</h5>
+      </div>
       <div class="card-body">
-        <p>
-          Generate and download a new XLSX backup of all subscribers.
+        <p class="mb-2">
+          Click the button below to generate and download a new backup of all subscribers in the system. The backup will be in XLSX format, containing all the records you need to secure.
         </p>
-        <button id="download-backup-btn"
-                class="btn btn-primary">
+    
+        <button id="download-backup-btn" class="btn btn-primary mt-2 mt-md-0">
           <i class="fas fa-download me-1"></i> Download New Backup
         </button>
       </div>
     </div>
 
-    {{-- Previous Backups --}}
-    <div class="card">
+    {{-- Latest Backup Card --}}
+    <div class="card h-auto mb-4">
       <div class="card-header">
-        <h5 class="mb-0"><i class="fas fa-history me-2"></i>Previous Backups</h5>
+        <h5 class="mb-0"><i class="fas fa-history me-2"></i> Latest Backup Details</h5>
       </div>
       <div class="card-body">
-        @if($backups->isEmpty())
-          <p class="text-muted">No backups have been created yet.</p>
+        @if(!$latestBackup)
+          <div class="alert alert-warning mb-0">
+            <i class="fas fa-info-circle me-2"></i>
+            No backups have been created yet. Please generate a backup to proceed.
+          </div>
         @else
-          <ul class="list-group">
-            @foreach($backups as $b)
-              <li class="list-group-item d-flex justify-content-between align-items-center">
-                <div>
-                  {{-- Serial Number and Filename --}}
-                  <span class="me-2"><strong>#{{ $loop->iteration }}</strong></span>
-                  <strong>{{ $b->filename }}</strong><br>
-                  {{-- Count and Date with Icon --}}
-                  <small class="text-muted">
-                    <i class="fas fa-database me-1"></i>{{ $b->count }} records
-                    &nbsp;|&nbsp;
-                    <i class="fas fa-calendar-alt me-1"></i>{{ $b->created_at->format('Y-m-d H:i:s') }}
-                  </small>
+          <div>
+            <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between">
+              <div class="mb-3 mb-md-0">
+                <div class="fw-bold fs-5">{{ $latestBackup->filename }}</div>
+                <div class="text-muted small mt-1">
+                  <i class="fas fa-database me-1"></i>{{ $latestBackup->count }} records
+                  &nbsp;|&nbsp;
+                  <i class="fas fa-calendar-alt me-1"></i>{{ $latestBackup->created_at->format('Y-m-d H:i:s') }}
                 </div>
-                <a href="{{ asset('storage/' . $b->path) }}"
-                   class="btn btn-sm btn-secondary"
-                   download>
-                  <i class="fas fa-download me-1"></i> Download
-                </a>
-              </li>
-            @endforeach
-          </ul>
+              </div>
+              <a href="{{ asset('storage/' . $latestBackup->path) }}"
+                 class="btn btn-outline-secondary btn-sm"
+                 download>
+                <i class="fas fa-download me-1"></i> Download Backup
+              </a>
+            </div>
+            <p class="mt-3">
+              The most recent backup contains {{ $latestBackup->count }} subscriber records and was created on {{ $latestBackup->created_at->format('Y-m-d') }}. Click the button above to download it.
+            </p>
+          </div>
         @endif
       </div>
     </div>
+
+    {{-- Restore Info Card --}}
+    <div class="card h-auto mb-4">
+      <div class="card-body">
+        <h5 class="mb-3"><i class="fas fa-exclamation-circle me-2"></i> Need to Restore a Backup?</h5>
+        <p>
+          If you need to restore a backup, please <a href="mailto:info@aplu.com" class="text-primary">contact support</a> for assistance. We can help you revert to any previous backup if necessary. Restoring a backup will overwrite current data, so be sure that this is the action you want to take. If you're unsure, reach out for help.
+        </p>
+      </div>
+    </div>
+
   </div>
 </section>
 @endsection
 
 @push('scripts')
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-
+<script src="https://cdn.jsdelivr.net/npm/izitoast@1.4.0/dist/js/iziToast.min.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
   const btn = document.getElementById('download-backup-btn');
-
   btn.addEventListener('click', function() {
     Swal.fire({
       title: 'Are you sure?',
@@ -91,13 +104,30 @@ document.addEventListener('DOMContentLoaded', function() {
       reverseButtons: true
     }).then(result => {
       if (result.isConfirmed) {
+        // Show "Processing" message using iziToast
         iziToast.info({
           title: 'Processing',
           message: 'Preparing your download...',
           position: 'topRight',
-          timeout: 3000
+          timeout: 3000 // Show for 3 seconds
         });
-        window.location.href = @json(route('settings.backup-subscribers.download'));
+
+        // Disable the button to prevent multiple clicks
+        btn.disabled = true;
+
+        // Wait for a moment before starting the download (simulating processing)
+        setTimeout(function() {
+          // Trigger the download
+          window.location.href = @json(route('settings.backup-subscribers.download'));
+
+          // Show the success message after the download starts
+          iziToast.success({
+            title: 'Success',
+            message: 'Your backup is ready for download!',
+            position: 'topRight',
+            timeout: 5000
+          });
+        }, 3000); // 3-second delay to simulate processing
       }
     });
   });
