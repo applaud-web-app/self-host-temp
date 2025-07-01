@@ -599,12 +599,12 @@ class DomainController extends Controller
         }
     }
 
-   public function verifyIntegration(Request $request)
+    public function verifyIntegration(Request $request)
     {
         // Sample URL and target URLs (adjust accordingly)
         $clientSite = "https://{$request->domain}";
         $targetScriptUrl = route('api.push.notify'); // Assuming you're looking for this script in the <head> tag
-        $swFileUrl = "https://{$request->domain}/service-worker.js";
+        $swFileUrl = "https://{$request->domain}/apluselfhost-messaging-sw.js";
 
         // Verify head script
         $isHeadScriptValid = verifyHeadScript($clientSite, $targetScriptUrl);
@@ -612,11 +612,11 @@ class DomainController extends Controller
 
         // Return response based on validation
         if (!$isHeadScriptValid) {
-            return response()->json(['error' => 'The required script is missing from the head tag.'], 400);
+            return response()->json(['error' => 'The required script is missing from the head tag.'], 200);
         }
 
         if (!$isSwFileValid) {
-            return response()->json(['error' => 'Service Worker file is missing or invalid.'], 400);
+            return response()->json(['error' => 'Service Worker file is missing or invalid.'], 200);
         }
 
         // If both checks pass
