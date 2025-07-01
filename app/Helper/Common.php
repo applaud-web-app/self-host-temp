@@ -262,7 +262,7 @@ if (! function_exists('verifySwFile')) {
 
         // Check if the HTTP code is OK and contains required scripts
         if ($httpCode == 200) {
-            if (strpos($response, 'firebase-app.js') !== false && strpos($response, 'firebase-messaging.js') !== false) {
+            if (strpos($response, 'firebase-app-compat.js') !== false && strpos($response, 'firebase-messaging-compat.js') !== false) {
                 return true;
             }
         }
