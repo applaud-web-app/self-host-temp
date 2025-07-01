@@ -404,7 +404,7 @@ class DomainController extends Controller
                 if (preg_match($pattern, $contents)) {
                     $contents = preg_replace(
                         $pattern,
-                        "const API_BASE = '{$apiBaseUrl}';",  // Replace with the dynamic API URL
+                        "const API_BASE = '{$apiBaseUrl}'",  // Replace with the dynamic API URL
                         $contents
                     );
                     $modified = true;
