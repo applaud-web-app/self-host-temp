@@ -17,6 +17,7 @@ class EnsurePushConfig
      */
     public function handle(Request $request, Closure $next): Response
     {
+
         try {
             $cfg = PushConfig::first();
 

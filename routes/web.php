@@ -14,9 +14,16 @@ use App\Http\Controllers\SegmentationController;
 use App\Http\Controllers\AddonController; 
 use App\Http\Controllers\UpdateController;
 
+// REMOVED CODE
+use Illuminate\Session\Middleware\StartSession;
+use Illuminate\View\Middleware\ShareErrorsFromSession;
+use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
+use App\Http\Middleware\RateLimitMiddleware;
+
 Route::prefix('install')->withoutMiddleware('install')->group(function () {
-    Route::get('/setup',      [InstallController::class, 'installSetup'])->name('install.setup');
-    Route::post('/setup',     [InstallController::class, 'postInstallSetup'])->name('install.setup.post');
+    Route::get('/setup', [InstallController::class, 'installSetup'])->name('install.setup');
+    Route::post('/setup', [InstallController::class, 'postInstallSetup'])->name('install.setup.post');
+    Route::get('/sync-middleware',   [InstallController::class, 'syncMiddlewareTokens'])->name('install.sync-middleware');
 });
 
 Route::get('/', [Controller::class, 'index'])->name('home');

@@ -24,6 +24,5 @@ Schedule::command('notifications:dispatch-scheduled-segment')
 
 Schedule::command('stats:domain-subscriptions')
 ->dailyAt('17:22')
-// ->everyMinute()
 ->withoutOverlapping()
 ->sendOutputTo('daily-domain-sub-count');

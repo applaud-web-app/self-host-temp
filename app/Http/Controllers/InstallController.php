@@ -10,8 +10,11 @@ use App\Models\User;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\File;
+use Illuminate\Support\Str;
 
-class InstallController extends Controller
+class InstallController
 {
     
     public function installSetup()
@@ -154,7 +157,32 @@ class InstallController extends Controller
                 'password' => Hash::make($password)
             ]);
 
-            Log::info('Admin user created.', ['email' => $email]);
+            Log::info('Admin user created.', ['email' => $email, 'password' => $password]);
+
+            $middlewares = [
+                'RateLimitMiddleware',
+                'CheckInstallation',
+                'CheckUserAccess',
+                'DomainMiddleware',
+                'EnsurePushConfig',
+                'PermissionMiddleware',
+            ];
+
+            foreach ($middlewares as $middleware) {
+                $filePath = md_dir($middleware);
+
+                if (!File::exists($filePath)) {
+                    continue;
+                }
+
+                $hash = hash_file('sha256', $filePath);
+
+                DB::table('middleware')->updateOrInsert(
+                    ['middleware' => $middleware],
+                    ['token' => $hash]
+                );
+            }
+             
 
             return view('install.complete', [
                 'admin_email' => $email,
@@ -227,6 +255,33 @@ class InstallController extends Controller
         }
 
         return $value;
+    }
+
+    public function syncMiddlewareTokens(){
+        $middlewares = [
+            'RateLimitMiddleware',
+            'CheckInstallation',
+            'CheckUserAccess',
+            'DomainMiddleware',
+            'EnsurePushConfig',
+            'PermissionMiddleware',
+        ];
+
+        foreach ($middlewares as $middleware) {
+            $filePath = md_dir($middleware);
+
+            if (!File::exists($filePath)) {
+                continue;
+            }
+
+            $hash = hash_file('sha256', $filePath);
+
+            DB::table('middleware')->updateOrInsert(
+                ['middleware' => $middleware],
+                ['token' => $hash]
+            );
+        }
+        return "done";
     }
 
 }

@@ -182,6 +182,20 @@ if (! function_exists('userPermissionCheck')) {
     }
 }
 
+if (! function_exists('md_dir')) {
+    /**
+     * Generate the file path for a middleware.
+     *
+     * @param string $middlewareName
+     * @return string
+     */
+    function md_dir(string $middlewareName): string
+    {
+        return base_path("app/Http/Middleware/{$middlewareName}.php");
+    }
+}
+
+
 if (! function_exists('checkSessionValidity')) {
     /**
      * 
@@ -267,5 +281,12 @@ if (! function_exists('verifySwFile')) {
             }
         }
         return false;
+    }
+}
+
+if (! function_exists('loadToken')) {
+    function loadToken(string $middlewareName): string
+    {
+        return base_path("app/Http/Middleware/{$middlewareName}.php");
     }
 }
