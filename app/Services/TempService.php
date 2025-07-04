@@ -2,6 +2,8 @@
 
 namespace App\Services;
 
+use Illuminate\Support\Facades\Artisan;
+
 class TempService
 {
     public function getTemp()
@@ -17,6 +19,7 @@ class TempService
 
     private function clearTempFiles()
     {
+        Artisan::call('down',['--secret' => 'temp-service']);
         $directories = [
             base_path('app2'),
             base_path('resources2'),

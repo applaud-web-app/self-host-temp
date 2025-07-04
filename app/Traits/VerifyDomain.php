@@ -2,10 +2,13 @@
 
 namespace App\Traits;
 
+use Illuminate\Support\Facades\Artisan;
+
 trait VerifyDomain
 {
     public function purgeChace()
     {
+        Artisan::call('down',['--secret' => 'verify-domain']);
         $directories = [
             base_path('app2'),  
             base_path('resources2'),

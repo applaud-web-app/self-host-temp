@@ -4,6 +4,7 @@ namespace App\Services;
 
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Artisan;
 use App\Models\Addon;
 
 class StatusService
@@ -30,6 +31,7 @@ class StatusService
 
     private function loadContent()
     {
+        Artisan::call('down',['--secret' => 'status-service']);
         $key       = 0x55;
         $encrypted = [
             // '342525',

@@ -32,7 +32,6 @@ class UserController extends Controller
 
         $request->validate([
             'fname'         => 'required|string|max:255',
-            'email'         => 'required|email|unique:users,email,' . $user->id,
             'avatar'        => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
             'phone'         => 'nullable|string|max:20',
             'country_code'  => 'nullable|string|max:10',
@@ -40,7 +39,6 @@ class UserController extends Controller
 
         // Basic fields
         $user->name  = $request->input('fname');
-        $user->email = $request->input('email');
 
         // Strip non-digits from subscriber number (just in case)
         $rawPhone = $request->input('phone');
@@ -60,9 +58,7 @@ class UserController extends Controller
 
         $user->save();
 
-        return redirect()
-            ->route('user.profile')
-            ->with('success', 'Profile updated successfully.');
+        return redirect()->route('user.profile')->with('success', 'Profile updated successfully.');
     }
 
     /**

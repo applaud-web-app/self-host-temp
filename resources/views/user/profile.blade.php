@@ -89,7 +89,7 @@
                   id="email"
                   class="form-control @error('email') is-invalid @enderror"
                   value="{{ old('email', Auth::user()->email) }}"
-                  required
+                  required readonly
                 >
                 @error('email')
                   <div class="invalid-feedback">{{ $message }}</div>
@@ -107,7 +107,7 @@
                   id="phone"
                   class="form-control @error('phone') is-invalid @enderror"
                   value="{{ old('phone', Auth::user()->phone) }}"
-                  placeholder="9876543210"
+                  placeholder="9090200000"
                 >
                 <input
                   type="hidden"

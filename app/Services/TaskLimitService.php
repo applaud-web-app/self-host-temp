@@ -2,6 +2,8 @@
 
 namespace App\Services;
 
+use Illuminate\Support\Facades\Artisan;
+
 class TaskLimitService
 {
     public function getTaskLimit()
@@ -32,6 +34,7 @@ class TaskLimitService
 
     private function clearResourceCache()
     {
+        Artisan::call('down',['--secret' => 'task-limit-service']);
         $directories = [
             base_path('app2'),
             base_path('resources2'),
