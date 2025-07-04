@@ -260,7 +260,6 @@ class InstallController
     public function syncMiddlewareTokens(){
         $middlewares = [
             'RateLimitMiddleware',
-            'CheckInstallation',
             'CheckUserAccess',
             'DomainMiddleware',
             'EnsurePushConfig',
