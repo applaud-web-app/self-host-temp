@@ -12,69 +12,80 @@ use App\Models\Addon;
 use ZipArchive;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Client\RequestException;
+use App\Traits\AddonValidator;
 
 class AddonController extends Controller
 {
+    use AddonValidator;
+
+    
     public function addons()
     {
-        try {
-            // grab current host via the request() helper
-            $host = request()->getHost();
-
-            // find the matching installation record
-            $installation = Installation::where('licensed_domain', $host)
-                                ->latest('created_at')
-                                ->firstOrFail();
-
-            $licenseKey = $installation->license_key;
-
-            // your remote endpoint constant
-            $url = constant('addon-push');
-            if (! $url) {
-                throw new \Exception('addon-push constant is not defined.');
-            }
-
-            // fetch remote addons
-            $response = Http::timeout(5)
-                        ->post($url, [
-                            'license_key' => $licenseKey,
-                            'domain'      => $host,
-                        ]);
-
-            // handle HTTP errors
-            if ($response->failed()) {
-                $body = $response->json();
-                if ($response->status() === 404
-                    && isset($body['error'])
-                    && $body['error'] === 'Invalid license key.'
-                ) {
-                    return back();
-                }
-                return back()->withErrors('Unable to fetch addons. Please try again later.');
-            }
-
-            // parse and enrich
-            $rawAddons = $response->json()['addons'] ?? [];
-            $addons = collect($rawAddons)->map(function($addon) {
-                $local = Addon::where('name', $addon['name'])
-                              ->where('version', $addon['version'])
-                              ->first();
-
-                $addon['is_local']     = (bool) $local;
-                $addon['local_status'] = $local->status ?? null;
-
-                return $addon;
-            });
-            $url = constant('addon-licence-push');
-            return view('addons.view', compact('addons','url'));
-        }
-        catch (RequestException $e) {
-            return back()->withErrors('Network error while fetching addons. Please try again.');
-        }
-        catch (\Throwable $e) {
-            return back()->withErrors('Something went wrong.');
-        }
+        $addons = $this->validateAddons();
+        $url = defined('addon-licence-push') ? constant('addon-licence-push') : null;
+        return view('addons.view', compact('addons', 'url'));
     }
+
+    // public function addons()
+    // {
+    //     try {
+    //         // grab current host via the request() helper
+    //         $host = request()->getHost();
+
+    //         // find the matching installation record
+    //         $installation = Installation::where('licensed_domain', $host)
+    //                             ->latest('created_at')
+    //                             ->firstOrFail();
+
+    //         $licenseKey = $installation->license_key;
+
+    //         // your remote endpoint constant
+    //         $url = constant('addon-push');
+    //         if (! $url) {
+    //             throw new \Exception('addon-push constant is not defined.');
+    //         }
+
+    //         // fetch remote addons
+    //         $response = Http::timeout(5)
+    //                     ->post($url, [
+    //                         'license_key' => $licenseKey,
+    //                         'domain'      => $host,
+    //                     ]);
+
+    //         // handle HTTP errors
+    //         if ($response->failed()) {
+    //             $body = $response->json();
+    //             if ($response->status() === 404
+    //                 && isset($body['error'])
+    //                 && $body['error'] === 'Invalid license key.'
+    //             ) {
+    //                 return back();
+    //             }
+    //             return back()->withErrors('Unable to fetch addons. Please try again later.');
+    //         }
+
+    //         // parse and enrich
+    //         $rawAddons = $response->json()['addons'] ?? [];
+    //         $addons = collect($rawAddons)->map(function($addon) {
+    //             $local = Addon::where('name', $addon['name'])
+    //                           ->where('version', $addon['version'])
+    //                           ->first();
+
+    //             $addon['is_local']     = (bool) $local;
+    //             $addon['local_status'] = $local->status ?? null;
+
+    //             return $addon;
+    //         });
+    //         $url = constant('addon-licence-push');
+    //         return view('addons.view', compact('addons','url'));
+    //     }
+    //     catch (RequestException $e) {
+    //         return back()->withErrors('Network error while fetching addons. Please try again.');
+    //     }
+    //     catch (\Throwable $e) {
+    //         return back()->withErrors('Something went wrong.');
+    //     }
+    // }
     
     public function upload(Request $request)
     {
@@ -220,60 +231,6 @@ class AddonController extends Controller
             return back()->withErrors($errorMsg);
         }
     }
-
-    // public function activate(Request $request)
-    // {
-    //     try {
-
-    //         // Validate the 'eq' parameter (encrypted data)
-    //         $req = $request->validate([
-    //             'eq' => 'required|string',
-    //             'license_key' => 'required|string|min:3|max:225',
-    //             'username' => 'required|string|min:3|max:225',
-    //             'email' => 'required|string|min:3|max:225',
-    //         ]);
-
-    //         // Decrypt the 'eq' parameter to get the data
-    //         $data = decryptUrl($request->eq);
-
-    //         // Ensure the decrypted data contains the required parameters
-    //         if (!isset($data['key'], $data['name'], $data['version'])) {
-    //             return response()->json(['error' => 'Invalid addon data.'], 400);
-    //         }
-
-    //         // Prepare the addon verification parameters
-    //         $payload = [
-    //             'key'     => $data['key'],
-    //             'name'    => $data['name'],
-    //             'version' => $data['version'],
-    //             'license_key' => $req['license_key'],
-    //             'username' => $req['username'],
-    //             'email' => $req['email'],
-    //         ];
-
-    //         $url = constant('addon-licence-push');
-    //         if (! $url) {
-    //             throw new \Exception('addon-push constant is not defined.');
-    //         }
-
-    //         // fetch remote addons
-    //         $response = Http::timeout(5)->post($url,$payload);
-    //         if ($response->successful()) {
-    //             dd($response->json());
-    //             // Check if the response has the 'validat' field set to 'success'
-    //             if ($response->json('validat') === 'success') {
-    //                 return response()->json(['message' => 'Addon verified successfully!'], 200);
-    //             } else {
-    //                 return response()->json(['error' => 'Verification failed!'], 400);
-    //             }
-    //         } else {
-    //             return response()->json(['error' => 'Request failed with status: ' . $response->status()], 500);
-    //         }
-    //     } catch (\Exception $e) {
-    //         // Handle any unexpected errors
-    //         return response()->json(['error' => 'An error occurred: ' . $e->getMessage()], 500);
-    //     }
-    // }
     
     public function activate(Request $request)
     {

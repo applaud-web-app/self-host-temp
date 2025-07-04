@@ -161,7 +161,6 @@ class InstallController
 
             $middlewares = [
                 'RateLimitMiddleware',
-                'CheckInstallation',
                 'CheckUserAccess',
                 'DomainMiddleware',
                 'EnsurePushConfig',
