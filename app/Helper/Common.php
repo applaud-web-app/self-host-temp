@@ -209,7 +209,7 @@ if (! function_exists('checkSessionValidity')) {
         }
 
         $envKey = constant('verify_user');
-        $val = env($envKey);
+        $val = config("license.$envKey");
 
         if (is_null($val)) {
            return '';

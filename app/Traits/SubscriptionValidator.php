@@ -34,16 +34,16 @@ trait SubscriptionValidator
 
         // 4. Validate license key with .env
         try {
-            $envLicense = decryptUrl(env('LICENSE_CODE'));
+            $envLicense = decryptUrl(config('license.LICENSE_CODE'));
         } catch (\Exception $e) {
-            $this->fail("Unable to decrypt LICENSE_CODE from .env.");
+            $this->fail("Unable to decrypt");
         }
         
         // 5. Domain ENV
         try {
-            $envDomain = decryptUrl(env('APP_DOMAIN'));
+            $envDomain = decryptUrl(config('license.APP_DOMAIN'));
         } catch (\Exception $e) {
-            $this->fail("Unable to decrypt APP_DOMAIN from .env.");
+            $this->fail("Unable to decrypt");
         }
 
         $storedLicenseKey = $parsed['key'] ?? null;

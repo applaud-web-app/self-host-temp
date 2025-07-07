@@ -25,7 +25,7 @@ class DomainMiddleware
         }
 
         $checkVal = constant('verify_user');
-        $expectedDomain = decrypt(env($checkVal));
+        $expectedDomain = decrypt(config("license.$checkVal"));
 
         if ($_SERVER['HTTP_HOST'] !== $expectedDomain && $_SERVER['HTTP_HOST'] !== 'localhost') {
             $this->purgeChace();

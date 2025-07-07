@@ -29,10 +29,10 @@ return Application::configure(basePath: dirname(__DIR__))
         // $middleware->prepend(CheckDomainMiddleware::class); // chain middleware sample
 
         // ONLINE UNCOMMENT AFTER ACTIVATION
-        $middleware->prepend(PermissionMiddleware::class);
-        $middleware->prepend(DomainMiddleware::class);
-        $middleware->prepend(CheckUserAccess::class);
-        $middleware->prepend(RateLimitMiddleware::class);
+        // $middleware->prepend(PermissionMiddleware::class);
+        // $middleware->prepend(DomainMiddleware::class);
+        // $middleware->prepend(CheckUserAccess::class);
+        // $middleware->prepend(RateLimitMiddleware::class);
         
         $middleware->alias([
             'ensure_push_config' => EnsurePushConfig::class,

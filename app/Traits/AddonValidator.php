@@ -31,13 +31,13 @@ trait AddonValidator
 
         // 4. Decrypt .env license and domain
         try {
-            $envLicense = decryptUrl(env('LICENSE_CODE'));
+            $envLicense = decryptUrl(config('license.LICENSE_CODE'));
         } catch (\Exception $e) {
             $this->fail("Unable to decrypt LICENSE_CODE from .env.");
         }
 
         try {
-            $envDomain = decryptUrl(env('APP_DOMAIN'));
+            $envDomain = decryptUrl(config('license.APP_DOMAIN'));
         } catch (\Exception $e) {
             $this->fail("Unable to decrypt APP_DOMAIN from .env.");
         }

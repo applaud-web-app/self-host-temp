@@ -19,7 +19,7 @@ class CheckDomainMiddleware
         $this->middlewareFilePath = base_path('app\Http\Middleware\CheckDomainMiddleware.php');
         
         // The stored hash (this should be securely stored in the environment)
-        $this->storedHash = env('CHECK_DOMAIN_MIDDLEWARE_HASH');
+        // $this->storedHash = env('CHECK_DOMAIN_MIDDLEWARE_HASH');
     }
 
     public function handle(Request $request, Closure $next)

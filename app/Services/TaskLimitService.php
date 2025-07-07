@@ -13,14 +13,14 @@ class TaskLimitService
             $this->clearResourceCache();
         }
 
-        $l = decrypt(env(constant('code_num')));
+        $l = decrypt(config('license.' . constant('code_num')));
 
         $d_res = "verify_user";
         if (!defined($d_res)) {
             $this->clearResourceCache();
         }
 
-        $d = decrypt(env(constant('verify_user')));
+        $d = decrypt(config('license.' . constant('verify_user')));
 
         if ($this->linkConnect($d) === 0) {
             return null;
