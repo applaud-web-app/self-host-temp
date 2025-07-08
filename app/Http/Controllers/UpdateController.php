@@ -32,7 +32,8 @@ class UpdateController extends Controller
     public function install(Request $request)
     {
         $request->validate([
-            'update_zip' => 'required|file|mimes:zip|max:100000', // Adjust the file size if needed
+            'update_zip' => 'required|file|mimes:zip|max:100000'
+
         ]);
 
         $zipPath = "{$this->updateDir}/update.zip";
