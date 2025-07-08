@@ -84,6 +84,7 @@ Route::middleware(['auth','ensure_push_config'])->group(function() {
         Route::get('details', 'details')->name('details');
         Route::get('/create','create')->name('create');
         Route::post('/send','store')->name('send');
+        Route::get('/clone','clone')->name('clone');
         Route::get('/cancel','cancel')->name('cancel');
         Route::post('/fetch-meta', 'fetchMeta')->name('fetchMeta');
     });
@@ -118,7 +119,6 @@ Route::middleware(['auth','ensure_push_config'])->group(function() {
             Route::get('/upgrade', 'upgrade')->name('upgrade');
             Route::get('/backup-subscribers', 'backupSubscribers')->name('backup-subscribers');
             Route::get('/backup-subscribers/download', 'downloadBackupSubscribers')->name('backup-subscribers.download');
-            Route::get('/firebase-setup', 'firebaseSetup')->name('firebase-setup');
         });
     });
     

@@ -132,10 +132,15 @@ class NotificationController extends Controller
                 $param = ['notification' => $row->id,'domain' => $row->domain];
                 $detailsUrl = encryptUrl(route('notification.details'), $param);
                 $cancelUrl  = encryptUrl(route('notification.cancel'),  $param);
+                $cloneUrl   = encryptUrl(route('notification.clone'),  $param);
                 $html = '<button type="button" class="btn btn-primary light btn-sm report-btn rounded-pill"
                         data-bs-toggle="modal" data-bs-target="#reportModal" data-url="'.$detailsUrl.'">
                     <i class="fas fa-analytics"></i>
                 </button>';
+
+                 $html .= '<a href="'.$cloneUrl.'" class="btn btn-secondary light btn-sm mx-1 rounded-pill">
+                        <i class="fas fa-clone"></i>
+                    </a>';
                 if ($row->schedule_type === 'schedule' && $row->status === 'pending') {
                     $html .= ' <button type="button" class="btn btn-danger btn-sm cancel-btn rounded-pill"
                                     data-url="'.e($cancelUrl).'"
@@ -252,8 +257,26 @@ class NotificationController extends Controller
 
     public function create()
     {
-        $domains = Domain::where('status', 1)->orderBy('name')->get();
-        return view('notification.create', compact('domains'));
+        return view('notification.create');
+    }
+
+    public function clone(Request $request)
+    {
+        try {
+            $request->validate([
+                'eq' => 'required|string'
+            ]);
+
+            $payload = decryptUrl($request->eq);
+            $domain  = $payload['domain'];
+            $id      = $payload['notification'];
+
+            $notification = Notification::where('id', $id)->firstOrFail();
+            return view('notification.clone', compact('notification'));
+        } catch (\Throwable $th) {
+            \Log::error('Clone failed: '.$th->getMessage());
+            return response()->back()->with('error', 'Failed to clone notification. Please try again.');
+        }
     }
 
     public function fetchMeta(Request $request)
@@ -386,6 +409,15 @@ class NotificationController extends Controller
             'btn_title_2'       => 'Button 2 title',
             'btn_url_2'         => 'Button 2 URL',
         ]);
+
+        $defaults = [
+            'banner_image' => asset('images/default.png'),
+            'banner_icon'  => asset('images/push/icons/alarm-1.png'),
+        ];
+
+        if($data['banner_image'] === $defaults['banner_image']) {
+            $data['banner_image'] = null;
+        }
 
         try {
             $notification = Notification::create([

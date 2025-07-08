@@ -184,7 +184,7 @@ class SegmentationController extends Controller
                     'required', 'string', 'max:255',
                     // unique segment name inside the same domain
                     Rule::unique('segments', 'name')->where(
-                        fn ($q) => $q->where('domain', $request->domain_name)
+                        fn ($q) => $q->where('domain', $request->domain_name)->where('status', 1)
                     ),
                 ],
                 'domain_name'  => 'required|exists:domains,name',
@@ -294,7 +294,7 @@ class SegmentationController extends Controller
 
             return redirect()->route('segmentation.view')->with('success', 'Segment created successfully.');
         } catch (\Throwable $th) {
-            return redirect()->back()->with('error', 'Something Went Wrong : '.$th->getMessage());
+            return redirect()->back()->with('error', 'Error : '.$th->getMessage());
         }
     }
 

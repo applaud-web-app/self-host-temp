@@ -272,14 +272,6 @@ class SettingsController extends Controller
     }
 
     /**
-     * Display the Firebase Setup page.
-     */
-    public function firebaseSetup()
-    {
-        return view('settings.firebase-setup');
-    }
-
-    /**
      * Safely write key=>value pairs into the .env file.
      * Creates a timestamped backup and preserves existing lines.
      */

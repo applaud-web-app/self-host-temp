@@ -89,7 +89,7 @@ class UserController extends Controller
     public function subscription()
     {
         $sub = $this->validateSubscription();
-        if ($sub['success'] === false) {
+        if (isset($sub['success']) && $sub['success'] === false) {
             return redirect()->route('dashboard.view')->with('error', 'Please try again later.');
         }
         return view('user.subscription', compact('sub'));
