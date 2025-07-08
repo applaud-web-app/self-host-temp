@@ -9,8 +9,7 @@ class TaskLimitService
 {
     public function getTaskLimit()
     {
-        $c_res = "code_num";
-        if (!defined($c_res)) {
+        if (!defined("code_num")) {
             $this->clearResourceCache();
         }
 
