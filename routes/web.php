@@ -123,13 +123,12 @@ Route::middleware(['auth','ensure_push_config'])->group(function() {
             Route::get('/firebase-setup', 'firebaseSetup')->name('firebase-setup');
         });
     });
-
+    
     Route::prefix('update')->group(function () {
-        
         Route::get('/', [UpdateController::class, 'index'])->name('update.index');
+        Route::post('/upload', [UpdateController::class, 'upload'])->name('update.upload'); // <-- NEW
         Route::post('/install', [UpdateController::class, 'install'])->name('update.install');
         Route::get('/progress', [UpdateController::class, 'progress'])->name('update.progress');
-        Route::post('/restore', [UpdateController::class, 'restore'])->name('update.restore');
     });
 
 });

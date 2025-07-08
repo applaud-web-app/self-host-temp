@@ -1,6 +1,5 @@
 <?php
 // app/Http/Controllers/UpdateController.php
-
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
@@ -21,39 +20,33 @@ class UpdateController extends Controller
         File::ensureDirectoryExists($this->updateDir);
     }
 
+    // Show the update page with current version and upload button
     public function index()
     {
         return view('update.index', [
             'currentVersion' => $this->currentVersion(),
-            'zipReady'       => File::exists("{$this->updateDir}/update.zip"),
-            'updateSize'     => File::exists("{$this->updateDir}/update.zip")
-                               ? $this->formatBytes(File::size("{$this->updateDir}/update.zip"))
-                               : '0 KB',
         ]);
     }
 
+    // Handle the uploaded ZIP file
     public function install(Request $request)
     {
-        // URL of the new update package (for example, your self-hosted update)
-        $updateUrl = 'http://awmtab.in/self-host-server.zip';
-        
-        // Define path to save the downloaded update
+        $request->validate([
+            'update_zip' => 'required|file|mimes:zip|max:100000', // Adjust the file size if needed
+        ]);
+
         $zipPath = "{$this->updateDir}/update.zip";
-        
+
+        // If the file already exists, delete it before uploading the new one
         if (File::exists($zipPath)) {
-            File::delete($zipPath);  // Delete the previous update if exists
+            File::delete($zipPath);
         }
 
-        // Download the update package
-        $this->setProgress(10, 'Downloading update...');
-        try {
-            $this->downloadUpdate($updateUrl, $zipPath);
-        } catch (\Throwable $e) {
-            Log::error('[Updater] Download failed: '.$e->getMessage());
-            return response()->json(['message' => 'Download failed: '.$e->getMessage()], 500);
-        }
+        // Save uploaded file
+        $this->setProgress(10, 'Uploading ZIP...');
+        $request->file('update_zip')->move($this->updateDir, 'update.zip');
 
-        // Extract the update package
+        // Extract the uploaded ZIP file
         $this->setProgress(30, 'Extracting update...');
         $this->extractUpdatePackage($zipPath);
 
@@ -61,9 +54,20 @@ class UpdateController extends Controller
         $this->setProgress(95, 'Cleaning up...');
         File::delete($zipPath);
 
+        // Completion message
         $this->setProgress(100, 'Update completed!');
         
         return response()->json(['message' => 'Application updated successfully!']);
+    }
+
+    // Return progress data for the client-side AJAX
+    public function progress()
+    {
+        if (!File::exists($this->progressFile)) {
+            return response()->json(['progress' => 0, 'message' => 'Not started.']);
+        }
+
+        return response()->json(json_decode(File::get($this->progressFile), true));
     }
 
     // Helper methods
@@ -72,26 +76,11 @@ class UpdateController extends Controller
         File::put($this->progressFile, json_encode(['progress' => $p, 'message' => $m]));
     }
 
-    private function downloadUpdate(string $url, string $destination)
-    {
-        $client = new Client();
-        $response = $client->get($url, ['sink' => $destination]);
-
-        if ($response->getStatusCode() !== 200) {
-            throw new \Exception("Failed to download the update package. HTTP Status: " . $response->getStatusCode());
-        }
-
-        // Verify if the file was successfully downloaded
-        if (!File::exists($destination)) {
-            throw new \Exception('Failed to save the update package.');
-        }
-    }
-
     private function extractUpdatePackage(string $zipPath): void
     {
         $zip = new \ZipArchive();
         if ($zip->open($zipPath) !== true) {
-            throw new \Exception('Cannot open ZIP');
+            throw new \Exception('Cannot open ZIP file.');
         }
 
         $extractDir = "{$this->updateDir}/extracted";
@@ -113,20 +102,12 @@ class UpdateController extends Controller
         File::deleteDirectory($extractDir);
     }
 
+    // Get the current version of the app (from `version.txt` or `composer.json`)
     private function currentVersion(): string
     {
         $vf = base_path('version.txt');
         if (File::exists($vf)) return trim(File::get($vf));
         $c = json_decode(File::get(base_path('composer.json')), true);
         return $c['version'] ?? '1.0.0';
-    }
-
-    private function formatBytes(int $b, int $p = 2): string
-    {
-        $u = ['B', 'KB', 'MB', 'GB', 'TB'];
-        $b = max($b, 0);
-        $pow = floor($b ? log($b, 1024) : 0);
-        $pow = min($pow, count($u) - 1);
-        return round($b / (1 << ($pow * 10)), $p) . ' ' . $u[$pow];
     }
 }

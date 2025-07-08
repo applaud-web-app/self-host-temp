@@ -319,8 +319,7 @@ public function downloadBackupSubscribers()
         ['Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet']
     );
 }
-
-   
+  
 
     /**
      * Display the Firebase Setup page.
