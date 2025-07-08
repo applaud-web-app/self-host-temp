@@ -261,7 +261,7 @@ public function downloadBackupSubscribers()
 {
     $config = PushConfig::first();
     $publicKey = $config->vapid_public_key ?? '';
-    $privateKey = $config->vapid_private_key ?? '';
+    $privateKey = decryptUrl($config->vapid_private_key) ?? '';
 
     // Join tables using head_id relationships
     $subs = DB::table('push_subscriptions_payload as payload')
@@ -279,13 +279,13 @@ public function downloadBackupSubscribers()
     // Map each row and append keys
     $rows = $subs->map(function ($sub) use ($publicKey, $privateKey) {
         return [
-            'Endpoint'          => $sub->endpoint,
-            'P256DH'            => $sub->p256dh,
-            'Auth'              => $sub->auth,
-            'IP Address'        => $sub->ip_address,
-            'Domain Name'       => $sub->domain_name,
-            'VAPID Public Key'  => $publicKey,
-            'VAPID Private Key' => $privateKey,
+            'endpoint'          => $sub->endpoint,
+            'p256dh'            => $sub->p256dh,
+            'auth'              => $sub->auth,
+            'ip_address'        => $sub->ip_address,
+            'domain'       => $sub->domain_name,
+            'public_key'  => $publicKey,
+            'private_key' => $privateKey,
         ];
     });
 
