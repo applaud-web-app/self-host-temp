@@ -22,6 +22,9 @@ class AddonController extends Controller
     public function addons()
     {
         $addons = $this->validateAddons();
+        if ($addons['success'] === false) {
+            return redirect()->route('dashboard.view')->with('error', 'Please try again later.');
+        }
         $url = defined('addon-licence-push') ? constant('addon-licence-push') : null;
         return view('addons.view', compact('addons', 'url'));
     }

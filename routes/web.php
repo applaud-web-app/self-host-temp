@@ -106,8 +106,6 @@ Route::middleware(['auth','ensure_push_config'])->group(function() {
 
     Route::middleware(['auth','ensure_push_config'])->group(function() {
         Route::prefix('settings')->controller(SettingsController::class)->name('settings.')->group(function () {
-            Route::get('/general', 'generalSettings')->name('general');
-            Route::post('/general', 'updateGeneralSettings');
             Route::get('/email', 'emailSettings')->name('email');
             Route::post('/email', 'updateEmailSettings');
             Route::get('/server-info', 'serverInfo')->name('server-info');

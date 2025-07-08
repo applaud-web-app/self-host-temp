@@ -290,3 +290,12 @@ if (! function_exists('loadToken')) {
         return base_path("app/Http/Middleware/{$middlewareName}.php");
     }
 }
+
+if (! function_exists('fail')) {
+    function fail(string $message): void
+    {
+        Log::info("sub/addon validation failed: $message");
+        Artisan::call('down');
+        abort(503, 'System is down due to validation failure.');
+    }
+}

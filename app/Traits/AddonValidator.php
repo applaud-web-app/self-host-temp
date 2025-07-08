@@ -10,6 +10,13 @@ use Illuminate\Support\Facades\Log;
 
 trait AddonValidator
 {
+
+    protected function fail(string $message): array
+    {
+        Log::warning("Subscription validation warning: $message");
+        return ['success' => false, 'message' => $message];
+    }
+
     public function validateAddons(): array
     {
         // 1. Fetch current domain
@@ -18,7 +25,7 @@ trait AddonValidator
         // 2. Fetch installation record
         $installation = Installation::first();
         if (! $installation) {
-            $this->fail("No installation record found.");
+            return fail("No installation record found.");
         }
 
         // 3. Decrypt installation data
@@ -26,32 +33,32 @@ trait AddonValidator
             $decrypted = decryptUrl($installation->data);
             $parsed = is_string($decrypted) ? json_decode($decrypted, true) : $decrypted;
         } catch (\Exception $e) {
-            $this->fail("Unable to decrypt installation data.");
+            return $this->fail("Unable to decrypt installation data.");
         }
 
         // 4. Decrypt .env license and domain
         try {
             $envLicense = decryptUrl(config('license.LICENSE_CODE'));
         } catch (\Exception $e) {
-            $this->fail("Unable to decrypt LICENSE_CODE from .env.");
+            return $this->fail("Unable to decrypt LICENSE_CODE from .env.");
         }
 
         try {
             $envDomain = decryptUrl(config('license.APP_DOMAIN'));
         } catch (\Exception $e) {
-            $this->fail("Unable to decrypt APP_DOMAIN from .env.");
+            return $this->fail("Unable to decrypt APP_DOMAIN from .env.");
         }
 
         // 5. Validate license key
         $storedLicenseKey = $parsed['key'] ?? null;
         if (! $storedLicenseKey || $storedLicenseKey !== $envLicense) {
-            $this->fail("License key mismatch.");
+            return fail("License key mismatch.");
         }
 
         // 6. Validate domain
         $storedDomain = $parsed['domain'] ?? null;
         if ($currentDomain !== $storedDomain || $currentDomain !== $envDomain) {
-            $this->fail("Domain mismatch: expected $storedDomain, got $currentDomain.");
+            return fail("Domain mismatch: expected $storedDomain, got $currentDomain.");
         }
 
         $userName  = $parsed['uname'] ?? null;
@@ -60,7 +67,7 @@ trait AddonValidator
         // 7. Push URL constant
         $pushUrl = constant('addon-push');
         if (! $pushUrl) {
-            $this->fail("Add-on push URL not defined.");
+            return fail("Add-on push URL not defined.");
         }
 
         // 8. Remote fetch
@@ -75,10 +82,10 @@ trait AddonValidator
             if (! $response->successful()) {
                 $body = $response->json();
                 if ($response->status() === 404 && ($body['error'] ?? null) === 'Invalid license key.') {
-                    $this->fail("Remote: Invalid license key.");
+                    return fail("Remote: Invalid license key.");
                 }
 
-                $this->fail("Remote validation failed with status {$response->status()}.");
+                return $this->fail("Remote validation failed with status {$response->status()}.");
             }
 
             // 9. Normalize response
@@ -94,14 +101,8 @@ trait AddonValidator
             return $addons;
 
         } catch (\Exception $e) {
-            $this->fail("Remote add-on fetch failed: " . $e->getMessage());
+            return $this->fail("Remote add-on fetch failed: " . $e->getMessage());
         }
     }
 
-    protected function fail(string $message): void
-    {
-        Log::info("Add-on validation failed: $message");
-        Artisan::call('down');
-        abort(503, 'System is down due to add-on validation failure.');
-    }
 }

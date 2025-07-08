@@ -105,6 +105,7 @@ class SubscribePushSubscriptionJob implements ShouldQueue
                         'device'     => $deviceType,
                         'browser'    => $agent->browser(),
                         'platform'   => $agent->platform(),
+                        'subscribed_url' => rtrim($this->data['url'] ?? ('https://' . $domain), '/') . '/',
                     ]
                 );
             } catch (Throwable $e) {

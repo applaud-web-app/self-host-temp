@@ -20,6 +20,7 @@ use Illuminate\Validation\ValidationException;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Response;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class DomainController extends Controller
 {
@@ -451,8 +452,7 @@ class DomainController extends Controller
             }
 
             // Step 7: Send the modified ZIP file for download
-            return response()->download($newZipFilePath, 'self-host-plugin-modified.zip')
-                ->deleteFileAfterSend(true);
+           return response()->download($newZipFilePath, 'self-host-plugin-modified.zip')->deleteFileAfterSend(true);
 
         } catch (\Exception $e) {
             // Clean up on error

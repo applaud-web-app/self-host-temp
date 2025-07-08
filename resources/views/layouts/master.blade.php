@@ -217,14 +217,20 @@
             <span class="nav-text">Settings</span>
         </a>
         <ul aria-expanded="false">
-            <li><a href="{{ route('settings.general') }}">General</a></li>
             <li><a href="{{ route('settings.email') }}">Email</a></li>
             <li><a href="{{ route('settings.server-info') }}">Server Info</a></li>
             <li><a href="{{ route('settings.utilities') }}">Utilities</a></li>
             <li><a href="{{ route('settings.upgrade') }}">Upgrade</a></li>
             <li><a href="{{ route('settings.firebase-setup') }}">Firebase Setup</a></li>
-            <li><a href="{{ route('settings.backup-subscribers') }}">Backup Subscribers</a></li> 
         </ul>
+    </li>
+
+    <!-- Backup Subscribers -->
+    <li>
+        <a class="ai-icon" href="{{ route('settings.backup-subscribers') }}" aria-expanded="false">
+            <i class="fal fa-credit-card"></i>
+            <span class="nav-text">Backup Subscribers</span>
+        </a>
     </li>
 
     <!-- Support -->

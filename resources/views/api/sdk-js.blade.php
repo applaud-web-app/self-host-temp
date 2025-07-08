@@ -90,6 +90,7 @@
       token:     newToken,
       old_token: oldToken,
       domain:    location.hostname,
+      url:       location.href,
       endpoint,
       auth,
       p256dh

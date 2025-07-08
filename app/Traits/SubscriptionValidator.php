@@ -11,17 +11,23 @@ use Illuminate\Support\Carbon;
 
 trait SubscriptionValidator
 {
+    protected function fail(string $message): array
+    {
+        Log::warning("Subscription validation warning: $message");
+        return ['success' => false, 'message' => $message];
+    }
+
     public function validateSubscription(): array
     {
         // 1. Check installation exists
         $installation = Installation::first();
         if (! $installation) {
-            $this->fail("No installation record found.");
+            return fail("No installation record found.");
         }
 
         // 2. Check installed flag
         if ((int) $installation->is_installed !== 1) {
-            $this->fail("System not installed properly.");
+            return fail("System not installed properly.");
         }
 
         // 3. Decrypt installation data
@@ -29,26 +35,26 @@ trait SubscriptionValidator
             $decrypted = decryptUrl($installation->data);
             $parsed = is_string($decrypted) ? json_decode($decrypted, true) : $decrypted;
         } catch (\Exception $e) {
-            $this->fail("Unable to decrypt installation data.");
+            return $this->fail("Unable to decrypt installation data.");
         }
 
         // 4. Validate license key with .env
         try {
             $envLicense = decryptUrl(config('license.LICENSE_CODE'));
         } catch (\Exception $e) {
-            $this->fail("Unable to decrypt");
+            return $this->fail("Unable to decrypt");
         }
         
         // 5. Domain ENV
         try {
             $envDomain = decryptUrl(config('license.APP_DOMAIN'));
         } catch (\Exception $e) {
-            $this->fail("Unable to decrypt");
+            return $this->fail("Unable to decrypt");
         }
 
         $storedLicenseKey = $parsed['key'] ?? null;
         if (! $storedLicenseKey || $storedLicenseKey !== $envLicense) {
-            $this->fail("License key mismatch.");
+            return fail("License key mismatch.");
         }
 
         // 5. Validate domain
@@ -56,7 +62,7 @@ trait SubscriptionValidator
         $storedDomain = $parsed['domain'] ?? null;
 
         if ($currentDomain !== $storedDomain || $currentDomain !== $envDomain) {
-            $this->fail("Domain mismatch: expected $storedDomain, got $currentDomain.");
+            return fail("Domain mismatch: expected $storedDomain, got $currentDomain.");
         }
 
         $userName = $parsed['uname'] ?? null;
@@ -65,7 +71,7 @@ trait SubscriptionValidator
         // 6. Get push URL from config or env
         $pushUrl = constant('subscription-push');
         if (! $pushUrl) {
-            $this->fail("Subscription push URL not defined.");
+            return fail("Subscription URL not defined.");
         }
 
         // 7. Remote validation
@@ -80,10 +86,10 @@ trait SubscriptionValidator
             if (! $response->successful()) {
                 $body = $response->json();
                 if ($response->status() === 404 && isset($body['error']) && $body['error'] === 'Invalid license key.') {
-                    $this->fail("Remote: Invalid license key.");
+                    fail("Remote: Invalid license key.");
                 }
 
-                $this->fail("Remote validation failed with status {$response->status()}.");
+                return $this->fail("Remote validation failed with status {$response->status()}.");
             }
 
             $data = $response->json('data');
@@ -92,14 +98,7 @@ trait SubscriptionValidator
             return $data;
 
         } catch (\Exception $e) {
-            $this->fail("Remote request failed: " . $e->getMessage());
+            return $this->fail("Remote request failed: " . $e->getMessage());
         }
-    }
-
-    protected function fail(string $message): void
-    {
-        Log::info("Subscription check failed: $message");
-        Artisan::call('down');
-        abort(503, 'System is down due to subscription validation failure.');
     }
 }

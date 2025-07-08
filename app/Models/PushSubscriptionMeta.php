@@ -13,7 +13,7 @@ class PushSubscriptionMeta extends Model
 
     protected $fillable = [
         'head_id', 'ip_address', 'country', 'state', 'city',
-        'device', 'browser', 'platform'
+        'device', 'browser', 'platform', 'subscribed_url'
     ];
 
     public function head()

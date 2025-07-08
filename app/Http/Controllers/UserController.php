@@ -86,60 +86,12 @@ class UserController extends Controller
         return view('user.status');
     }
 
-    /**
-     * Show the user subscription page.
-    */
-    // public function subscription()
-    // {
-    //     // 1) Grab your license key (this will throw a ModelNotFoundException if there’s no row)
-    //     $installation = Installation::firstOrFail();
-    //     if(! empty($installation) && $installation->is_installed == 1){
-    //         $data = decrypt($installation->data);
-    //         dd($data);
-    //     }
-    //     $licenseKey   = $installation->license_key;
-    //     $url = constant('subscription-push');
-    //     if (! $url) {
-    //         throw new \Exception('subscription-push constant is not defined.');
-    //     }
-
-    //     try {
-    //         // 3) Call your subscription API
-    //         $response = Http::timeout(5)
-    //             ->post($url, [
-    //                 'license_key' => $licenseKey,
-    //                 'domain'      => request()->getHost(),
-    //             ]);
-
-    //         if (! $response->successful()) {
-    //             $status = $response->status();
-    //             $body = $response->json();
-    //             if ($response->status() === 404 && isset($body['error']) && $body['error'] === 'Invalid license key.'){
-    //                 // Installation::truncate();
-    //                 return back();
-    //             }
-    //         }
-
-    //         // 5) Pull out your data payload
-    //         $resp = $response->json('data');
-
-    //         // 6) Normalize the purchase date
-    //         $resp['purchase_date'] = Carbon::createFromFormat('d-M-Y', $resp['purchase_date']);
-
-    //         // 7) Render the view
-    //         return view('user.subscription', ['sub' => $resp]);
-
-    //     } catch (\Illuminate\Http\Client\RequestException $e) {
-    //         return back()->withErrors('Something went wrong.');
-    //     } catch (\Throwable $e) {
-    //         Log::error('Unexpected error fetching subscription: ' . $e->getMessage());
-    //         return back()->withErrors('Something went wrong..');
-    //     }
-    // }
-
     public function subscription()
     {
         $sub = $this->validateSubscription();
+        if ($sub['success'] === false) {
+            return redirect()->route('dashboard.view')->with('error', 'Please try again later.');
+        }
         return view('user.subscription', compact('sub'));
     }
 

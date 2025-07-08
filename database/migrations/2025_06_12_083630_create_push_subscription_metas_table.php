@@ -13,6 +13,7 @@ return new class extends Migration
     {
         Schema::create('push_subscriptions_meta', function (Blueprint $table) {
             $table->unsignedBigInteger('head_id');
+            $table->text('subscribed_url')->nullable();
             $table->string('ip_address', 45)->nullable();
             $table->string('country')->nullable();
             $table->string('state')->nullable();
