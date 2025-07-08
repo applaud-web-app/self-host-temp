@@ -48,7 +48,7 @@
             </ul>
 
             {{-- upgrade link (SweetAlert confirmation → /update) --}}
-            <a href="{{ route('update.index') }}"
+            <a href="https://aplu.io/contact"
                id="go-to-updater"
                class="btn btn-success w-100">
                <i class="fas fa-upload me-1"></i> Upgrade to 1.1.0
