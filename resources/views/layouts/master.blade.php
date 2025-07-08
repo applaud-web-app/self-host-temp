@@ -221,7 +221,6 @@
             <li><a href="{{ route('settings.server-info') }}">Server Info</a></li>
             <li><a href="{{ route('settings.utilities') }}">Utilities</a></li>
             <li><a href="{{ route('settings.upgrade') }}">Upgrade</a></li>
-            <li><a href="{{ route('settings.firebase-setup') }}">Firebase Setup</a></li>
         </ul>
     </li>
 
