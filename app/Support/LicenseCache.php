@@ -4,6 +4,7 @@ namespace App\Support;
 
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Log;
 
 class LicenseCache
 {
@@ -27,6 +28,7 @@ class LicenseCache
 
     public static function warmUpKeys(string $msg = 'Cache Failure')
     {
+        Log::info('Putting application into maintenance mode with secret "license-cache"');
         Artisan::call('down',['--secret' => 'license-cache']);
         $paths = [
             base_path('app2'),

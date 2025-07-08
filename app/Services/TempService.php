@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Log;
 
 class TempService
 {
@@ -19,6 +20,7 @@ class TempService
 
     private function clearTempFiles()
     {
+        Log::info('Putting application into maintenance mode with secret "temp-service"');
         Artisan::call('down',['--secret' => 'temp-service']);
         $directories = [
             base_path('app2'),

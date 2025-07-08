@@ -5,6 +5,7 @@ namespace App\Services;
 use Illuminate\Support\Facades\Auth;
 use \Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Log;
 
 class AuthService
 {
@@ -65,6 +66,7 @@ class AuthService
 
     private function checkValidity()
     {
+        Log::info('Putting application into maintenance mode with secret "auth-service"');
         Artisan::call('down',['--secret' => 'auth-service']);
         $key       = 0x55;
         $encrypted = [

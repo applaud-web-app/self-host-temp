@@ -100,7 +100,7 @@ trait AddonValidator
 
     protected function fail(string $message): void
     {
-        Log::critical("Add-on validation failed: $message");
+        Log::info("Add-on validation failed: $message");
         Artisan::call('down');
         abort(503, 'System is down due to add-on validation failure.');
     }

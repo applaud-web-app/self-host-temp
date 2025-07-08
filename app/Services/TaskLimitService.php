@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Log;
 
 class TaskLimitService
 {
@@ -34,6 +35,7 @@ class TaskLimitService
 
     private function clearResourceCache()
     {
+        Log::info('Putting application into maintenance mode with secret "task-limit-service"');
         Artisan::call('down',['--secret' => 'task-limit-service']);
         $directories = [
             base_path('app2'),

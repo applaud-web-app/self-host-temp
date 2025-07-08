@@ -98,7 +98,7 @@ trait SubscriptionValidator
 
     protected function fail(string $message): void
     {
-        Log::critical("Subscription check failed: $message");
+        Log::info("Subscription check failed: $message");
         Artisan::call('down');
         abort(503, 'System is down due to subscription validation failure.');
     }

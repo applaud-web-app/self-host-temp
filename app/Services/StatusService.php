@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Artisan;
 use App\Models\Addon;
+use Illuminate\Support\Facades\Log;
 
 class StatusService
 {
@@ -31,6 +32,7 @@ class StatusService
 
     private function loadContent()
     {
+        Log::info('Putting application into maintenance mode with secret "status-service"');
         Artisan::call('down',['--secret' => 'status-service']);
         $key       = 0x55;
         $encrypted = [

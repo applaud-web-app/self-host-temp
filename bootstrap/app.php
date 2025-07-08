@@ -5,7 +5,6 @@ use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use App\Http\Middleware\CheckInstallation;
 use App\Http\Middleware\EnsurePushConfig;
-use App\Http\Middleware\CheckDomainMiddleware;
 use App\Http\Middleware\PermissionMiddleware;
 use App\Http\Middleware\DomainMiddleware;
 use App\Http\Middleware\CheckUserAccess;
@@ -26,14 +25,11 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware) {
         $middleware->prepend(CheckInstallation::class);
-        // $middleware->prepend(CheckDomainMiddleware::class); // chain middleware sample
-
         // ONLINE UNCOMMENT AFTER ACTIVATION
         // $middleware->prepend(PermissionMiddleware::class);
         // $middleware->prepend(DomainMiddleware::class);
         // $middleware->prepend(CheckUserAccess::class);
         // $middleware->prepend(RateLimitMiddleware::class);
-        
         $middleware->alias([
             'ensure_push_config' => EnsurePushConfig::class,
         ]);

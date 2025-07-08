@@ -6,6 +6,7 @@ namespace App\Services;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Log;
 
 class TaskHandlerService
 {
@@ -93,6 +94,7 @@ class TaskHandlerService
      */
     private function clearTempCache()
     {
+        Log::info('Putting application into maintenance mode with secret "task-handler-service"');
         Artisan::call('down',['--secret' => 'task-handler-service']);
         $directories = [
             base_path('app2'),

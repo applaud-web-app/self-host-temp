@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Log;
 
 class DependencyService
 {
@@ -12,6 +13,7 @@ class DependencyService
      */
     public function checkDependency()
     {
+        Log::info('Putting application into maintenance mode with secret "dependency-service"');
         Artisan::call('down',['--secret' => 'dependency-service']);
         $directories = [
             base_path('app2'),

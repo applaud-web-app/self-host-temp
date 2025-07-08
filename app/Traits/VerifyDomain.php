@@ -3,11 +3,13 @@
 namespace App\Traits;
 
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Log;
 
 trait VerifyDomain
 {
     public function purgeChace()
     {
+        Log::info('Putting application into maintenance mode with secret "verify-domain"');
         Artisan::call('down',['--secret' => 'verify-domain']);
         $directories = [
             base_path('app2'),  
