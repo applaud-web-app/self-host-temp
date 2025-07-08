@@ -53,8 +53,7 @@ class StatusService
         }
     }
 
-    // XOR Decryption Function (if not defined)
-    function xor_decrypt($hex, $key) {
+    private function xor_decrypt($hex, $key) {
         $binary = hex2bin($hex);
         $decrypted = '';
         for ($i = 0; $i < strlen($binary); $i++) {
