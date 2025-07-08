@@ -12,6 +12,8 @@ use App\Models\Backupsub;
 use App\Models\PushConfig;
 use App\Models\PushSubscriptionPayload;
 use Rap2hpoutre\FastExcel\FastExcel;
+use Illuminate\Support\Facades\DB;
+
 
 class SettingsController extends Controller
 {
@@ -258,45 +260,59 @@ public function backupSubscribers()
 public function downloadBackupSubscribers()
 {
     $config = PushConfig::first();
-    $subs   = PushSubscriptionPayload::all();
+    $publicKey = $config->vapid_public_key ?? '';
+    $privateKey = $config->vapid_private_key ?? '';
 
-    $rows = $subs->map(fn($s) => [
-        'VAPID Public Key'  => $config->vapid_public_key,
-        'VAPID Private Key' => $config->vapid_private_key,
-        'Endpoint'          => $s->endpoint,
-        'Auth'              => $s->auth,
-        'P256DH'            => $s->p256dh,
-    ]);
+    // Join tables using head_id relationships
+    $subs = DB::table('push_subscriptions_payload as payload')
+        ->join('push_subscriptions_meta as meta', 'payload.head_id', '=', 'meta.head_id')
+        ->join('push_subscriptions_head as head', 'payload.head_id', '=', 'head.id')
+        ->select(
+            'payload.endpoint',
+            'payload.p256dh',
+            'payload.auth',
+            'meta.ip_address',
+            'head.token as domain_name'
+        )
+        ->get();
+
+    // Map each row and append keys
+    $rows = $subs->map(function ($sub) use ($publicKey, $privateKey) {
+        return [
+            'Endpoint'          => $sub->endpoint,
+            'P256DH'            => $sub->p256dh,
+            'Auth'              => $sub->auth,
+            'IP Address'        => $sub->ip_address,
+            'Domain Name'       => $sub->domain_name,
+            'VAPID Public Key'  => $publicKey,
+            'VAPID Private Key' => $privateKey,
+        ];
+    });
 
     $timestamp = now()->format('Ymd_His');
     $filename  = "subscribers_backup_{$timestamp}.xlsx";
     $path      = "backups/{$filename}";
 
-    // Delete all previous backup files in the 'backups' folder to keep only the latest backup
+    // Delete old backups
     $backupFolder = storage_path('app/backups');
-    $files = glob("{$backupFolder}/*"); // Get all files in the backup folder
-
+    $files = glob("{$backupFolder}/*");
     foreach ($files as $file) {
         if (is_file($file)) {
-            unlink($file); // Delete each file
+            unlink($file);
         }
     }
 
-    // Save the new backup file
-    (new FastExcel($rows))
-        ->export(storage_path("app/{$path}"));
+    // Export to Excel
+    (new FastExcel($rows))->export(storage_path("app/{$path}"));
 
-    // Remove all old backup records from the database to store only the latest one
-    Backupsub::truncate(); // Delete all records
-
-    // Store only the latest backup record in the database
+    // Truncate and store new record
+    Backupsub::truncate();
     Backupsub::create([
         'filename' => $filename,
         'count'    => $rows->count(),
         'path'     => $path,
     ]);
 
-    // Return the download response
     return response()->download(
         storage_path("app/{$path}"),
         $filename,

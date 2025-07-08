@@ -2,7 +2,6 @@
 
 @section('content')
 <section class="content-body">
-  {{-- iziToast on success --}}
   @if(session('status'))
     <script>
       document.addEventListener('DOMContentLoaded', function() {
@@ -21,14 +20,15 @@
       <h2 class="mb-0">Backup Management</h2>
     </div>
 
-    {{-- New Backup Card --}}
+    <!-- New Backup Card -->
     <div class="card h-auto mb-4">
       <div class="card-header">
          <h5 class="mb-0"><i class="fas fa-plus-circle me-2"></i> Generate New Backup</h5>
       </div>
       <div class="card-body">
         <p class="mb-2">
-          Click the button below to generate and download a new backup of all subscribers in the system. The backup will be in XLSX format, containing all the records you need to secure.
+          Click the button below to generate and download a new backup of all push subscribers. 
+          The XLSX file will include endpoint, device keys, IP address, domain name, and VAPID keys.
         </p>
     
         <button id="download-backup-btn" class="btn btn-primary mt-2 mt-md-0">
@@ -37,7 +37,7 @@
       </div>
     </div>
 
-    {{-- Latest Backup Card --}}
+    <!-- Latest Backup Card -->
     <div class="card h-auto mb-4">
       <div class="card-header">
         <h5 class="mb-0"><i class="fas fa-history me-2"></i> Latest Backup Details</h5>
@@ -66,23 +66,24 @@
               </a>
             </div>
             <p class="mt-3">
-              The most recent backup contains {{ $latestBackup->count }} subscriber records and was created on {{ $latestBackup->created_at->format('Y-m-d') }}. Click the button above to download it.
+              This backup includes endpoint, device keys (auth, p256dh), IP address, domain name, and VAPID credentials.
+              It contains {{ $latestBackup->count }} records and was created on {{ $latestBackup->created_at->format('Y-m-d') }}.
             </p>
           </div>
         @endif
       </div>
     </div>
 
-    {{-- Restore Info Card --}}
+    <!-- Restore Info Card -->
     <div class="card h-auto mb-4">
       <div class="card-body">
         <h5 class="mb-3"><i class="fas fa-exclamation-circle me-2"></i> Need to Restore a Backup?</h5>
         <p>
-          If you need to restore a backup, please <a href="mailto:info@aplu.com" class="text-primary">contact support</a> for assistance. We can help you revert to any previous backup if necessary. Restoring a backup will overwrite current data, so be sure that this is the action you want to take. If you're unsure, reach out for help.
+          If you need to restore a backup, please <a href="mailto:info@aplu.com" class="text-primary">contact support</a> for assistance.
+          Restoring a backup will overwrite current data. Contact us before proceeding.
         </p>
       </div>
     </div>
-
   </div>
 </section>
 @endsection
@@ -104,30 +105,24 @@ document.addEventListener('DOMContentLoaded', function() {
       reverseButtons: true
     }).then(result => {
       if (result.isConfirmed) {
-        // Show "Processing" message using iziToast
         iziToast.info({
           title: 'Processing',
           message: 'Preparing your download...',
           position: 'topRight',
-          timeout: 3000 // Show for 3 seconds
+          timeout: 3000
         });
 
-        // Disable the button to prevent multiple clicks
         btn.disabled = true;
 
-        // Wait for a moment before starting the download (simulating processing)
         setTimeout(function() {
-          // Trigger the download
           window.location.href = @json(route('settings.backup-subscribers.download'));
-
-          // Show the success message after the download starts
           iziToast.success({
             title: 'Success',
             message: 'Your backup is ready for download!',
             position: 'topRight',
             timeout: 5000
           });
-        }, 3000); // 3-second delay to simulate processing
+        }, 3000);
       }
     });
   });
