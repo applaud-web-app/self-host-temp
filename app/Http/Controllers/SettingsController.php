@@ -222,7 +222,7 @@ class SettingsController extends Controller
         return view('settings.backup-subscribers', compact('latestBackup'));
     }
 
-   public function downloadBackupSubscribers()
+ public function downloadBackupSubscribers()
 {
     $config = PushConfig::first();
     $subs   = PushSubscriptionPayload::all();
@@ -237,39 +237,34 @@ class SettingsController extends Controller
 
     $timestamp = now()->format('Ymd_His');
     $filename  = "subscribers_backup_{$timestamp}.xlsx";
-    $path      = "public/backups/{$filename}";  // Ensure it's inside public directory
+    $relativePath = "backups/{$filename}";
+    $fullPath = storage_path("app/public/{$relativePath}");
 
-    // Delete all previous backup files in the 'backups' folder to keep only the latest backup
-    $backupFolder = storage_path('app/public/backups');
-    $files = glob("{$backupFolder}/*");
+    // 1. Ensure the backups folder exists (creates if missing, no harm if already exists)
+    File::ensureDirectoryExists(dirname($fullPath));
 
-    foreach ($files as $file) {
-        if (is_file($file)) {
-            unlink($file); // Delete each file
-        }
-    }
+    // 2. Remove previous backup files to keep only the latest backup
+    File::cleanDirectory(dirname($fullPath));
 
-    // Save the new backup file
-    (new FastExcel($rows))
-        ->export(storage_path("app/{$path}"));
+    // 3. Save the new backup file
+    (new FastExcel($rows))->export($fullPath);
 
-    // Remove all old backup records from the database to store only the latest one
+    // 4. Remove all old backup records from the database to store only the latest one
     Backupsub::truncate();
 
-    // Store only the latest backup record in the database
+    // 5. Store only the latest backup record in the database
     Backupsub::create([
         'filename' => $filename,
         'count'    => $rows->count(),
-        'path'     => $path,
+        'path'     => $relativePath,
     ]);
 
-    // Return the download response
-    return response()->download(
-        storage_path("app/{$path}"),
-        $filename,
-        ['Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet']
-    );
+    // 6. Return the download response
+    return response()->download($fullPath, $filename, [
+        'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    ]);
 }
+
     /**
      * Safely write key=>value pairs into the .env file.
      * Creates a timestamped backup and preserves existing lines.
