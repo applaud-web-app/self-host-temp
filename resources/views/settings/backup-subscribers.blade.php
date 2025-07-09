@@ -59,9 +59,9 @@
                   <i class="fas fa-calendar-alt me-1"></i>{{ $latestBackup->created_at->format('Y-m-d H:i:s') }}
                 </div>
               </div>
-              <a href="{{ asset('storage/' . $latestBackup->path) }}"
-                 class="btn btn-outline-secondary btn-sm"
-                 download>
+             <a href="{{ asset('storage/' . $latestBackup->path) }}"
+                class="btn btn-outline-secondary btn-sm"
+                download>
                 <i class="fas fa-download me-1"></i> Download Backup
               </a>
             </div>
