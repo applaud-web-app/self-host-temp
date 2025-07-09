@@ -300,7 +300,7 @@ class DomainController extends Controller
             // 4a) build raw key + salt + (optional) pepper
             $rawKey = Str::random(64);
             $salt   = Str::random(16);
-            $pepper = config('license.license_code');
+            $pepper = config('license.LICENSE_CODE');
             if (empty($pepper)) {
                 // purgeMissingPepper();
                 

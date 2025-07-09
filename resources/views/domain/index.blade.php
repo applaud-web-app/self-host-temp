@@ -53,6 +53,15 @@
                         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                     </div>
                     <div class="modal-body">
+                        <div class="d-flex align-items-center mb-3 bg-primary light p-2 rounded-1">
+                            <div class="me-2">
+                                <i class="fas fa-exclamation-triangle text-primary fs-6" style="background: #fff;width: 25px;height: 25px;border-radius: 50%;display: flex;justify-content: center;align-items: center;"></i>
+                            </div>
+                            <small class="text-white" style="line-height: 13px;">
+                                Please enter the domain name.
+                                <strong>Eg:</strong> example.com or www.example.com
+                            </small>
+                        </div>
                         <div class="mb-3">
                             <label for="domain_name" class="form-label">Domain Name</label>
                             <input type="text" name="domain_name" id="domain_name" class="form-control text-lowercase"

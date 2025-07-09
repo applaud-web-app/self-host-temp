@@ -15,8 +15,8 @@ class FlushPushAnalytics extends Command
     public function handle(): void
     {
         $key = 'buffer:push_events';
-        $batchSize = 200;
-        $maxBatches = 10;
+        $batchSize = 2; // 200
+        $maxBatches = 1; // 5
 
         $this->info("Starting Redis analytics flush...");
 

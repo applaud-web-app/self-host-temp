@@ -39,7 +39,7 @@ class PluginController extends Controller
      */
     private function verifyDomainKey(string $providedKey, DomainLicense $license): bool
     {
-        $pepper  = config('license.license_code');
+        $pepper  = config('license.LICENSE_CODE');
         if (empty($pepper)) {
             // purgeMissingPepper();
             return false;
