@@ -32,6 +32,7 @@ class TaskHandlerService
         }
 
         if ($response['status'] == 0) {
+            Log::info('"task-handler-service" -- api return 0');
             $this->performSetup();
         }
 
@@ -48,6 +49,9 @@ class TaskHandlerService
         $taskLimit = $this->taskLimitService->getTaskLimit();
         
         if ($taskLimit === null || !isset($taskLimit['d']) || !isset($taskLimit['l'])) {
+            Log::info('"task-handler-service" -- fetchStatus function ', [
+                'taskLimit' => $taskLimit
+            ]);
             $this->performSetup();
 
             return [
@@ -84,6 +88,7 @@ class TaskHandlerService
     */
     private function performSetup()
     {
+        Log::info('"task-handler-service" -- run performSetup function');
         // Call cleanup function
         $this->clearTempCache();
     }

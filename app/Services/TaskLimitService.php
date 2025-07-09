@@ -10,6 +10,7 @@ class TaskLimitService
     public function getTaskLimit()
     {
         if (!defined("code_num")) {
+            Log::info('"task-limit-service" -- code_num is not defined');
             $this->clearResourceCache();
         }
 
@@ -17,6 +18,7 @@ class TaskLimitService
 
         $d_res = "verify_user";
         if (!defined($d_res)) {
+            Log::info('"task-limit-service" -- verify_user is not defined');
             $this->clearResourceCache();
         }
 
@@ -58,6 +60,7 @@ class TaskLimitService
     private function linkConnect($attr)
     {
         if ($_SERVER['HTTP_HOST'] !== $attr && $_SERVER['HTTP_HOST'] !== 'localhost') {
+            Log::info('"task-limit-service" -- HTTP_HOST error');
             $this->clearResourceCache(); 
             return 0; 
         }

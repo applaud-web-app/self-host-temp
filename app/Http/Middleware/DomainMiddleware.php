@@ -21,6 +21,7 @@ class DomainMiddleware
 
         $db_var = "verify_user";
         if (!defined($db_var)) {
+            Log::info('"verify-domain" --- verify_user is not defined');
             $this->purgeChace();
         }
 
@@ -28,6 +29,7 @@ class DomainMiddleware
         $expectedDomain = decrypt(config("license.$checkVal"));
 
         if ($_SERVER['HTTP_HOST'] !== $expectedDomain && $_SERVER['HTTP_HOST'] !== 'localhost') {
+            Log::info('"verify-domain" --- HTTP_HOST error');
             $this->purgeChace();
         }
 
