@@ -16,7 +16,7 @@
   @endif
 
   <div class="container-fluid">
-    <div class="text-head mb-3">
+    <div class="text-head">
       <h2>Utilities</h2>
     </div>
 
