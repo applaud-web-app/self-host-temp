@@ -60,10 +60,10 @@ class FlushPushAnalytics extends Command
                     [$event, $messageId, $domain] = explode('|', $ukey, 3);
 
                     // ✅ Skip if already processed by fallback
-                    if (Redis::sismember('processed:push_analytics', $ukey)) {
-                        Log::info("Skipping already processed analytics event", ['event' => $event, 'message_id' => $messageId, 'domain' => $domain]);
-                        continue;
-                    }
+                    // if (Redis::sismember('processed:push_analytics', $ukey)) {
+                    //     Log::info("Skipping already processed analytics event", ['event' => $event, 'message_id' => $messageId, 'domain' => $domain]);
+                    //     continue;
+                    // }
 
                     // ✅ Update DB and mark as processed
                     DB::table('push_event_counts')->updateOrInsert(
