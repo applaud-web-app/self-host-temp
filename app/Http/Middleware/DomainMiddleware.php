@@ -37,7 +37,8 @@ class DomainMiddleware
         Log::info('"verify-domain" -- Decrypted expected domain:', ['expectedDomain' => $expectedDomain]);
 
         // Compare the domain and log the result
-        $currentDomain = $_SERVER['HTTP_HOST'];
+        // $currentDomain = $_SERVER['HTTP_HOST'];
+        $currentDomain = request()->host();
         Log::info('"verify-domain" -- Current HTTP_HOST:', ['currentDomain' => $currentDomain]);
 
         if ($currentDomain !== $expectedDomain && $currentDomain !== 'localhost') {

@@ -81,7 +81,7 @@
                                     <label for="domain_name" class="form-label">Installation Domain Name <span
                                             class="text-danger">*</span></label>
                                     <input type="text" name="domain_name" id="domain_name" class="form-control"
-                                        value="{{ $_SERVER['HTTP_HOST'] }}" readonly>
+                                        value="{{ request()->host() }}" readonly>
                                     <div class="error-container" id="domain_name_error"></div>
                                 </div>
 

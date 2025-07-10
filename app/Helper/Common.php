@@ -291,6 +291,16 @@ if (! function_exists('loadToken')) {
     }
 }
 
+if (! function_exists('host')) {
+    function host(): string
+    {
+        $baseUrl = env('APP_URL');
+        $parsedUrl = parse_url($baseUrl);
+        $host = $parsedUrl['host'];
+        return $host;
+    }
+}
+
 if (! function_exists('fail')) {
     function fail(string $message): void
     {

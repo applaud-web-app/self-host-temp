@@ -58,7 +58,8 @@ trait SubscriptionValidator
         }
 
         // 5. Validate domain
-        $currentDomain = $_SERVER['HTTP_HOST'];
+        // $currentDomain = $_SERVER['HTTP_HOST'];
+        $currentDomain = request()->host();
         $storedDomain = $parsed['domain'] ?? null;
 
         if ($currentDomain !== $storedDomain || $currentDomain !== $envDomain) {

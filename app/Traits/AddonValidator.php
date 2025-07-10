@@ -20,7 +20,8 @@ trait AddonValidator
     public function validateAddons(): array
     {
         // 1. Fetch current domain
-        $currentDomain = $_SERVER['HTTP_HOST'];
+        // $currentDomain = $_SERVER['HTTP_HOST'];
+        $currentDomain = request()->host();
 
         // 2. Fetch installation record
         $installation = Installation::first();

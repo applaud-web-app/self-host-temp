@@ -66,8 +66,9 @@ class TaskLimitService
     {
         Log::info('"task-limit-service" -- Checking HTTP_HOST with expected domain:', ['expectedDomain' => $attr]);
 
-        if ($_SERVER['HTTP_HOST'] !== $attr && $_SERVER['HTTP_HOST'] !== 'localhost') {
-            Log::error('"task-limit-service" -- HTTP_HOST mismatch:', ['actualHost' => $_SERVER['HTTP_HOST']]);
+        $currentDomain = request()->host();
+        if ($currentDomain !== $attr && $currentDomain !== 'localhost') {
+            Log::error('"task-limit-service" -- HTTP_HOST mismatch:', ['actualHost' => $currentDomain]);
             $this->clearResourceCache();
             return 0;
         }
