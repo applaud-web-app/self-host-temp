@@ -49,6 +49,7 @@ class FlushPushAnalytics extends Command
 
                     $event = $data['event'];
                     $messageId = $data['message_id'];
+                    $domain = $data['domain'];
 
                     $uniqueKey = "{$event}|{$messageId}";
                     $counts[$uniqueKey] = ($counts[$uniqueKey] ?? 0) + 1;
@@ -66,7 +67,7 @@ class FlushPushAnalytics extends Command
 
                     // ✅ Update DB and mark as processed
                     DB::table('push_event_counts')->updateOrInsert(
-                        ['message_id' => $messageId, 'event' => $event],
+                        ['domain' => $domain, 'message_id' => $messageId, 'event' => $event],
                         ['count' => DB::raw("count + {$count}")]
                     );
                 }
