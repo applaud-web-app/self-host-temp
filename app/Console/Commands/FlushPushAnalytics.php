@@ -42,7 +42,7 @@ class FlushPushAnalytics extends Command
                 foreach ($batch as $raw) {
                     $data = json_decode($raw, true);
 
-                    if (!isset($data['message_id'], $data['event'])) {
+                    if (!isset($data['message_id'], $data['event'], $data['domain'])) {
                         Log::warning('Malformed Redis entry in analytics buffer', ['raw' => $raw]);
                         continue;
                     }
@@ -51,17 +51,17 @@ class FlushPushAnalytics extends Command
                     $messageId = $data['message_id'];
                     $domain = $data['domain'];
 
-                    $uniqueKey = "{$event}|{$messageId}";
+                    $uniqueKey = "{$event}|{$messageId}|{$domain}";
                     $counts[$uniqueKey] = ($counts[$uniqueKey] ?? 0) + 1;
                 }
 
                 // Step 4: Bulk update to DB
-                foreach ($counts as $key => $count) {
-                    [$event, $messageId] = explode('|', $key, 2);
+                foreach ($counts as $ukey => $count) {
+                    [$event, $messageId, $domain] = explode('|', $ukey, 3);
 
                     // ✅ Skip if already processed by fallback
-                    if (Redis::sismember('processed:push_analytics', $key)) {
-                        Log::info("Skipping already processed analytics event", ['event' => $event, 'message_id' => $messageId]);
+                    if (Redis::sismember('processed:push_analytics', $ukey)) {
+                        Log::info("Skipping already processed analytics event", ['event' => $event, 'message_id' => $messageId, 'domain' => $domain]);
                         continue;
                     }
 
@@ -70,11 +70,12 @@ class FlushPushAnalytics extends Command
                         ['domain' => $domain, 'message_id' => $messageId, 'event' => $event],
                         ['count' => DB::raw("count + {$count}")]
                     );
+
+                    Redis::sadd('processed:push_analytics', $ukey);
+                    Redis::expire('processed:push_analytics', 3600);
                 }
 
                 $this->info("Processed batch of " . count($batch) . " entries.");
-                Redis::sadd('processed:push_analytics', $key);
-                Redis::expire('processed:push_analytics', 3600);
             }
         } catch (\Throwable $e) {
             Log::error('analytics:flush crashed', [
