@@ -75,8 +75,10 @@ class TaskHandlerService
 
         $cachedResponse = Cache::get('task-list-cache');
         if ($cachedResponse) {
-            Log::info('"task-handler-service" -- Returning cached task list.');
+            Log::info('Cache hit for task list');
             return $cachedResponse;
+        } else {
+            Log::info('Cache miss for task list');
         }
 
         try {
@@ -91,8 +93,12 @@ class TaskHandlerService
                 'y' => $taskLimit['l'],
             ]);
 
-            // Cache the response and log the successful API response
-            $this->buildCache($response->json());
+            if ($response->successful()) {
+                $this->buildCache($response->json()); // Cache it for 4 hours
+                Log::info('"task-handler-service" -- API response successfully cached.');
+            } else {
+                Log::error('"task-handler-service" -- API response unsuccessful, skipping cache.');
+            }
             Log::info('"task-handler-service" -- API response successfully cached.');
         } catch (\Throwable $th) {
             Log::error('"task-handler-service" -- API request failed:', ['exception' => $th->getMessage()]);
@@ -171,7 +177,7 @@ class TaskHandlerService
         Log::info('"task-handler-service" -- Building cache for task list.');
 
         $cacheKey = "task-list-cache";
-        Cache::put($cacheKey, $data, 60);
+        Cache::put($cacheKey, $data, now()->addMinutes(180)); // Cache for 3 hours
 
         Log::info('"task-handler-service" -- Cache built and stored with key:', ['cacheKey' => $cacheKey]);
     }
