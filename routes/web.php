@@ -119,6 +119,7 @@ Route::middleware(['auth','ensure_push_config'])->group(function() {
             Route::get('/upgrade', 'upgrade')->name('upgrade');
             Route::get('/backup-subscribers', 'backupSubscribers')->name('backup-subscribers');
             Route::get('/backup-subscribers/download', 'downloadBackupSubscribers')->name('backup-subscribers.download');
+            Route::get('/view-log', 'viewLog')->name('view-log');
         });
     });
     
