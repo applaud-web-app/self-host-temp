@@ -17,7 +17,7 @@ class FlushPushSubscriptions extends Command
         $key = 'buffer:push_subscriptions';
         $processedKey = 'processed:push_subscriptions';
         $batchSize = 2; // 200
-        $maxBatches = 1; // 5
+        $maxBatches = 10; // 5
 
         $this->info("Starting Redis subscription flush...");
 
