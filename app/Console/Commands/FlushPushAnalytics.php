@@ -16,7 +16,7 @@ class FlushPushAnalytics extends Command
     {
         $key = 'buffer:push_events';
         $batchSize = 2; // 200
-        $maxBatches = 1; // 5
+        $maxBatches = 10; // 5
 
         $this->info("Starting Redis analytics flush...");
 
