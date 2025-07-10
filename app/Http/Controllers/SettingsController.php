@@ -332,4 +332,25 @@ class SettingsController extends Controller
         return $value;
     }
 
+    
+        public function viewLog()
+        {
+            // Define the log file path (adjust if necessary)
+            $logFile = storage_path('logs/laravel.log');
+            
+            // Check if the log file exists
+            if (File::exists($logFile)) {
+                // Get the contents of the log file (or use tail for large logs)
+                $logContent = File::get($logFile);
+                
+                // Optionally, you can paginate or limit the output
+                // $logContent = implode("\n", array_slice(explode("\n", $logContent), -100)); // Get the last 100 lines
+                
+                return view('settings.view-log', compact('logContent'));
+            } else {
+                return response()->json(['error' => 'Log file not found'], 404);
+            }
+        }
+
+
 }
