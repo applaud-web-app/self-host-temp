@@ -58,8 +58,13 @@ trait AddonValidator
 
         // 6. Validate domain
         $storedDomain = $parsed['domain'] ?? null;
-        if ($currentDomain !== $storedDomain || $currentDomain !== $envDomain) {
+        $expectedIp = decrypt(config("license.SERVER_IP"));
+        if (!in_array($currentDomain, ['localhost', $expectedIp, $storedDomain, $envDomain])) {
             return fail("Domain mismatch: expected $storedDomain, got $currentDomain.");
+        }
+
+        if ($storedDomain !== $envDomain) {
+            return fail("Domain mismatch: stored $storedDomain, and env $envDomain.");
         }
 
         $userName  = $parsed['uname'] ?? null;

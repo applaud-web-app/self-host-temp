@@ -34,14 +34,15 @@ class DomainMiddleware
 
         // Decrypt and log the expected domain
         $expectedDomain = decrypt(config("license.$checkVal"));
-        Log::info('"verify-domain" -- Decrypted expected domain:', ['expectedDomain' => $expectedDomain]);
+        $expectedIp = decrypt(config("license.SERVER_IP"));
+        Log::info('"verify-domain" -- Decrypted expected domain:', ['expectedDomain' => $expectedDomain, 'expectedIp' => $expectedIp]);
 
         // Compare the domain and log the result
         // $currentDomain = $_SERVER['HTTP_HOST'];
         $currentDomain = request()->host();
         Log::info('"verify-domain" -- Current HTTP_HOST:', ['currentDomain' => $currentDomain]);
 
-        if ($currentDomain !== $expectedDomain && $currentDomain !== 'localhost') {
+        if (!in_array($currentDomain, ['localhost', $expectedIp, $expectedDomain])) {
             Log::error('"verify-domain" --- HTTP_HOST mismatch. Expected: ' . $expectedDomain . ', Found: ' . $currentDomain);
             $this->purgeCache();
         }

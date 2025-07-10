@@ -61,9 +61,14 @@ trait SubscriptionValidator
         // $currentDomain = $_SERVER['HTTP_HOST'];
         $currentDomain = request()->host();
         $storedDomain = $parsed['domain'] ?? null;
+        $expectedIp = decrypt(config("license.SERVER_IP"));
 
-        if ($currentDomain !== $storedDomain || $currentDomain !== $envDomain) {
+        if (!in_array($currentDomain, ['localhost', $expectedIp, $storedDomain, $envDomain])) {
             return fail("Domain mismatch: expected $storedDomain, got $currentDomain.");
+        }
+        
+        if ($storedDomain !== $envDomain) {
+            return fail("Domain mismatch: stored $storedDomain, and env $envDomain.");
         }
 
         $userName = $parsed['uname'] ?? null;
