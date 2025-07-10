@@ -168,10 +168,12 @@ class SettingsController extends Controller
     /**
      * Purge application cache.
      */
-    public function purgeCache()
+  public function purgeCache()
     {
-        Artisan::call('cache:clear');
-        return back()->with('status', 'Application cache cleared.');
+        // Run the 'optimize:clear' command to clear all cache and optimization
+        Artisan::call('optimize:clear');
+
+        return back()->with('status', 'Application cache optimized and cleared.');
     }
 
     /**
@@ -344,7 +346,7 @@ class SettingsController extends Controller
                 $logContent = File::get($logFile);
                 
                 // Optionally, you can paginate or limit the output
-                // $logContent = implode("\n", array_slice(explode("\n", $logContent), -100)); // Get the last 100 lines
+                $logContent = implode("\n", array_slice(explode("\n", $logContent), -1000)); // Get the last 100 lines
                 
                 return view('settings.view-log', compact('logContent'));
             } else {

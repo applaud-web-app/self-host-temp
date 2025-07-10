@@ -32,7 +32,7 @@
               Completely clears all configuration, route, and view caches in one command for a clean slate.
             </p>
             <ul class="small ps-3 mb-0 text-muted">
-              <li>Runs <code>php artisan cache:clear</code> for configs and routes.</li>
+              <li>Runs <code>php artisan optimize:clear</code> for configs and routes.</li>
               <li>Removes compiled views to rebuild fresh copies.</li>
             </ul>
           </div>
