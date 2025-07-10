@@ -134,17 +134,144 @@
   };
 
   // 10) handle in-page notifications
-  messaging.onMessage(payload => {
-    const n = payload.notification || {};
-    const show = swReg?.showNotification?.bind(swReg)
-               || ((t, o) => new Notification(t, o));
-    show(n.title || '', {
-      body:  n.body,
-      icon:  n.icon,
-      image: n.image,
-      data:  payload.data
+  {{-- messaging.onMessage(payload => {
+    console.log('[Push] Foreground message received:', payload);
+
+    const d = payload.data || {};
+    const title = d.title || 'Notification';
+    const options = {
+      body: d.body || '',
+      icon: d.icon || '/favicon.ico',
+      image: d.image,
+      data: {
+        click_action: d.click_action || '/',
+        message_id: d.message_id || '',
+        actions: [] // keep this for your use, but don't include in main options
+      }
+    };
+
+    // Parse actions (but DO NOT add to options.actions)
+    try {
+      const actions = JSON.parse(d.actions || '[]');
+      options.data.actions = actions;
+    } catch (e) {
+      console.warn('[Push] Invalid actions JSON in foreground:', e);
+    }
+
+    if (Notification.permission === 'granted') {
+      console.log('[Push] Showing foreground notification:', { title, options });
+      const notif = new Notification(title, options);
+
+      // Optional: handle click
+      notif.onclick = () => {
+        console.log('[Push] Notification clicked, opening:', options.data.click_action);
+        window.open(options.data.click_action, '_blank');
+      };
+    } else {
+      console.warn('[Push] Foreground notification skipped — permission not granted');
+    }
+  }); --}}
+
+  messaging.onMessage(async payload => {
+    console.log('[Push] Foreground message received:', payload);
+
+    const d = payload.data || {};
+    const title = d.title || 'Notification';
+    const messageId = d.message_id || '';
+    const clickAction = d.click_action || '/';
+
+    const options = {
+      body: d.body || '',
+      icon: d.icon || '/favicon.ico',
+      image: d.image,
+      data: {
+        click_action: clickAction,
+        message_id: messageId,
+        actions: []
+      }
+    };
+
+    // Parse actions
+    try {
+      const actions = JSON.parse(d.actions || '[]');
+      options.data.actions = actions;
+    } catch (e) {
+      console.warn('[Push] Invalid actions JSON in foreground:', e);
+    }
+
+    // 👉 Send "received" analytics
+    console.log('[Push] Sending received analytics:', {
+      message_id: messageId,
+      event: 'received',
+      domain: location.hostname
     });
+
+    try {
+      const res = await fetch('https://self.awmtab.in/api/push/analytics', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          message_id: messageId,
+          event: 'received',
+          domain: location.hostname
+        })
+      });
+
+      if (!res.ok) {
+        const text = await res.text();
+        console.warn('[Push] Analytics response error:', res.status, text);
+      } else {
+        console.log('[Push] Received analytics sent successfully');
+      }
+    } catch (err) {
+      console.error('[Push] Foreground received analytics failed:', err);
+    }
+
+    // 👉 Show browser notification
+    if (Notification.permission === 'granted') {
+      console.log('[Push] Showing foreground notification:', { title, options });
+
+      const notif = new Notification(title, options);
+
+      notif.onclick = async function () {
+        console.log('[Push] Foreground notification clicked:', clickAction);
+
+        // 👉 Send "click" analytics
+        console.log('[Push] Sending click analytics:', {
+          message_id: messageId,
+          event: 'click',
+          domain: location.hostname
+        });
+
+        try {
+          const res = await fetch('https://self.awmtab.in/api/push/analytics', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              message_id: messageId,
+              event: 'click',
+              domain: location.hostname
+            })
+          });
+
+          if (!res.ok) {
+            const text = await res.text();
+            console.warn('[Push] Click analytics response error:', res.status, text);
+          } else {
+            console.log('[Push] Click analytics sent successfully');
+          }
+        } catch (err) {
+          console.error('[Push] Foreground click analytics failed:', err);
+        }
+
+        // Open target URL
+        window.open(clickAction, '_blank');
+      };
+    } else {
+      console.warn('[Push] Foreground notification skipped — permission not granted');
+    }
   });
+
 
   // 11) expose manual refresh if needed
   window.pushNotifyRefreshToken = subscribe;

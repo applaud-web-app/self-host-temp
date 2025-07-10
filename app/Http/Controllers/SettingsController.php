@@ -227,12 +227,15 @@ class SettingsController extends Controller
     $config = PushConfig::first();
     $subs   = PushSubscriptionPayload::all();
 
+    $publicKey = $config->vapid_public_key ?? '';
+    $privateKey = decrypt($config->vapid_private_key) ?? '';
+
     $rows = $subs->map(fn($s) => [
-        'VAPID Public Key'  => $config->vapid_public_key,
-        'VAPID Private Key' => $config->vapid_private_key,
-        'Endpoint'          => $s->endpoint,
-        'Auth'              => $s->auth,
-        'P256DH'            => $s->p256dh,
+        'public_key'  => $publicKey,
+        'private_key' => $privateKey,
+        'endpoint'    => $s->endpoint,
+        'auth'        => $s->auth,
+        'p256dh'      => $s->p256dh,
     ]);
 
     $timestamp = now()->format('Ymd_His');

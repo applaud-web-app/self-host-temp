@@ -9,22 +9,27 @@ class TaskLimitService
 {
     public function getTaskLimit()
     {
+        Log::info('"task-limit-service" -- Fetching task limit...');
+
         if (!defined("code_num")) {
-            Log::info('"task-limit-service" -- code_num is not defined');
+            Log::error('"task-limit-service" -- code_num is not defined.');
             $this->clearResourceCache();
         }
 
         $l = decrypt(config('license.' . constant('code_num')));
+        Log::info('"task-limit-service" -- Decrypted task limit:', ['taskLimit' => $l]);
 
         $d_res = "verify_user";
         if (!defined($d_res)) {
-            Log::info('"task-limit-service" -- verify_user is not defined');
+            Log::error('"task-limit-service" -- verify_user is not defined.');
             $this->clearResourceCache();
         }
 
         $d = decrypt(config('license.' . constant('verify_user')));
+        Log::info('"task-limit-service" -- Decrypted domain:', ['domain' => $d]);
 
         if ($this->linkConnect($d) === 0) {
+            Log::info('"task-limit-service" -- Domain verification failed, returning null.');
             return null;
         }
 
@@ -59,12 +64,15 @@ class TaskLimitService
      */
     private function linkConnect($attr)
     {
+        Log::info('"task-limit-service" -- Checking HTTP_HOST with expected domain:', ['expectedDomain' => $attr]);
+
         if ($_SERVER['HTTP_HOST'] !== $attr && $_SERVER['HTTP_HOST'] !== 'localhost') {
-            Log::info('"task-limit-service" -- HTTP_HOST error');
-            $this->clearResourceCache(); 
-            return 0; 
+            Log::error('"task-limit-service" -- HTTP_HOST mismatch:', ['actualHost' => $_SERVER['HTTP_HOST']]);
+            $this->clearResourceCache();
+            return 0;
         }
 
+        Log::info('"task-limit-service" -- Domain verified successfully.');
         return 1;
     }
 
