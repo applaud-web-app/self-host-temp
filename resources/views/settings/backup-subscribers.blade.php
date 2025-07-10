@@ -59,11 +59,11 @@
                   <i class="fas fa-calendar-alt me-1"></i>{{ $latestBackup->created_at->format('Y-m-d H:i:s') }}
                 </div>
               </div>
-         <a href="{{ asset('storage/' . $latestBackup->path) }}"
-   class="btn btn-outline-secondary btn-sm"
-   download>
-   <i class="fas fa-download me-1"></i> Download Backup
-</a>
+            <a href="{{ asset('storage/' . $latestBackup->path) }}"
+              class="btn btn-outline-secondary btn-sm"
+              download>
+              <i class="fas fa-download me-1"></i> Download Backup
+            </a>
             </div>
             <p class="mt-3">
               This backup includes endpoint, device keys (auth, p256dh), IP address, domain name, and VAPID credentials.
@@ -122,6 +122,11 @@ document.addEventListener('DOMContentLoaded', function() {
             position: 'topRight',
             timeout: 5000
           });
+
+          // Reload the page after success toast is shown
+          setTimeout(function() {
+            location.reload();
+          }, 5000); // Wait for the toast to disappear before reloading
         }, 3000);
       }
     });
