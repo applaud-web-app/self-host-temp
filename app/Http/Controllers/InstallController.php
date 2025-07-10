@@ -48,6 +48,7 @@ class InstallController
             'registered_email' => 'required|email|max:255',
             'license_verified' => 'required|in:1',
             'registered_username' => 'required|string|max:255',
+            'server_ip' => 'required|string|max:255',
         ];
 
         $messages = [
@@ -145,6 +146,7 @@ class InstallController
                 'APP_DOMAIN' => encrypt($domain_name),
                 'LICENSE_USER' => encrypt($validated['registered_username']),
                 'LICENSE_EMAIL' => encrypt($validated['registered_email']),
+                'SERVER_IP' => encrypt($validated['server_ip']),
             ]);
 
             // Create a new user for the installation
