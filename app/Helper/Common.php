@@ -296,8 +296,7 @@ if (! function_exists('host')) {
     {
         $baseUrl = env('APP_URL');
         $parsedUrl = parse_url($baseUrl);
-        $host = $parsedUrl['host'];
-        return $host;
+        return $parsedUrl['host'];
     }
 }
 

@@ -73,6 +73,7 @@ class InstallController
             'domain_name.regex' => 'Please provide a valid domain name.',
             'registered_email.email' => 'Please provide a valid email address.',
             'registered_email.unique' => 'This email is already in use.',
+            'server_ip.required' => 'Please provide the server IP address.',
         ];
 
         try {

@@ -22,7 +22,10 @@ trait AddonValidator
         // 1. Fetch current domain
         // $currentDomain = $_SERVER['HTTP_HOST'];
         $currentDomain = request()->host();
-
+        $hostName = host();
+        if ($currentDomain !== $hostName) {
+            $currentDomain = $hostName;
+        }
         // 2. Fetch installation record
         $installation = Installation::first();
         if (! $installation) {

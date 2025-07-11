@@ -67,6 +67,10 @@ class TaskLimitService
         Log::info('"task-limit-service" -- Checking HTTP_HOST with expected domain:', ['expectedDomain' => $attr]);
 
         $currentDomain = request()->host();
+        $hostName = host();
+        if ($currentDomain !== $hostName) {
+            $currentDomain = $hostName;
+        }
         $expectedIp = decrypt(config("license.SERVER_IP"));
         if (!in_array($currentDomain, ['localhost', $expectedIp, $attr])) {
             Log::error('"task-limit-service" -- HTTP_HOST mismatch:', ['actualHost' => $currentDomain]);

@@ -60,6 +60,11 @@ trait SubscriptionValidator
         // 5. Validate domain
         // $currentDomain = $_SERVER['HTTP_HOST'];
         $currentDomain = request()->host();
+        $hostName = host();
+
+        if ($currentDomain !== $hostName) {
+            $currentDomain = $hostName;
+        }
         $storedDomain = $parsed['domain'] ?? null;
         $expectedIp = decrypt(config("license.SERVER_IP"));
 

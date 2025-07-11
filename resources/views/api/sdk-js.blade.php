@@ -207,7 +207,7 @@
     });
 
     try {
-      const res = await fetch('https://self.awmtab.in/api/push/analytics', {
+      const res = await fetch('{{route('api.analytics')}}', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -244,7 +244,7 @@
         });
 
         try {
-          const res = await fetch('https://self.awmtab.in/api/push/analytics', {
+          const res = await fetch('{{route('api.analytics')}}', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({

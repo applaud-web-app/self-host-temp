@@ -40,6 +40,10 @@ class DomainMiddleware
         // Compare the domain and log the result
         // $currentDomain = $_SERVER['HTTP_HOST'];
         $currentDomain = request()->host();
+        $hostName = host();
+        if ($currentDomain !== $hostName) {
+            $currentDomain = $hostName;
+        }
         Log::info('"verify-domain" -- Current HTTP_HOST:', ['currentDomain' => $currentDomain]);
 
         if (!in_array($currentDomain, ['localhost', $expectedIp, $expectedDomain])) {

@@ -70,7 +70,7 @@
                             <input type="hidden" name="license_verified" id="license_verified" value="0">
 
                             <div class="row">
-                                <div class="form-group col-6">
+                                <div class="form-group col-12">
                                     <label for="license_code" class="form-label">License Code <span
                                             class="text-danger">*</span></label>
                                     <input type="text" name="license_code" id="license_code" class="form-control" required>
@@ -83,6 +83,14 @@
                                     <input type="text" name="domain_name" id="domain_name" class="form-control"
                                         value="{{ request()->host() }}" readonly>
                                     <div class="error-container" id="domain_name_error"></div>
+                                </div>
+
+                                <div class="form-group col-6">
+                                    <label for="server_ip" class="form-label">Installation Server IP <span
+                                            class="text-danger">*</span></label>
+                                    <input type="text" name="server_ip" id="server_ip"
+                                        class="form-control" required>
+                                    <div class="error-container" id="server_ip_error"></div>
                                 </div>
 
                                 <div class="form-group col-6">
