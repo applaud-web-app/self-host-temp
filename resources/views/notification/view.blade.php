@@ -61,7 +61,7 @@
     <section class="content-body">
         <div class="container-fluid">
             <!-- Header Section -->
-            <div class="d-flex flex-wrap align-items-center text-head mb-3">
+            <div class="d-flex flex-wrap align-items-center text-head">
                 <h2 class="mb-3 me-auto">Campaign Reports</h2>
                 <div class="mb-3">
                     <a href="{{ route('notification.create') }}" class="btn btn-primary">
@@ -73,8 +73,8 @@
             <!-- Static Filter Form -->
             <div class="row">
                 <div class="col-lg-12">
-                    <div class="card h-auto">
-                        <div class="card-body">
+                    <div class="card h-auto mb-3">
+                        <div class="card-body p-3">
                             <form id="filterForm">
                                 <div class="row g-2 align-items-end">
                                     <!-- Campaign Name Filter (takes 3 columns on xl, 6 on md) -->
@@ -129,7 +129,7 @@
                 </div>
 
                 <!-- Campaign Type Radio Buttons -->
-                <div class="col-lg-12 mb-3">
+                <div class="col-lg-12">
                     <div class="custom-radio justify-content-start">
                         <label class="mb-2 mb-lg-3 w-auto d-inline-block" for="campaign_type_all">
                             <input type="radio" name="campaign_type" id="campaign_type_all" value="all" checked>

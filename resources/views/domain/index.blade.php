@@ -5,19 +5,39 @@
         <div class="container-fluid position-relative">
             <div class="d-flex flex-wrap align-items-center justify-content-between text-head mb-3">
                 <h2 class="me-auto mb-0">Domain Management</h2>
-                <input type="text" id="searchName" class="form-control me-2" placeholder="Search by name…"
-                    style="max-width:150px;">
-                <select id="filterStatus" class="form-select me-2 form-control" style="max-width:150px;">
-                    <option value="">All Status</option>
-                    <option value="1">Active</option>
-                    <option value="0">Inactive</option>
-                </select>
+               
                 <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addDomainModal">
                     <i class="fas fa-plus pe-2"></i>Add Domain
                 </button>
             </div>
 
-            <div class="card">
+            <div class="card h-auto mb-2">
+                <div class="card-body p-3">
+                    <div class="row g-2">
+                        <div class="col-lg-4 col-md-4 col-12">
+               
+
+                    <div class="position-relative">
+                                           <input type="text" id="searchName" class="form-control " placeholder="Search by name…">
+                                            <div class="invalid-feedback"></div>
+                                            <i class="far fa-search text-primary position-absolute top-50 translate-middle-y" style="right: 10px;"></i>
+                                        </div>
+               
+                        </div>
+                           <div class="col-lg-4 col-md-4 col-12">
+                                <select id="filterStatus" class="form-select me-2 form-control" >
+                                    <option value="">All Status</option>
+                                    <option value="1">Active</option>
+                                    <option value="0">Inactive</option>
+                                </select>
+                        </div>
+                         <div class="col-lg-4 col-md-4 col-12">
+                            <button class="btn btn-danger light" id="resetFilter"><i class="fas fa-undo me-1"></i> Reset</button>
+                         </div>
+                    </div>
+                </div>
+            </div>
+            <div class="card h-auto">
                 <div class="card-header">
                     <h4 class="card-title">Connected Domains</h4>
                 </div>
@@ -244,6 +264,23 @@
                 });
             });
         });
+    </script>
+
+    <script>
+$(document).ready(function() {
+    $('#resetFilter').click(function(event) {
+        event.preventDefault(); // Prevent default button behavior (if any)
+
+        // Reset the search input field
+        $('#searchName').val('');
+
+        // Reset the filter status dropdown
+        $('#filterStatus').val('');
+
+        // Reload the page after resetting the filters
+        location.reload();
+    });
+});
     </script>
 
 @endpush

@@ -26,7 +26,7 @@
         </div>
         <div class="row">
             <!-- FORM COLUMN -->
-            <div class="col-lg-8">
+    <div class="col-lg-8 order-2 order-lg-1">
                 <form id="segmentationForm" method="POST" action="{{ route('segmentation.store') }}">
                     @csrf
                     <input type="hidden" name="segment_type" id="segment_type">
@@ -180,7 +180,7 @@
             </div>
 
             <!-- SIDEBAR COLUMN -->
-            <div class="col-lg-4">
+    <div class="col-lg-4 order-1 order-lg-2">
                 <div class="card h-auto mb-3 text-center">
                     <div class="card-header bg-primary ">
                         <h4 class="mb-0 text-white">Total Audience</h4>

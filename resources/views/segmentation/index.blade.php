@@ -3,30 +3,53 @@
 @section('content')
 <section class="content-body">
     <div class="container-fluid position-relative">
+         <div class="d-flex flex-wrap align-items-center justify-content-between text-head mb-3">
+                <h2 class="me-auto mb-0">Segment Management</h2>
+               
+               <a href="{{ route('segmentation.create') }}" class="btn btn-primary">
+                    <i class="fas fa-plus pe-2"></i>Add Segment
+                </a>
+            </div>
 
-        <!-- page header -->
-        <div class="d-flex flex-wrap align-items-center justify-content-between text-head mb-3">
-            <h2 class="me-auto mb-0">Segment Management</h2>
+             <div class="card h-auto mb-2">
+                <div class="card-body p-3">
+                    <div class="row g-2">
+                        <div class="col-lg-3 col-md-3 col-12">
+               
 
-            <!-- search / filter controls -->
-            <input type="text" id="searchName" class="form-control me-2"
-                   placeholder="Search by name…" style="max-width:150px;">
-            <select id="filterStatus" class="form-select form-control me-2" style="max-width:150px;">
+                    <div class="position-relative">
+                                          <input type="text" id="searchName" class="form-control"
+                   placeholder="Search by name…" >
+                                            <div class="invalid-feedback"></div>
+                                            <i class="far fa-search text-primary position-absolute top-50 translate-middle-y" style="right: 10px;"></i>
+                                        </div>
+               
+                        </div>
+                        <div class="col-lg-3 col-md-3 col-6">
+                                <select id="filterStatus" class="form-select form-control " >
                 <option value="">All Status</option>
                 <option value="1">Active</option>
                 <option value="0">Paused</option>
             </select>
-            <select id="filterType" class="form-select form-control me-2" style="max-width:150px;">
+                        </div>
+                        <div class="col-lg-3 col-md-3 col-6">
+                              <select id="filterType" class="form-select form-control ">
                 <option value="">All Type</option>
                 <option value="geo">Geo</option>
                 <option value="device">Device</option>
             </select>
+                        </div>
+                        <div class="col-lg-3 col-md-3 col-12">
+                            <button class="btn btn-danger light w-100" id="resetFilter"><i class="fas fa-undo me-1"></i> Reset</button>
+                         </div>
+                    </div>
+                </div>
+            </div>
 
-            <!-- separate create page -->
-            <a href="{{ route('segmentation.create') }}" class="btn btn-primary">
-                <i class="fas fa-plus pe-2"></i>Add Segment
-            </a>
-        </div>
+ 
+
+
+
 
         <!-- list card -->
         <div class="card">
@@ -361,4 +384,21 @@ $(function () {
         });
     });
 </script>
+
+    <script>
+$(document).ready(function() {
+    $('#resetFilter').click(function(event) {
+        event.preventDefault(); // Prevent default button behavior (if any)
+
+        // Reset the search input field
+        $('#searchName').val('');
+
+        // Reset the filter status dropdown
+        $('#filterStatus').val('');
+
+        // Reload the page after resetting the filters
+        location.reload();
+    });
+});
+    </script>
 @endpush
