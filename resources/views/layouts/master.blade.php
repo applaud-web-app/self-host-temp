@@ -242,10 +242,12 @@
 </ul>
 
         <div class="plus-box">
-					<img src="{{ asset('images/plus.png') }}" alt="">
-					<h5 class="fs-18 font-w700">Add Menus</h5>
-					<p class="fs-14 font-w400">Manage your food <br>and beverages menus<i class="fas fa-arrow-right ms-3"></i></p>
-				</div>
+                <a href="{{ route('domain.view') }}">
+                    <img src="{{ asset('images/plus.png') }}" alt="">
+                    <h5 class="fs-18 font-w700">Add Domain</h5>
+                    <p class="fs-14 font-w400 text-white">Start growing your digital footprint today! <i class="fas fa-arrow-right ms-3"></i></p>
+                </a>
+        </div>
     </div>
 </div>
 
