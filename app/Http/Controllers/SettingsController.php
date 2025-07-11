@@ -353,6 +353,4 @@ class SettingsController extends Controller
                 return response()->json(['error' => 'Log file not found'], 404);
             }
         }
-
-
 }
