@@ -93,7 +93,7 @@
       </div>
     </div>
 
-    {{-- Enabled PHP Extensions --------------------------------------------------}}
+    {{-- Enabled PHP Extensions --}}
     <div class="row">
       <div class="col-12 mb-3">
         <div class="card h-100">
