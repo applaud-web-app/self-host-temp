@@ -450,16 +450,17 @@
                         <span class="badge bg-primary">Total Sent: ${sent.toLocaleString()}</span>
                     </div>
                     <ul class="nav nav-tabs mb-3" id="chartTabs" role="tablist">
-                        <li class="nav-item w-50" role="presentation">
+                        <li class="nav-item w-50" role="presentation" data-bs-toggle="tooltip" data-bs-placement="top" title="Shows the percentage of delivered notifications (online users) vs undelivered (offline users).">
                             <button class="nav-link w-100 active" id="delivery-tab" data-bs-toggle="tab" 
                                     data-bs-target="#delivery-chart" type="button" role="tab">
                                 Delivery
+                                <i class="fas fa-info-circle ms-1"></i>
                             </button>
                         </li>
-                        <li class="nav-item w-50" role="presentation">
-                            <button class="nav-link w-100" id="engagement-tab" data-bs-toggle="tab" 
-                                    data-bs-target="#engagement-chart" type="button" role="tab">
+                        <li class="nav-item w-50" role="presentation" data-bs-toggle="tooltip" data-bs-placement="top" title="Shows the percentage of users who clicked the notification vs those who didn't.">
+                            <button class="nav-link w-100" id="engagement-tab" data-bs-toggle="tab" data-bs-target="#engagement-chart" type="button" role="tab">
                                 Engagement
+                                <i class="fas fa-info-circle ms-1"></i>
                             </button>
                         </li>
                     </ul>
@@ -509,8 +510,8 @@
                     },
                     series: [receivedPercentage, notReceivedPercentage],
                     labels: [
-                        `Received (${received.toLocaleString()})`, 
-                        `Not Received (${(sent - received).toLocaleString()})`
+                        `Delivered (${received.toLocaleString()})`, 
+                        `Offline Users (${(sent - received).toLocaleString()})`
                     ],
                     legend: { 
                         position: 'bottom',

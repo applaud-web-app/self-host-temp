@@ -74,7 +74,6 @@
                         'plugin' => ['label' => 'Plugin Notifications', 'icon' => 'fa-plug', 'badge' => 'success'],
                     ];
                 @endphp
-
                 @foreach ($notifCards as $key => $c)
                     <div class="col-lg-3 col-md-6 col-sm-6 col-12">
                         <div class="widget-stat card">
@@ -188,20 +187,55 @@
             localStorage.setItem(LS_KEY, dom);
         }
 
-        function animateValue(el, start, end, duration = 800) {
+        function animateValue(el, start, end, maxDuration = 3000) {
             start = Number(el.textContent.replace(/,/g, '')) || start;
+
+            // If the value is the same, don't animate
             if (start === end) {
                 el.textContent = new Intl.NumberFormat().format(end);
                 return;
             }
-            const range = end - start;
-            const stepTime = Math.max(Math.floor(duration / Math.abs(range)), 50);
-            let cur = start, inc = range > 0 ? 1 : -1;
+
+            // Calculate the range (difference between start and end)
+            const range = Math.abs(end - start);
+
+            // Calculate the step size dynamically based on the range
+            let step;
+            let steps;
+
+            if (range < 1000) {
+                // For values below 1000, use smaller steps
+                steps = 50;  // Target around 50 steps
+                step = Math.ceil(range / steps);
+            } else if (range >= 1000 && range < 10000) {
+                // For values between 1000 and 10000, make the steps a little larger
+                steps = 100;  // Target around 100 steps
+                step = Math.ceil(range / steps);
+            } else if (range >= 10000 && range < 100000) {
+                // For values between 10k and 100k, use a larger step size
+                steps = 200;  // Target around 200 steps
+                step = Math.ceil(range / steps);
+            } else {
+                // For values above 100,000, increase the step size even more
+                steps = 500;  // Target around 500 steps
+                step = Math.ceil(range / steps);
+            }
+
+            // Calculate the duration: faster for larger ranges, but with a cap
+            const adjustedDuration = Math.min(range / step * 10, maxDuration); // Adjust duration dynamically
+
+            let cur = start;
+            const inc = end > start ? step : -step;
+
             const timer = setInterval(() => {
                 cur += inc;
+                if (Math.abs(cur - end) < Math.abs(inc)) {
+                    cur = end;  // Ensure we don't overshoot the target value
+                    clearInterval(timer);
+                }
+
                 el.textContent = new Intl.NumberFormat().format(cur);
-                if (cur === end) clearInterval(timer);
-            }, stepTime);
+            }, adjustedDuration / range); // Adjust the interval speed based on range
         }
 
         const charts = {};
@@ -383,21 +417,42 @@
             if (!checkRateLimit()) return;
             const btnIcon = $('#refresh-all i.fa-sync-alt');
             btnIcon.addClass('fa-spin');
-            $.when(
-                fetchDomainStats(true),
-                fetchNotificationStats(true),
-                fetchWeeklyStats(true)
-            )
-            .done(() => {
-                iziToast.success({ title:'All Refreshed', message:'All stats updated', position:'topRight' });
-            })
-            .fail(() => {
-                iziToast.error({ title:'Error', message:'Some stats failed to refresh', position:'topRight' });
-            })
-            .always(() => {
-                btnIcon.removeClass('fa-spin');
+            
+            // Fetch domain stats and animate values
+            fetchDomainStats(true).done(res => {
+                if (res.status) {
+                    console.log(res);  // Debugging: Log the response
+                    Object.entries(res.data).forEach(([k, v]) => {
+                        animateValue($(`#card-${k}`)[0], 0, v, 1000);  // Ensure proper reference to the element and value
+                    });
+                    iziToast.success({ title: 'Subscribers Refreshed', message: 'Subscriber stats updated', position: 'topRight' });
+                }
             });
+
+            // Fetch notification stats and animate values
+            fetchNotificationStats(true).done(res => {
+                if (res.status) {
+                    console.log(res);  // Debugging: Log the response
+                    Object.entries(res.data).forEach(([k, v]) => {
+                        animateValue($(`#notif-${k}`)[0], 0, v, 800);  // Ensure proper reference to the element and value
+                    });
+                    iziToast.success({ title: 'Notifications Refreshed', message: 'Notification stats updated', position: 'topRight' });
+                }
+            });
+
+            // Fetch weekly stats and update the charts
+            fetchWeeklyStats(true).done(res => {
+                if (res.status) {
+                    const { labels, subscribers, notifications } = res.data;
+                    renderChart('weeklySubscribersChart', labels, subscribers, 'Subscribers');
+                    renderChart('weeklyNotificationsChart', labels, notifications, 'Notifications');
+                    iziToast.success({ title: 'Chart Refreshed', message: 'Weekly chart updated', position: 'topRight' });
+                }
+            });
+
+            btnIcon.removeClass('fa-spin');
         });
+
 
         // ——— Initial load if pre-selected —————————————————————————————————
         if (currentDomain) {
