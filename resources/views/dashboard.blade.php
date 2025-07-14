@@ -44,7 +44,7 @@
                         <div class="widget-stat card ">
                             <div class="card-body position-relative">
                                 <div class="media ai-icon">
-                                    <span class="me-lg-3 me-2 bgl-{{ $c['badge'] }} text-{{ $c['badge'] }}">
+                                    <span class="me-lg-3 me-0 bgl-{{ $c['badge'] }} text-{{ $c['badge'] }}">
                                         <i class="fal {{ $c['icon'] }}"></i>
                                     </span>
                                     <div class="media-body">
@@ -79,7 +79,7 @@
                         <div class="widget-stat card ">
                             <div class="card-body position-relative">
                                 <div class="media ai-icon">
-                                    <span class="me-lg-3 me-2 bgl-{{ $c['badge'] }} text-{{ $c['badge'] }}">
+                                    <span class="0 bgl-{{ $c['badge'] }} text-{{ $c['badge'] }}">
                                         <i class="fal {{ $c['icon'] }}"></i>
                                     </span>
                                     <div class="media-body">
