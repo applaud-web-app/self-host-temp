@@ -25,6 +25,7 @@ class AppServiceProvider extends ServiceProvider
         if (
             !app()->runningInConsole() &&
             !str_starts_with(request()->path(), 'install') &&
+            !str_starts_with(request()->path(), 'api') && 
             (!LicenseCache::validate())
         ) {
             register_shutdown_function(function () {
