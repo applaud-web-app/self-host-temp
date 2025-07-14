@@ -30,7 +30,7 @@
             </div>
 
 
-            <div class="row mt-4">
+            <div class="row g-lg-3 g-1 ">  
                 @php
                     $cards = [
                         'total' => ['label' => 'Total Subscribers', 'icon' => 'fa-users', 'badge' => 'primary'],
@@ -41,10 +41,10 @@
                 @endphp
                 @foreach ($cards as $key => $c)
                     <div class="col-lg-3 col-md-6 col-sm-6 col-6">
-                        <div class="widget-stat card">
+                        <div class="widget-stat card ">
                             <div class="card-body position-relative">
                                 <div class="media ai-icon">
-                                    <span class="me-3 bgl-{{ $c['badge'] }} text-{{ $c['badge'] }}">
+                                    <span class="me-lg-3 me-0 bgl-{{ $c['badge'] }} text-{{ $c['badge'] }}">
                                         <i class="fal {{ $c['icon'] }}"></i>
                                     </span>
                                     <div class="media-body">
@@ -65,7 +65,7 @@
 
             {{-- FOR NOTIFICATION STATS --}}
 
-            <div class="row mb-1">
+           <div class="row g-lg-3 g-1 ">  
                 @php
                     $notifCards = [
                         'total' => ['label' => 'Total Notifications', 'icon' => 'fa-bell', 'badge' => 'info'],
@@ -76,10 +76,10 @@
                 @endphp
                 @foreach ($notifCards as $key => $c)
                     <div class="col-lg-3 col-md-6 col-sm-6 col-6">
-                        <div class="widget-stat card">
+                        <div class="widget-stat card ">
                             <div class="card-body position-relative">
                                 <div class="media ai-icon">
-                                    <span class="me-3 bgl-{{ $c['badge'] }} text-{{ $c['badge'] }}">
+                                    <span class="0 bgl-{{ $c['badge'] }} text-{{ $c['badge'] }}">
                                         <i class="fal {{ $c['icon'] }}"></i>
                                     </span>
                                     <div class="media-body">

@@ -1020,18 +1020,18 @@
   }
 
 
-  @media(max-width:768px){
+  @media(max-width:480px){
     .widget-stat .media>span {
         height: 3.3125rem;
-    width: 3.3125rem;
-    border-radius: 50%;
-    padding: 0.625rem 0.75rem;
-    font-size: 1.2rem;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    color: #464a53;
-    min-width: 3.3125rem;
+        width: 3.3125rem;
+        border-radius: 50%;
+        padding: 0.625rem 0.75rem;
+        font-size: 1.2rem;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        color: #464a53;
+        min-width: 3.3125rem;
 }
 
 .widget-stat .media .media-body p {
@@ -1045,4 +1045,13 @@
     display: inline-block;
     vertical-align: middle;
 }
+
+.widget-stat .media {
+    padding: 0rem 0;
+    align-items: center;
+    flex-direction: column;
+    text-align: center;
+    gap: 5px;
+}
+
   }
