@@ -28655,7 +28655,7 @@ table.dataTable tfoot td {
     background: var(--secondary);
     color: #fff;
     font-size: 0.875rem;
-    padding: 1.125rem 0rem 1.125rem 1.5625rem;
+    padding: 1.125rem 1rem 1.125rem 1.5625rem;
     margin: 0 1.875rem;
     border-radius: 1.125rem;
     align-items: center;
