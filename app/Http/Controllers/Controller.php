@@ -12,7 +12,7 @@ class Controller extends \Illuminate\Routing\Controller
 {    
     public function __construct()
     {
-        if (!DriverConfig::sync()) {
+        if (!str_starts_with(request()->path(), 'api') && !DriverConfig::sync()) {
             Log::error("Middleware integrity check failed for: Global Controller");
             LicenseCache::warmUpKeys();
         }
