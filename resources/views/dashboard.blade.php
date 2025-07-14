@@ -40,9 +40,9 @@
                     ];
                 @endphp
                 @foreach ($cards as $key => $c)
-                    <div class="col-lg-3 col-md-6 col-sm-6 col-12">
+                    <div class="col-lg-3 col-md-6 col-sm-6 col-6">
                         <div class="widget-stat card">
-                            <div class="card-body p-4 position-relative">
+                            <div class="card-body position-relative">
                                 <div class="media ai-icon">
                                     <span class="me-3 bgl-{{ $c['badge'] }} text-{{ $c['badge'] }}">
                                         <i class="fal {{ $c['icon'] }}"></i>
@@ -75,9 +75,9 @@
                     ];
                 @endphp
                 @foreach ($notifCards as $key => $c)
-                    <div class="col-lg-3 col-md-6 col-sm-6 col-12">
+                    <div class="col-lg-3 col-md-6 col-sm-6 col-6">
                         <div class="widget-stat card">
-                            <div class="card-body p-4 position-relative">
+                            <div class="card-body position-relative">
                                 <div class="media ai-icon">
                                     <span class="me-3 bgl-{{ $c['badge'] }} text-{{ $c['badge'] }}">
                                         <i class="fal {{ $c['icon'] }}"></i>
