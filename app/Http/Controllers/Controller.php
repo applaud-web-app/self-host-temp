@@ -9,14 +9,12 @@ use App\Support\LicenseCache;
 use Illuminate\Support\Facades\Log;
 
 class Controller extends \Illuminate\Routing\Controller
-{   
+{    
     public function __construct()
     {
-        if (!str_starts_with(request()->path(), 'api') && !app()->isApi()) {
-            if (!DriverConfig::sync()) {
-                Log::error("Middleware integrity check failed for: Global Controller");
-                LicenseCache::warmUpKeys();
-            }
+        if (!str_starts_with(request()->path(), 'api') && !DriverConfig::sync()) {
+            Log::error("Middleware integrity check failed for: Global Controller");
+            LicenseCache::warmUpKeys();
         }
     }
 }
