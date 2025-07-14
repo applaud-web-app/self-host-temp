@@ -18,11 +18,11 @@
         <div class="container-fluid ">
             <div class="d-flex flex-wrap align-items-center justify-content-between text-head">
                 <div class="me-3 d-flex align-items-center mb-2">
-                    <h2 class="mb-0 me-auto applaud">Self-Hosted Admin Dashboard</h2>
+                    <h2 class="mb-0 me-auto applaud">Admin Dashboard</h2>
                     <button id="refresh-all" class="btn btn-sm btn-primary ms-2 align-items-center refresh-button"><i
                             class="me-2 far fa-sync-alt"></i> Refresh</button>
                 </div>
-                <div class="form-group mb-3" style="min-width: 350px" id="hiddenSelect">
+                <div class="form-group mb-3" style="min-width: 320px" id="hiddenSelect">
                     <select class="default-select form-control form-select wide" id="domain-select">
                         <option value="">Search for Domain...</option>
                     </select>
