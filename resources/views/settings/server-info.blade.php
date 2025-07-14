@@ -1,16 +1,13 @@
 @extends('layouts.master')
-
 @section('content')
 <section class="content-body">
   <div class="container-fluid">
-
     {{-- Page Header --}}
     <div class="text-head mb-3">
       <h2>Server Info</h2>
     </div>
-
     {{-- Static App & Server Info + Disk & Memory Snapshot --}}
-    <div class="row ">
+    <div class="row">
       {{-- App & Server --}}
       <div class="col-md-6 mb-3">
         <div class="card h-100">
@@ -27,19 +24,8 @@
           </div>
         </div>
       </div>
-
       {{-- Disk & Memory --}}
       <div class="col-md-6 mb-3">
-        @php
-          function bytesToHuman($bytes) {
-            $units = ['B','KB','MB','GB','TB'];
-            for ($i = 0; $bytes >= 1024 && $i < count($units)-1; $i++) {
-              $bytes /= 1024;
-            }
-            return round($bytes, 2).' '.$units[$i];
-          }
-        @endphp
-
         <div class="card h-100">
           <div class="card-header"><h5>Resources Snapshot</h5></div>
           <div class="card-body">
@@ -49,30 +35,21 @@
               <div class="progress-bar bg-primary" style="width: {{ $diskPercent }}%;"></div>
             </div>
             <p class="text-muted small">
-              {{ bytesToHuman($usedDisk) }} / {{ bytesToHuman($totalDisk) }}
+              {{ number_format($usedDisk / 1024 / 1024 / 1024, 2) }} GB / {{ number_format($totalDisk / 1024 / 1024 / 1024, 2) }} GB
               ({{ $diskPercent }}%)
             </p>
-
-            {{-- Memory (PHP process) --}}
-            @php
-              $usedMem    = memory_get_usage(false);
-              $totalMem   = memory_get_usage(true);
-              $memPercent = $totalMem > 0 ? round($usedMem / $totalMem * 100, 1) : 0;
-            @endphp
-
+            {{-- Memory --}}
             <p class="mb-1 small mt-3">Memory Usage</p>
             <div class="progress" style="height: 8px;">
-              <div class="progress-bar bg-success" style="width: {{ $memPercent }}%;"></div>
+              <div class="progress-bar bg-success" style="width: {{ $memoryPercent }}%;"></div>
             </div>
             <p class="text-muted small">
-              {{ bytesToHuman($usedMem) }} / {{ bytesToHuman($totalMem) }}
-              ({{ $memPercent }}%)
+              {{ number_format($usedMemory / 1024 / 1024 / 1024, 2) }} GB / {{ number_format($totalMemory / 1024 / 1024 / 1024, 2) }} GB ({{ number_format($memoryPercent, 2) }}%)
             </p>
           </div>
         </div>
       </div>
     </div>
-
     {{-- Real-time CPU & Memory Charts --}}
     <div class="row">
       <div class="col-md-6 mb-3">
@@ -92,7 +69,6 @@
         </div>
       </div>
     </div>
-
     {{-- Enabled PHP Extensions --}}
     <div class="row">
       <div class="col-12 mb-3">
@@ -110,11 +86,9 @@
         </div>
       </div>
     </div>
-
   </div>
 </section>
 @endsection
-
 @push('scripts')
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
@@ -140,14 +114,11 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
   }
-
   const cpuCtx = document.getElementById('cpuChart').getContext('2d');
   const memCtx = document.getElementById('memoryChart').getContext('2d');
   const cpuChart = makeLine(cpuCtx, 'rgba(13,110,253,1)');
   const memChart = makeLine(memCtx, 'rgba(25,135,84,1)');
-
   const metricsUrl = '{{ route('settings.server-info.metrics') }}';
-
   function updateMetrics() {
     fetch(metricsUrl)
       .then(r => { if (!r.ok) throw new Error('Network'); return r.json(); })
@@ -156,14 +127,12 @@ document.addEventListener('DOMContentLoaded', () => {
         cpuChart.data.labels.push(now); cpuChart.data.labels.shift();
         cpuChart.data.datasets[0].data.push(Number(cpu));  cpuChart.data.datasets[0].data.shift();
         cpuChart.update();
-
         memChart.data.labels.push(now); memChart.data.labels.shift();
         memChart.data.datasets[0].data.push(Number(memory)); memChart.data.datasets[0].data.shift();
         memChart.update();
       })
       .catch(console.error);
   }
-
   updateMetrics();
   setInterval(updateMetrics, 2000);
 });

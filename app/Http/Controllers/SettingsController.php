@@ -77,88 +77,87 @@ class SettingsController extends Controller
     /*  Server Info & Metrics                                                */
     /* --------------------------------------------------------------------- */
  public function serverInfo()
-{
-    // Get basic server information
-    $info = [
-        'php_version'        => phpversion(),
-        'laravel_version'    => app()->version(),
-        'environment'        => app()->environment(),
-        'memory_limit'       => ini_get('memory_limit'),
-        'max_execution_time' => ini_get('max_execution_time'),
-        'server_software'    => $_SERVER['SERVER_SOFTWARE'] ?? 'N/A',
-        'os'                 => php_uname('s') . ' ' . php_uname('r'),
-    ];
-
-    // Disk space
-    $totalDisk   = (float) disk_total_space(base_path());
-    $freeDisk    = (float) disk_free_space(base_path());
-    $usedDisk    = $totalDisk - $freeDisk;
-    $diskPercent = $totalDisk > 0 ? round($usedDisk / $totalDisk * 100, 1) : 0;
-
-    // Extensions
-    $extensions = get_loaded_extensions();
-    sort($extensions, SORT_STRING);
-
-    // Return server info along with disk usage and extensions
-    return view('settings.server-info', compact(
-        'info', 'totalDisk', 'freeDisk', 'usedDisk', 'diskPercent', 'extensions'
-    ));
-}
-
-public function serverMetrics()
-{
-    // Get CPU load
-    $load = 0;
-    if (PHP_OS_FAMILY !== 'Windows' && function_exists('sys_getloadavg')) {
-        $load = sys_getloadavg()[0] ?? 0;
+    {
+        $info = [
+            'php_version'        => phpversion(),
+            'laravel_version'    => app()->version(),
+            'environment'        => app()->environment(),
+            'memory_limit'       => ini_get('memory_limit'),
+            'max_execution_time' => ini_get('max_execution_time'),
+            'server_software'    => $_SERVER['SERVER_SOFTWARE'] ?? 'N/A',
+            'os'                 => php_uname('s').' '.php_uname('r'),
+        ];
+        // Disk Information
+        $totalDisk   = (float) disk_total_space(base_path());
+        $freeDisk    = (float) disk_free_space(base_path());
+        $usedDisk    = $totalDisk - $freeDisk;
+        $diskPercent = $totalDisk > 0 ? round($usedDisk / $totalDisk * 100, 1) : 0;
+        // Memory Information
+        list($totalMemory, $usedMemory, $memoryPercent) = $this->getSystemMemoryUsage();
+        $extensions = get_loaded_extensions();
+        sort($extensions, SORT_STRING);
+        return view('settings.server-info', compact(
+            'info', 'totalDisk', 'freeDisk', 'usedDisk', 'diskPercent', 'extensions', 'totalMemory', 'usedMemory', 'memoryPercent'
+        ));
     }
-
-    // Get number of CPU cores
-    $cores = 1;
-    if (PHP_OS_FAMILY === 'Linux') {
-        if (is_readable('/proc/cpuinfo')) {
-            preg_match_all('/^processor\s*:/m', file_get_contents('/proc/cpuinfo'), $m);
-            $cores = max(1, count($m[0]));
+    public function serverMetrics()
+    {
+        // CPU Calculation
+        $load = 0;
+        if (PHP_OS_FAMILY !== 'Windows' && function_exists('sys_getloadavg')) {
+            $load = sys_getloadavg()[0] ?? 0;
         }
-    } elseif (PHP_OS_FAMILY === 'Darwin' && function_exists('shell_exec')) {
-        $cores = (int) trim(shell_exec('sysctl -n hw.ncpu') ?: 1);
-    } elseif (PHP_OS_FAMILY === 'Windows') {
-        $cores = (int) (getenv('NUMBER_OF_PROCESSORS') ?: 1);
+        $cores = 1;
+        if (PHP_OS_FAMILY === 'Linux') {
+            if (is_readable('/proc/cpuinfo')) {
+                preg_match_all('/^processor\s*:/m', file_get_contents('/proc/cpuinfo'), $m);
+                $cores = max(1, count($m[0]));
+            }
+        } elseif (PHP_OS_FAMILY === 'Darwin' && function_exists('shell_exec')) {
+            $cores = (int) trim(shell_exec('sysctl -n hw.ncpu') ?: 1);
+        } elseif (PHP_OS_FAMILY === 'Windows') {
+            $cores = (int) (getenv('NUMBER_OF_PROCESSORS') ?: 1);
+        }
+        $cpu = min(100, ($cores ? $load / $cores : $load) * 100);
+        // Memory Calculation
+        $memory = $this->getSystemMemoryUsage();
+        return response()->json([
+            'cpu'    => round($cpu, 2),
+            'memory' => round($memory[2], 2),
+        ]);
     }
-
-    $cpu = min(100, ($cores ? $load / $cores : $load) * 100);
-
-    // Get memory usage
-    $memory = 0;
-    if (is_readable('/proc/meminfo')) { // Linux
-        $mem = file_get_contents('/proc/meminfo');
-        preg_match('/MemTotal:\s+(\d+)/', $mem, $tot);
-        preg_match('/MemAvailable:\s+(\d+)/', $mem, $avail);
-        $total = (int) ($tot[1] ?? 0) * 1024;
-        $free  = (int) ($avail[1] ?? 0) * 1024;
-        $memory = $total ? (($total - $free) / $total) * 100 : 0;
-
-    } elseif (PHP_OS_FAMILY === 'Darwin' && function_exists('shell_exec')) { // macOS
-        $total = (int) trim(shell_exec('sysctl -n hw.memsize') ?: 0);
-        $vm    = shell_exec('vm_stat');
-        preg_match('/Pages free:\s+(\d+)/', $vm, $f);
-        $free  = ((int) ($f[1] ?? 0)) * 4096;
-        $memory = $total ? (($total - $free) / $total) * 100 : 0;
-
-    } elseif (PHP_OS_FAMILY === 'Windows' && function_exists('shell_exec')) { // Windows
-        $out = shell_exec('wmic OS get FreePhysicalMemory,TotalVisibleMemorySize /Value');
-        preg_match('/TotalVisibleMemorySize=(\d+)/', $out, $tot);
-        preg_match('/FreePhysicalMemory=(\d+)/', $out, $free);
-        $total = (float) ($tot[1] ?? 0);
-        $avail = (float) ($free[1] ?? 0);
-        $memory = $total ? (($total - $avail) / $total) * 100 : 0;
+    // Function to get system memory usage
+    private function getSystemMemoryUsage()
+    {
+        $memory = 0;
+        $totalMemory = 0;
+        $usedMemory = 0;
+        if (is_readable('/proc/meminfo')) {  // For Linux systems
+            $mem = file_get_contents('/proc/meminfo');
+            preg_match('/MemTotal:\s+(\d+)/', $mem, $tot);
+            preg_match('/MemAvailable:\s+(\d+)/', $mem, $avail);
+            $totalMemory = (int) ($tot[1] ?? 0) * 1024;
+            $freeMemory  = (int) ($avail[1] ?? 0) * 1024;
+            $usedMemory  = $totalMemory - $freeMemory;
+            $memory = $totalMemory ? (($usedMemory) / $totalMemory) * 100 : 0;
+        } elseif (PHP_OS_FAMILY === 'Darwin' && function_exists('shell_exec')) {  // For macOS systems
+            $totalMemory = (int) trim(shell_exec('sysctl -n hw.memsize') ?: 0);
+            $vm    = shell_exec('vm_stat');
+            preg_match('/Pages free:\s+(\d+)/', $vm, $f);
+            $freeMemory  = ((int) ($f[1] ?? 0)) * 4096;
+            $usedMemory  = $totalMemory - $freeMemory;
+            $memory = $totalMemory ? (($usedMemory) / $totalMemory) * 100 : 0;
+        } elseif (PHP_OS_FAMILY === 'Windows' && function_exists('shell_exec')) {  // For Windows systems
+            $out = shell_exec('wmic OS get FreePhysicalMemory,TotalVisibleMemorySize /Value');
+            preg_match('/TotalVisibleMemorySize=(\d+)/', $out, $tot);
+            preg_match('/FreePhysicalMemory=(\d+)/', $out, $free);
+            $totalMemory = (float) ($tot[1] ?? 0);
+            $freeMemory = (float) ($free[1] ?? 0);
+            $usedMemory = $totalMemory - $freeMemory;
+            $memory = $totalMemory ? (($usedMemory) / $totalMemory) * 100 : 0;
+        }
+        return [$totalMemory, $usedMemory, round($memory, 2)];  // Returns total memory, used memory, and memory usage percentage
     }
-
-    return response()->json([
-        'cpu'    => round($cpu, 2),
-        'memory' => round($memory, 2),
-    ]);
-}
 
 
     /**
