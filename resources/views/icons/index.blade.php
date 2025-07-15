@@ -71,7 +71,7 @@
                     <form id="upload-form" action="{{ route('icons.upload') }}" method="POST" enctype="multipart/form-data">
                         @csrf
                         <div class="form-group">
-                            <label for="icons">Select Icons (PNG, JPG, JPEG, max 2MB each)</label>
+                            <label for="icons">Select Icons (PNG, JPG, JPEG, max 1MB each)</label>
                             <input type="file" class="form-control" name="icons[]" multiple required onchange="validateFileInput(event)">
                         </div>
                         <div class="d-flex justify-content-end mt-3">

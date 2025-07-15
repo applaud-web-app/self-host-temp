@@ -34,7 +34,7 @@ class IconController extends Controller
     {
         $request->validate([
             'icons' => 'required',
-            'icons.*' => 'image|mimes:png,jpg,jpeg|max:2048',
+            'icons.*' => 'image|mimes:png,jpg,jpeg|max:1024',
         ]);
 
         $uploadedCount = 0;
@@ -55,15 +55,8 @@ class IconController extends Controller
 
     private function processAndSaveIcon($icon, $filename)
     {
-        // Resize the image to 150x150
-        $image = \Image::make($icon)
-                    ->resize(150, 150, function ($constraint) {
-                        $constraint->aspectRatio();
-                        $constraint->upsize();
-                    });
-
-        // Save the image to the storage
-        $image->save($this->iconPath . '/' . $filename, 75);
+        // Just move the image without resizing or compressing
+        $icon->move($this->iconPath, $filename);
     }
 
     public function delete($filename)
