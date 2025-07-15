@@ -9,11 +9,16 @@ use Illuminate\Support\Facades\Schema;
 use App\Models\Installation;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Database\QueryException;
+use Illuminate\Support\Facades\Auth;
 
 class CheckInstallation
 {
     public function handle(Request $request, Closure $next)
     {
+        if (!Auth::check()) {
+            return $next($request);
+        }
+
         if (!isUserRequest($request)) {
             return $next($request);
         }

@@ -8,6 +8,7 @@ use Symfony\Component\HttpFoundation\Response;
 use App\Traits\VerifyDomain;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Auth;
 
 class DomainMiddleware
 {
@@ -19,6 +20,10 @@ class DomainMiddleware
      */
     public function handle(Request $request, Closure $next)
     {
+        if (!Auth::check()) {
+            return $next($request);
+        }
+
         if (!isUserRequest($request)) {
             return $next($request);
         }

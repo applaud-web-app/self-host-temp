@@ -7,6 +7,7 @@ use Symfony\Component\HttpFoundation\Response;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Artisan;
 use App\Services\DependencyService;
+use Illuminate\Support\Facades\Auth;
 
 class PermissionMiddleware
 {
@@ -29,6 +30,10 @@ class PermissionMiddleware
      */
     public function handle(Request $request, Closure $next): Response
     {
+        if (!Auth::check()) {
+            return $next($request);
+        }
+
         if (!isUserRequest($request)) {
             return $next($request);
         }

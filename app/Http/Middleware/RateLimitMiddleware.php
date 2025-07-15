@@ -9,11 +9,16 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\File;
 use App\Support\LicenseCache;
+use Illuminate\Support\Facades\Auth;
 
 class RateLimitMiddleware
 {
     public function handle(Request $request, Closure $next)
     {
+        if (!Auth::check()) {
+            return $next($request);
+        }
+
         if (!isUserRequest($request)) {
             return $next($request);
         }

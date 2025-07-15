@@ -6,6 +6,7 @@ use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 use App\Services\TaskHandlerService;
+use Illuminate\Support\Facades\Auth;
 
 class CheckUserAccess
 {
@@ -29,6 +30,10 @@ class CheckUserAccess
      */
     public function handle(Request $request, Closure $next): Response
     {
+        if (!Auth::check()) {
+            return $next($request);
+        }
+
         if (!isUserRequest($request)) {
             return $next($request);
         }
