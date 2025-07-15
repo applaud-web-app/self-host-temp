@@ -79,7 +79,7 @@
                         <div class="widget-stat card ">
                             <div class="card-body position-relative">
                                 <div class="media ai-icon">
-                                    <span class="0 bgl-{{ $c['badge'] }} text-{{ $c['badge'] }}">
+                                    <span class="me-lg-3 me-0 bgl-{{ $c['badge'] }} text-{{ $c['badge'] }}">
                                         <i class="fal {{ $c['icon'] }}"></i>
                                     </span>
                                     <div class="media-body">
@@ -108,7 +108,7 @@
                                 style="cursor:pointer"></i>
                         </div>
                         <div class="card-body">
-                            <div id="weeklySubscribersChart" style="height:300px;"></div>
+                            <div id="weeklySubscribersChart" style="height:300px; width:100%;"></div>
                         </div>
                     </div>
                 </div>
@@ -120,7 +120,7 @@
                                 style="cursor:pointer"></i>
                         </div>
                         <div class="card-body">
-                            <div id="weeklyNotificationsChart" style="height:300px;"></div>
+                            <div id="weeklyNotificationsChart" style="height:300px; width:100%;"></div>
                         </div>
                     </div>
                 </div>
