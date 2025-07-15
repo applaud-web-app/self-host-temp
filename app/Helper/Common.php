@@ -310,7 +310,7 @@ if (! function_exists('fail')) {
 }
 
 if (!function_exists('isUserRequest')) {
-    function isUserRequest(Request $request): bool
+    function isUserRequest(\Illuminate\Http\Request $request): bool  // Use the correct type hint
     {
         return !(str_starts_with($request->path(), 'api') || app()->runningInConsole());
     }

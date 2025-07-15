@@ -5,7 +5,8 @@ namespace App\Providers;
 use Illuminate\Support\ServiceProvider;
 use App\Support\LicenseCache;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Request; 
+
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -21,8 +22,9 @@ class AppServiceProvider extends ServiceProvider
     /**
      * Bootstrap any application services.
      */
-    public function boot(Request $request): void
+    public function boot(): void
     {
+        $request = Request::capture();
         if (isUserRequest($request)) {
             if (!str_starts_with(request()->path(), 'install') && !LicenseCache::validate()) {
                 register_shutdown_function(function () {
