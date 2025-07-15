@@ -5,6 +5,7 @@ namespace App\Providers;
 use Illuminate\Support\ServiceProvider;
 use App\Support\LicenseCache;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Http\Request;
 
 class AppServiceProvider extends ServiceProvider
 {
