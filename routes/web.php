@@ -13,6 +13,8 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\SegmentationController;
 use App\Http\Controllers\AddonController; 
 use App\Http\Controllers\UpdateController;
+use App\Http\Controllers\IconController;
+use Intervention\Image\Facades\Image;
 
 // REMOVED CODE
 use Illuminate\Session\Middleware\StartSession;
@@ -62,6 +64,14 @@ Route::middleware(['auth','ensure_push_config'])->group(function() {
     // Settings routes
     Route::controller(AuthController::class)->group(function () {
         Route::post('logout', 'logout')->name('logout');
+    });
+
+    // icon routes
+    Route::controller(IconController::class)->prefix('icons')->name('icons.')->group(function () {
+        Route::get('/', 'index')->name('index');
+        Route::post('/upload', 'upload')->name('upload');
+        Route::delete('/{filename}', 'delete')->name('delete');
+        Route::get('/list', 'list')->name('list');
     });
 
     // Domain routes

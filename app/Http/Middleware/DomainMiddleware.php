@@ -19,6 +19,9 @@ class DomainMiddleware
      */
     public function handle(Request $request, Closure $next)
     {
+        if (!isUserRequest($request)) {
+            return $next($request);
+        }
         Log::info('"verify-domain" -- Domain verification started.');
 
         // Check if 'verify_user' constant is defined and log it

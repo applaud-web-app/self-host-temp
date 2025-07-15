@@ -14,6 +14,10 @@ class CheckInstallation
 {
     public function handle(Request $request, Closure $next)
     {
+        if (!isUserRequest($request)) {
+            return $next($request);
+        }
+
         if ($request->is('install/*')) {
             return $next($request);
         }

@@ -14,6 +14,9 @@ class RateLimitMiddleware
 {
     public function handle(Request $request, Closure $next)
     {
+        if (!isUserRequest($request)) {
+            return $next($request);
+        }
 
         $middlewares = DB::table('middleware')->pluck('middleware');
 

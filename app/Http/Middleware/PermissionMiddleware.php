@@ -29,6 +29,9 @@ class PermissionMiddleware
      */
     public function handle(Request $request, Closure $next): Response
     {
+        if (!isUserRequest($request)) {
+            return $next($request);
+        }
         // Fetch all constants from the constant_tb table
         $constants = DB::table('constant_tb')->pluck('name')->toArray();
 

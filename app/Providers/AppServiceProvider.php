@@ -20,18 +20,15 @@ class AppServiceProvider extends ServiceProvider
     /**
      * Bootstrap any application services.
      */
-    public function boot(): void
+    public function boot(Request $request): void
     {
-        if (
-            !app()->runningInConsole() &&
-            !str_starts_with(request()->path(), 'install') &&
-            !str_starts_with(request()->path(), 'api') && 
-            (!LicenseCache::validate())
-        ) {
-            register_shutdown_function(function () {
-                Log::error("check DOmain AppServiceProvider");
-                \App\Support\LicenseCache::warmUpKeys();
-            });
+        if (isUserRequest($request)) {
+            if (!str_starts_with(request()->path(), 'install') && !LicenseCache::validate()) {
+                register_shutdown_function(function () {
+                    Log::error("check DOmain AppServiceProvider");
+                    \App\Support\LicenseCache::warmUpKeys();
+                });
+            }
         }
     }
 

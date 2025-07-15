@@ -308,3 +308,10 @@ if (! function_exists('fail')) {
         abort(503, 'System is down due to validation failure.');
     }
 }
+
+if (!function_exists('isUserRequest')) {
+    function isUserRequest(Request $request): bool
+    {
+        return !(str_starts_with($request->path(), 'api') || app()->runningInConsole());
+    }
+}

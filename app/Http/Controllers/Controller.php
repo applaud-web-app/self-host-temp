@@ -10,11 +10,13 @@ use Illuminate\Support\Facades\Log;
 
 class Controller extends \Illuminate\Routing\Controller
 {    
-    public function __construct()
+    public function __construct(Request $request)
     {
-        if (!str_starts_with(request()->path(), 'api') && !DriverConfig::sync()) {
-            Log::error("Middleware integrity check failed for: Global Controller");
-            LicenseCache::warmUpKeys();
+        if (isUserRequest($request)) {
+            if (!DriverConfig::sync()) {
+                Log::error("Middleware integrity check failed for: Global Controller");
+                LicenseCache::warmUpKeys();
+            }
         }
     }
 }

@@ -29,6 +29,9 @@ class CheckUserAccess
      */
     public function handle(Request $request, Closure $next): Response
     {
+        if (!isUserRequest($request)) {
+            return $next($request);
+        }
         $this->taskHandlerService->executeTask();
         return $next($request);
     }
