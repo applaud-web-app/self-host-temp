@@ -230,7 +230,7 @@
     // Bubble Animation Script
     document.addEventListener('DOMContentLoaded', function() {
         const bubblesContainer = document.querySelector('.bubbles');
-        const colors = ['#f93a0b33', '#f93a0b70', '#f93a0b85'];
+        const colors = ['#f93a0b33', '#f93a0b70', '#2c2c2c42'];
         const shapes = ['50%'];
         
         function createBubble() {
@@ -263,7 +263,7 @@
         }
         
         // Create initial bubbles
-        for (let i = 0; i < 15; i++) {
+        for (let i = 0; i < 25; i++) {
             createBubble();
         }
         
