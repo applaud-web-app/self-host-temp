@@ -32,6 +32,14 @@
     </style>
     {{-- Add this right before the closing </body> tag --}}
 <style>
+    body{
+        background: #ffece8;
+    }
+
+    .card{
+        border:none;
+        border:1px solid #fbc4b9;
+    }
     /* Bubble Animation Styles */
     .bubbles {
         position: fixed;
