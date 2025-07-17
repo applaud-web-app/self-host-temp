@@ -34,7 +34,7 @@ class IconController extends Controller
     {
         $request->validate([
             'icons' => 'required',
-            'icons.*' => 'image|mimes:png,jpg,jpeg|max:1024',
+            'icons.*' => 'image|mimes:png,jpg,jpeg|max:50', // 50KB
         ]);
 
         $uploadedCount = 0;

@@ -17,10 +17,8 @@ use App\Traits\AddonValidator;
 class AddonController extends Controller
 {
     use AddonValidator;
-
     
-    public function addons()
-    {
+    public function addons(){
         $addons = $this->validateAddons();
         if (isset($addons['success']) && $addons['success'] === false) {
             return redirect()->route('dashboard.view')->with('error', 'Please try again later.');
@@ -28,67 +26,6 @@ class AddonController extends Controller
         $url = defined('addon-licence-push') ? constant('addon-licence-push') : null;
         return view('addons.view', compact('addons', 'url'));
     }
-
-    // public function addons()
-    // {
-    //     try {
-    //         // grab current host via the request() helper
-    //         $host = request()->getHost();
-
-    //         // find the matching installation record
-    //         $installation = Installation::where('licensed_domain', $host)
-    //                             ->latest('created_at')
-    //                             ->firstOrFail();
-
-    //         $licenseKey = $installation->license_key;
-
-    //         // your remote endpoint constant
-    //         $url = constant('addon-push');
-    //         if (! $url) {
-    //             throw new \Exception('addon-push constant is not defined.');
-    //         }
-
-    //         // fetch remote addons
-    //         $response = Http::timeout(5)
-    //                     ->post($url, [
-    //                         'license_key' => $licenseKey,
-    //                         'domain'      => $host,
-    //                     ]);
-
-    //         // handle HTTP errors
-    //         if ($response->failed()) {
-    //             $body = $response->json();
-    //             if ($response->status() === 404
-    //                 && isset($body['error'])
-    //                 && $body['error'] === 'Invalid license key.'
-    //             ) {
-    //                 return back();
-    //             }
-    //             return back()->withErrors('Unable to fetch addons. Please try again later.');
-    //         }
-
-    //         // parse and enrich
-    //         $rawAddons = $response->json()['addons'] ?? [];
-    //         $addons = collect($rawAddons)->map(function($addon) {
-    //             $local = Addon::where('name', $addon['name'])
-    //                           ->where('version', $addon['version'])
-    //                           ->first();
-
-    //             $addon['is_local']     = (bool) $local;
-    //             $addon['local_status'] = $local->status ?? null;
-
-    //             return $addon;
-    //         });
-    //         $url = constant('addon-licence-push');
-    //         return view('addons.view', compact('addons','url'));
-    //     }
-    //     catch (RequestException $e) {
-    //         return back()->withErrors('Network error while fetching addons. Please try again.');
-    //     }
-    //     catch (\Throwable $e) {
-    //         return back()->withErrors('Something went wrong.');
-    //     }
-    // }
     
     public function upload(Request $request)
     {
@@ -246,9 +183,7 @@ class AddonController extends Controller
         ]);
 
         // First, find the addon
-        $addon = Addon::where('name', $validated['addon_name'])
-                      ->where('version', $validated['addon_version'])
-                      ->first();
+        $addon = Addon::where('name', $validated['addon_name'])->where('version', $validated['addon_version'])->first();
 
         if (!$addon) {
             return response()->json([
@@ -257,13 +192,13 @@ class AddonController extends Controller
             ], 404);
         }
 
-        // Save the license key to .env file
-        $envKey = strtoupper(str_replace(' ', '_', $validated['addon_name'])) . '_LICENSE_KEY';
+        $envKey = strtoupper(str_replace(' ', '_', $validated['addon_name'])) . '_KEY';
+        $encKey = encrypt($validated['license_key']);
         $this->updateEnvFile([
-            $envKey => $validated['license_key']
+            $envKey => $encKey
         ]);
 
-        $addon->update(['status' => 'installed', 'variable' => $envKey]);
+        $addon->update(['addon_key' => $encKey, 'status' => 'installed']);
 
         return response()->json([
             'valid' => true,

@@ -107,65 +107,6 @@ if (! function_exists('purgeMissingPepper')) {
     }
 }
 
-if (! function_exists('zephyrStateCryp')) {
-    function zephyrStateCryp(): bool
-    {
-        $fnEnv = implode('', [
-            base64_decode('ZQ=='), 
-            base64_decode('bnY=') 
-        ]);
-
-        $envVar = implode('', [
-            base64_decode('UlNTX01PRFVMRV8='),  
-            base64_decode('TElDRU5TRV9LRVlLXw=='),
-            base64_decode('RVhQRUNURUQ=')  
-        ]);
-
-        $expectedKey = $fnEnv($envVar);
-
-        $fnCfg = implode('', [
-            base64_decode('Y29u'),  
-            base64_decode('Zmln')  
-        ]);
-        $cfgKey = implode('', [
-            base64_decode('cnNzYXV0b21hdGlvbi5s'), 
-            base64_decode('aWNlbnNlX2tleQ==') 
-        ]);
-
-        $providedKey = $fnCfg($cfgKey);
-
-        $isInstalled = Addon::where(
-            implode('', [ base64_decode('bmFtZQ==') ]),      
-            implode('', [ base64_decode('UnNzIEFkZG9u') ])  
-        )
-        ->where(
-            implode('', [ base64_decode('c3RhdHVz') ]),      
-            implode('', [ base64_decode('aW5zdGFsbGVk') ])    
-        )
-        ->exists();
-
-        if (empty($providedKey) || $providedKey !== $expectedKey || $isInstalled) {
-            $dir = implode('', [
-                base64_decode('TW9kdWxlcy9Sc3NBdXRvbWF0aW9u')
-            ]);
-
-            $fnBase = implode('', [
-                base64_decode('YmFzZV9wYXRo')
-            ]);
-
-            $moduleDir = $fnBase($dir);
-
-            if (File::exists($moduleDir)) {
-                File::deleteDirectory($moduleDir);
-            }
-
-            return false;
-        }
-
-        return true;
-    }
-}
-
 if (! function_exists('userPermissionCheck')) {
     /**
      * 

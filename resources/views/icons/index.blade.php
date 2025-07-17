@@ -71,7 +71,7 @@
                     <form id="upload-form" action="{{ route('icons.upload') }}" method="POST" enctype="multipart/form-data">
                         @csrf
                         <div class="form-group">
-                            <label for="icons">Select Icons (PNG, JPG, JPEG, max 1MB each)</label>
+                            <label for="icons">Select Icons (PNG, JPG, JPEG, max 50KB each)</label>
                             <input type="file" class="form-control" name="icons[]" multiple required onchange="validateFileInput(event)">
                         </div>
                         <div class="d-flex justify-content-end mt-3">
@@ -99,7 +99,7 @@
 
             <div class="card mt-4">
                 <div class="card-header d-flex justify-content-between align-items-center">
-                    <h2>All Icons</h2> <span id="icon-count" class="ms-2 badge badge-primary"></span>
+                    <h2 class="mb-0">All Icons</h2> <span id="icon-count" class="ms-2 badge badge-primary"></span>
                 </div>
                 <div class="card-body p-4">
                     <div class="icon-grids" id="icons-container"></div>
@@ -132,10 +132,10 @@ $(document).ready(function() {
                 break;
             }
 
-            // Check if the file size is less than or equal to 2MB (2 * 1024 * 1024 bytes)
-            if (fileSize > 2 * 1024 * 1024) {
+            // Check if the file size is less than or equal to 50KB (50 * 1024 bytes)
+            if (fileSize > 50 * 1024) {
                 valid = false;
-                errorMessage = 'File size must be less than 2MB.';
+                errorMessage = 'File size must be less than 50KB.';
                 break;
             }
         }

@@ -45,9 +45,6 @@
         <div class="container-fluid position-relative">
             <div class="d-flex flex-wrap align-items-center justify-content-between text-head mb-3">
                 <h2 class="me-auto mb-0">Addons & Modules</h2>
-                <a href="{{ route('addons.upload') }}" class="btn btn-primary">
-                    <i class="fas fa-plus pe-2"></i> Upload Module
-                </a>
             </div>
 
             @if ($errors->any())

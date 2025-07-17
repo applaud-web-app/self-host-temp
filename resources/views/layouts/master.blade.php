@@ -232,6 +232,14 @@
         </a>
     </li>
 
+    <!-- Icons -->
+    <li>
+        <a class="ai-icon" href="{{ route('icons.index') }}" aria-expanded="false">
+            <i class="fal fa-credit-card"></i>
+            <span class="nav-text">Icons</span>
+        </a>
+    </li>
+
     <!-- Support -->
     <li>
         <a href="https://aplu.io/contact" class="ai-icon" aria-expanded="false" target="_blank">

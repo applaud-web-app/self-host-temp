@@ -15,6 +15,7 @@ class Addon extends Model
         'version',
         'file_path',
         'file_size',
+        'addon_key',
         'status',
     ];
 
