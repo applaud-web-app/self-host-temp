@@ -30,6 +30,40 @@
         .password-toggle { position:absolute; right:10px; top:50%; transform:translateY(-50%); cursor:pointer; }
         .password-wrapper { position:relative; }
     </style>
+    {{-- Add this right before the closing </body> tag --}}
+<style>
+    /* Bubble Animation Styles */
+    .bubbles {
+        position: fixed;
+        width: 100%;
+        height: 100%;
+        top: 0;
+        left: 0;
+        pointer-events: none;
+        z-index: -1;
+        overflow: hidden;
+    }
+    
+    .bubble {
+        position: absolute;
+        bottom: -100px;
+        background: #f93a0b;
+        border-radius: 50%;
+        /* filter: blur(5px); */
+        animation: float linear infinite;
+    }
+    
+    @keyframes float {
+        0% {
+            transform: translateY(0) rotate(0deg);
+            opacity: 1;
+        }
+        100% {
+            transform: translateY(-100vh) rotate(360deg);
+            opacity: 0;
+        }
+    }
+</style>
 </head>
 <body class="h-100">
 <div class="container-fluid h-100">
@@ -106,32 +140,10 @@
             </div>
         </div>
 
-        {{-- Illustration --}}
-        <div class="col-xl-7 col-lg-6 d-none d-lg-block">
-            <div class="p-5 text-center">
-                <img src="https://aplu.io/assets/images/aplu-image-1.png" alt="Login illustration"
-                     class="img-fluid" style="max-height:460px; animation:float 6s ease-in-out infinite;">
-                <h3 class="mt-4">Powerful Push Notifications</h3>
-                <p class="text-muted">Engage your users with real-time notifications delivered through our reliable platform.</p>
-                <div class="d-flex justify-content-center mt-4">
-                    <div class="mx-3 text-center">
-                        <i class="fas fa-bolt text-primary mb-2" style="font-size:2rem;"></i>
-                        <h5>Fast Delivery</h5>
-                        <p class="text-muted small">Instant notifications</p>
-                    </div>
-                    <div class="mx-3 text-center">
-                        <i class="fas fa-chart-line text-primary mb-2" style="font-size:2rem;"></i>
-                        <h5>Analytics</h5>
-                        <p class="text-muted small">Track engagement</p>
-                    </div>
-                    <div class="mx-3 text-center">
-                        <i class="fas fa-shield-alt text-primary mb-2" style="font-size:2rem;"></i>
-                        <h5>Secure</h5>
-                        <p class="text-muted small">Enterprise-grade</p>
-                    </div>
-                </div>
-            </div>
-        </div>
+
+<div class="bubbles">
+    <!-- Bubbles will be added dynamically by JS -->
+</div>
 
     </div>
 </div>
@@ -213,5 +225,51 @@
         @endforeach
     </script>
 @endif
+
+<script>
+    // Bubble Animation Script
+    document.addEventListener('DOMContentLoaded', function() {
+        const bubblesContainer = document.querySelector('.bubbles');
+        const colors = ['#f93a0b33', '#f93a0b70', '#f93a0b85'];
+        const shapes = ['50%'];
+        
+        function createBubble() {
+            const bubble = document.createElement('div');
+            bubble.className = 'bubble';
+            
+            // Random properties
+            const size = Math.random() * 40 + 50;
+            const posX = Math.random() * 100;
+            const duration = Math.random() * 25 + 10;
+            const delay = Math.random() * 4;
+            const color = colors[Math.floor(Math.random() * colors.length)];
+            const shape = shapes[Math.floor(Math.random() * shapes.length)];
+            
+            // Apply styles
+            bubble.style.width = `${size}px`;
+            bubble.style.height = `${size}px`;
+            bubble.style.left = `${posX}%`;
+            bubble.style.background = color;
+            bubble.style.borderRadius = shape;
+            bubble.style.animationDuration = `${duration}s`;
+            bubble.style.animationDelay = `${delay}s`;
+            
+            bubblesContainer.appendChild(bubble);
+            
+            // Remove bubble after animation completes
+            setTimeout(() => {
+                bubble.remove();
+            }, duration * 1000);
+        }
+        
+        // Create initial bubbles
+        for (let i = 0; i < 15; i++) {
+            createBubble();
+        }
+        
+        // Add new bubbles periodically
+        setInterval(createBubble, 2000);
+    });
+</script>
 </body>
 </html>
