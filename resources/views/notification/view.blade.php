@@ -131,26 +131,12 @@
                 <!-- Campaign Type Radio Buttons -->
                 <div class="col-lg-12">
                     <div class="custom-radio justify-content-start">
-                        <label class="mb-2 mb-lg-3 w-auto d-inline-block" for="campaign_type_all">
-                            <input type="radio" name="campaign_type" id="campaign_type_all" value="all" checked>
-                            <span>All</span>
-                        </label>
-                        <label class="mb-2 mb-lg-3 w-auto d-inline-block" for="campaign_type_instant">
-                            <input type="radio" name="campaign_type" id="campaign_type_instant" value="instant">
-                            <span>Instant</span>
-                        </label>
-                        <label class="mb-2 mb-lg-3 w-auto d-inline-block" for="campaign_type_schedule">
-                            <input type="radio" name="campaign_type" id="campaign_type_schedule" value="schedule">
-                            <span>Schedule</span>
-                        </label>
-                        <label class="mb-2 mb-lg-3 w-auto d-inline-block" for="campaign_type_segment">
-                            <input type="radio" name="campaign_type" id="campaign_type_segment" value="particular">
-                            <span>Segment</span>
-                        </label>
-                        <label class="mb-2 mb-lg-3 w-auto d-inline-block" for="campaign_type_api">
-                            <input type="radio" name="campaign_type" id="campaign_type_api" value="api">
-                            <span>API</span>
-                        </label>
+                        @foreach(config('campaign.types') as $value => $label)
+                            <label class="mb-2 mb-lg-3 w-auto d-inline-block" for="campaign_type_{{ $value }}">
+                                <input type="radio" name="campaign_type" id="campaign_type_{{ $value }}" value="{{ $value }}" {{ $value == 'all' ? 'checked' : '' }}>
+                                <span>{{ $label }}</span>
+                            </label>
+                        @endforeach
                     </div>
                 </div>
 

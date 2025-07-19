@@ -4,22 +4,32 @@ namespace Modules\RssAutomation\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
 
 class RssFeed extends Model
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory;
 
     protected $table = 'rss_feeds';
 
     protected $fillable = [
-        'rss_feed_name',
-        'rss_feed_url',
-        'rss_feed_title',
-        'rss_feed_description',
-        'banner_image',
-        'banner_icon',
+        'name',
+        'url',
+        'type',
+        'random_count',
+        'start_time',
+        'end_time',
+        'interval_min',
+        'icon',
+        'cta_enabled',
+        'button1_title',
+        'button1_url',
+        'button2_title',
+        'button2_url',
+        'is_active',
     ];
 
-    protected $dates = ['deleted_at'];
+    public function notifications()
+    {
+        return $this->hasMany(RssFeedNotification::class, 'rss_feed_id');
+    }
 }

@@ -95,14 +95,12 @@ class NotificationController extends Controller
                 $truncated = Str::limit($row->title, 50, '…');
 
                 $segment = '';
-                if ($row->segment_type === "all") {
-                    $segment = "";
-                } elseif ($row->segment_type === "segment") {
-                    $segment = '<small class="ms-1 text-secondary text-capitalize">[Segment]</small>';
-                } elseif ($row->segment_type === "api") {
-                    $segment = '<small class="ms-1 text-secondary text-capitalize">[API]</small>';
+                $segmentTypes = config('campaign.types'); 
+                if (isset($segmentTypes[$row->segment_type])) {
+                    if ($row->segment_type !== 'all') {
+                        $segment = '<small class="ms-1 text-secondary text-capitalize">[' . $segmentTypes[$row->segment_type] . ']</small>';
+                    }
                 }
-                
                 return '<div>'.e($row->campaign_name).' <small class="ms-1 text-primary text-capitalize">['.e($row->schedule_type).']</small>'.$segment.'<br><small> '.e($truncated).'</small></div>';
             })
             ->addColumn('status', function ($row) {

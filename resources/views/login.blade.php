@@ -1,4 +1,3 @@
-{{-- resources/views/login.blade.php --}}
 <!DOCTYPE html>
 <html lang="en" class="h-100">
 <head>
@@ -6,20 +5,14 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Aplu Push – Login</title>
-
-    {{-- SEO / Social --}}
     <meta name="keywords" content="push notifications, push notification service, Aplu Push, real-time notifications">
     <meta name="description" content="Aplu Push delivers reliable real-time push notifications for web and mobile.">
     <meta property="og:image" content="{{ asset('images/aplu.png') }}" />
     <meta property="og:image:secure_url" content="{{ asset('images/aplu.png') }}" />
-
-    {{-- Favicon --}}
     <link rel="apple-touch-icon" sizes="180x180" href="{{ asset('images/favicon_io/apple-touch-icon.png') }}">
     <link rel="icon" type="image/png" sizes="32x32"  href="{{ asset('images/favicon_io/favicon-32x32.png') }}">
     <link rel="icon" type="image/png" sizes="16x16"  href="{{ asset('images/favicon_io/favicon-16x16.png') }}">
     <link rel="icon" type="image/x-icon"              href="{{ asset('images/favicon.ico') }}">
-
-    {{-- Styles --}}
     <link href="{{ asset('css/style.css') }}"       rel="stylesheet">
     <link href="{{ asset('css/main.css') }}"        rel="stylesheet">
     <link href="{{ asset('css/responsive.css') }}"  rel="stylesheet">
@@ -30,7 +23,6 @@
         .password-toggle { position:absolute; right:10px; top:50%; transform:translateY(-50%); cursor:pointer; }
         .password-wrapper { position:relative; }
     </style>
-    {{-- Add this right before the closing </body> tag --}}
 <style>
     body{
         background: #ffece8;
@@ -40,7 +32,6 @@
         border:none;
         border:1px solid #fbc4b9;
     }
-    /* Bubble Animation Styles */
     .bubbles {
         position: fixed;
         width: 100%;
@@ -57,7 +48,6 @@
         bottom: -100px;
         background: #f93a0b;
         border-radius: 50%;
-        /* filter: blur(5px); */
         animation: float linear infinite;
     }
     
@@ -76,12 +66,8 @@
 <body class="h-100">
 <div class="container-fluid h-100">
     <div class="row h-100 align-items-center justify-content-center">
-
-        {{-- Login Card --}}
         <div class="col-xl-4 col-lg-5 col-md-8 col-sm-10">
             <div class="card p-3 p-md-5">
-
-                {{-- Header --}}
                 <div class="text-center mb-4">
                     <a href="{{ url('/') }}">
                         <img src="{{ asset('images/logo-full.png') }}" alt="Aplu Push" class="img-fluid" style="height:72px;">
@@ -89,12 +75,8 @@
                     <h2 class="mt-3 fw-bold">Welcome Back</h2>
                     <p class="text-muted">Sign in to continue to your Aplu Push account</p>
                 </div>
-
-                {{-- Form --}}
                 <form id="login" method="POST" action="{{ route('login.doLogin') }}">
                     @csrf
-
-                    {{-- Email --}}
                     <div class="mb-3">
                         <label for="email" class="form-label">Email Address</label>
                         <input type="email" id="email" name="email" class="form-control @error('email') is-invalid @enderror"
@@ -103,8 +85,6 @@
                             <div class="invalid-feedback">{{ $message }}</div>
                         @enderror
                     </div>
-
-                    {{-- Password --}}
                     <div class="mb-3">
                         <label for="password" class="form-label">Password</label>
                         <div class="password-wrapper">
@@ -117,8 +97,6 @@
                             @enderror
                         </div>
                     </div>
-
-                    {{-- Remember me & forgot --}}
                     <div class="d-flex align-items-center justify-content-between mb-3">
                         <div class="form-check">
                             <input type="checkbox" class="form-check-input" id="remember_check" name="remember_me" value="1"
@@ -127,8 +105,6 @@
                         </div>
                         <a href="#" class="text-primary small">Forgot password?</a>
                     </div>
-
-                    {{-- Submit --}}
                     <div class="d-grid gap-2 mb-3">
                         <button type="submit" class="btn btn-primary" id="loginBtn">
                             <span class="sign-in-text">Sign In</span>
@@ -137,8 +113,6 @@
                     </div>
                 </form>
             </div>
-
-            {{-- Footer --}}
             <div class="text-center mt-3">
                 <p class="text-muted mb-0">
                     &copy; {{ now()->year }} Aplu Push.
@@ -147,16 +121,10 @@
                 </p>
             </div>
         </div>
-
-
-<div class="bubbles">
-    <!-- Bubbles will be added dynamically by JS -->
-</div>
-
+        <div class="bubbles">
+        </div>
     </div>
 </div>
-
-{{-- Scripts --}}
 <script src="{{ asset('vendor/global/global.min.js') }}"></script>
 <script src="{{ asset('js/custom.min.js') }}"></script>
 <script src="{{ asset('js/deznav-init.js') }}"></script>
@@ -164,7 +132,6 @@
 <script src="{{ asset('js/iziToast.js') }}"></script>
 
 <script>
-    // Toggle password visibility
     document.getElementById('togglePassword').addEventListener('click', function () {
         const input = document.getElementById('password');
         const eye = this.querySelector('i');
@@ -172,8 +139,6 @@
         eye.classList.toggle('fa-eye');
         eye.classList.toggle('fa-eye-slash');
     });
-
-    // Validate and show spinner
     $('#login').validate({
         rules: {
             email: { 
@@ -212,8 +177,6 @@
         }
     });
 </script>
-
-{{-- Flash Messages --}}
 @if (Session::has('success'))
     <script> iziToast.success({ title:'Success', message:'{{ Session::get('success') }}', position:'topRight' }); </script>
 @endif
@@ -235,7 +198,6 @@
 @endif
 
 <script>
-    // Bubble Animation Script
     document.addEventListener('DOMContentLoaded', function() {
         const bubblesContainer = document.querySelector('.bubbles');
         const colors = ['#f93a0b33', '#f93a0b70', '#d9185947'];
@@ -244,16 +206,12 @@
         function createBubble() {
             const bubble = document.createElement('div');
             bubble.className = 'bubble';
-            
-            // Random properties
             const size = Math.random() * 40 + 50;
             const posX = Math.random() * 100;
             const duration = Math.random() * 25 + 10;
             const delay = Math.random() * 4;
             const color = colors[Math.floor(Math.random() * colors.length)];
             const shape = shapes[Math.floor(Math.random() * shapes.length)];
-            
-            // Apply styles
             bubble.style.width = `${size}px`;
             bubble.style.height = `${size}px`;
             bubble.style.left = `${posX}%`;
@@ -263,19 +221,13 @@
             bubble.style.animationDelay = `${delay}s`;
             
             bubblesContainer.appendChild(bubble);
-            
-            // Remove bubble after animation completes
             setTimeout(() => {
                 bubble.remove();
             }, duration * 2000);
         }
-        
-        // Create initial bubbles
         for (let i = 0; i < 25; i++) {
             createBubble();
         }
-        
-        // Add new bubbles periodically
         setInterval(createBubble, 2000);
     });
 </script>

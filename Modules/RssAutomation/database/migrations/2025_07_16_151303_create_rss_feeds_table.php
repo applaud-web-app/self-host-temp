@@ -30,7 +30,7 @@ return new class extends Migration
             $table->timestamps();
 
             // Adding indexes inside the table creation block
-            $table->index(['url']); 
+            $table->index('url'); 
             $table->index('start_time');
             $table->index('end_time');
             $table->index('interval_min');

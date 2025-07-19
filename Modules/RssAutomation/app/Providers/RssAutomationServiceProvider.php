@@ -7,13 +7,13 @@ use Illuminate\Support\ServiceProvider;
 use Nwidart\Modules\Traits\PathNamespace;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
+use Illuminate\Console\Scheduling\Schedule;
 
 class RssAutomationServiceProvider extends ServiceProvider
 {
     use PathNamespace;
 
     protected string $name = 'RssAutomation';
-
     protected string $nameLower = 'rssautomation';
 
     /**
@@ -21,12 +21,20 @@ class RssAutomationServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        $this->commands([
+            \Modules\RssAutomation\Console\Commands\SendRssNotifications::class,
+        ]);
+
+        // Register middleware if required
         app('router')->aliasMiddleware('rss_license', \Modules\RssAutomation\Http\Middleware\CheckLicenseKey::class);
-        $this->registerCommands();
-        $this->registerCommandSchedules();
-        $this->registerTranslations();
+
+        // Register configurations, views, and translations
         $this->registerConfig();
         $this->registerViews();
+        $this->registerTranslations();
+        $this->registerCommandSchedules();
+        $this->addRssTypeToConfig();
+        // Load migrations from the module
         $this->loadMigrationsFrom(module_path($this->name, 'database/migrations'));
     }
 
@@ -40,22 +48,17 @@ class RssAutomationServiceProvider extends ServiceProvider
     }
 
     /**
-     * Register commands in the format of Command::class
+     * Register config files.
      */
-    protected function registerCommands(): void
+    protected function registerConfig(): void
     {
-        // $this->commands([]);
-    }
+        $this->publishes([
+            module_path('RssAutomation', 'config/config.php') => config_path('license.php'),
+        ], 'config');
 
-    /**
-     * Register command Schedules.
-     */
-    protected function registerCommandSchedules(): void
-    {
-        // $this->app->booted(function () {
-        //     $schedule = $this->app->make(Schedule::class);
-        //     $schedule->command('inspire')->hourly();
-        // });
+        $this->mergeConfigFrom(
+            module_path('RssAutomation', 'config/config.php'), 'license'
+        );
     }
 
     /**
@@ -75,60 +78,6 @@ class RssAutomationServiceProvider extends ServiceProvider
     }
 
     /**
-     * Register config.
-     */
-    // protected function registerConfig(): void
-    // {
-    //     $configPath = module_path($this->name, config('modules.paths.generator.config.path'));
-
-    //     if (is_dir($configPath)) {
-    //         $iterator = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($configPath));
-
-    //         foreach ($iterator as $file) {
-    //             if ($file->isFile() && $file->getExtension() === 'php') {
-    //                 $config = str_replace($configPath.DIRECTORY_SEPARATOR, '', $file->getPathname());
-    //                 $config_key = str_replace([DIRECTORY_SEPARATOR, '.php'], ['.', ''], $config);
-    //                 $segments = explode('.', $this->nameLower.'.'.$config_key);
-
-    //                 // Remove duplicated adjacent segments
-    //                 $normalized = [];
-    //                 foreach ($segments as $segment) {
-    //                     if (end($normalized) !== $segment) {
-    //                         $normalized[] = $segment;
-    //                     }
-    //                 }
-
-    //                 $key = ($config === 'config.php') ? $this->nameLower : implode('.', $normalized);
-
-    //                 $this->publishes([$file->getPathname() => config_path($config)], 'config');
-    //                 $this->merge_config_from($file->getPathname(), $key);
-    //             }
-    //         }
-    //     }
-    // }
-
-    protected function registerConfig(): void
-    {
-        $this->publishes([
-            module_path('RssAutomation', 'config/config.php') => config_path('license.php'),
-        ], 'config');
-        $this->mergeConfigFrom(
-            module_path('RssAutomation', 'config/config.php'), 'license'
-        );
-    }
-
-    /**
-     * Merge config from the given path recursively.
-     */
-    protected function merge_config_from(string $path, string $key): void
-    {
-        $existing = config($key, []);
-        $module_config = require $path;
-
-        config([$key => array_replace_recursive($existing, $module_config)]);
-    }
-
-    /**
      * Register views.
      */
     public function registerViews(): void
@@ -137,7 +86,6 @@ class RssAutomationServiceProvider extends ServiceProvider
         $sourcePath = module_path($this->name, 'resources/views');
 
         $this->publishes([$sourcePath => $viewPath], ['views', $this->nameLower.'-module-views']);
-
         $this->loadViewsFrom(array_merge($this->getPublishableViewPaths(), [$sourcePath]), $this->nameLower);
 
         Blade::componentNamespace(config('modules.namespace').'\\' . $this->name . '\\View\\Components', $this->nameLower);
@@ -162,4 +110,24 @@ class RssAutomationServiceProvider extends ServiceProvider
 
         return $paths;
     }
+
+    protected function registerCommandSchedules(): void
+    {
+        $this->app->booted(function () {
+            $schedule = $this->app->make(Schedule::class);
+            $schedule->command('rss:send-notifications')->everyMinute()->sendOutputTo('rss-command.log');
+        });
+    }
+
+    protected function addRssTypeToConfig(): void
+    {
+        $existingTypes = config('campaign.types');
+
+        // Check if 'rss' is not already added to prevent duplicates
+        if (!array_key_exists('rss', $existingTypes)) {
+            $existingTypes['rss'] = 'RSS';
+            config()->set('campaign.types', $existingTypes); // Update the config at runtime
+        }
+    }
+
 }

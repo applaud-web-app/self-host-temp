@@ -188,6 +188,7 @@
             font-size: 0.875em;
             margin-top: 5px;
         }
+
         .upload-icon-btn {
             padding: 14px;
             border-radius: 5px;
@@ -219,13 +220,10 @@
 @section('content')
     <section class="content-body">
         <div class="container-fluid">
-            <div class="mb-sm-2 d-flex flex-wrap align-items-center text-head">
-                <div>
-                    <h2 class="me-auto mb-1">RSS Feed</h2>
-                    <p><strong class="text-primary">Note:</strong> RSS feed URL's are only valid for domains that are part of system.</p>
-                </div>
+            <div class="mb-sm-3 d-flex flex-wrap align-items-center text-head">
+                <h2 class="me-auto">RSS Feed</h2>
             </div>
-            <form action="{{ route('rss.store') }}" id="rss_create" method="post">
+            <form action="{{ $action }}" id="rss_create" method="post">
                 @csrf
                 <div class="row">
                     <div class="col-lg-7 col-md-7 col-12">
@@ -321,9 +319,9 @@
                                                 <input type="text" class="form-control" id="banner_icon"
                                                     name="banner_icon"
                                                     value="{{ asset('images/push/icons/alarm-1.png') }}" readonly>
-                                                <button class="input-group-text upload-icon-btn" type="button" style="margin:inherit"
-                                                    data-bs-toggle="modal" data-bs-target="#staticBackdrop"
-                                                    id="button2-addon1">
+                                                <button class="input-group-text upload-icon-btn" type="button"
+                                                    style="margin:inherit" data-bs-toggle="modal"
+                                                    data-bs-target="#staticBackdrop" id="button2-addon1">
                                                     <i class="fas fa-upload"></i>
                                                 </button>
                                             </div>
@@ -331,7 +329,8 @@
                                     </div>
                                     <div class="card-footer">
                                         <div class="form-check form-switch mb-3">
-                                            <input class="form-check-input" type="checkbox" id="ctaCheckbox">
+                                            <input class="form-check-input" type="checkbox" name="cta_enabled"
+                                                id="ctaCheckbox">
                                             <label class="form-check-label fw-bold" for="ctaCheckbox">Enable
                                                 Call-to-Action Buttons</label>
                                         </div>
@@ -394,21 +393,27 @@
                                     <div class="card-body">
                                         <div class="time-range-container">
                                             <div class="form-group">
-                                                <label for="daily_start_time" class="form-label">Daily Start Time <span class="text-danger">*</span></label>
-                                                <input type="time" class="form-control" name="daily_start_time" id="daily_start_time" value="09:00" required>
+                                                <label for="daily_start_time" class="form-label">Daily Start Time <span
+                                                        class="text-danger">*</span></label>
+                                                <input type="time" class="form-control" name="daily_start_time"
+                                                    id="daily_start_time" value="09:00" required>
                                             </div>
                                             <div class="form-group">
-                                                <label for="daily_end_time" class="form-label">Daily End Time <span class="text-danger">*</span></label>
-                                                <input type="time" class="form-control" name="daily_end_time" id="daily_end_time" value="18:00" required>
+                                                <label for="daily_end_time" class="form-label">Daily End Time <span
+                                                        class="text-danger">*</span></label>
+                                                <input type="time" class="form-control" name="daily_end_time"
+                                                    id="daily_end_time" value="18:00" required>
                                             </div>
                                         </div>
                                         <div class="time-difference">
-                                            Available Time Window: <span class="time-difference-value" id="time-difference">9 hours</span>
+                                            Available Time Window: <span class="time-difference-value"
+                                                id="time-difference">9 hours</span>
                                         </div>
                                         <div class="mt-4">
-                                            <label class="form-label">Time Difference Between Notifications <span class="text-danger">*</span></label>
+                                            <label class="form-label">Time Difference Between Notifications <span
+                                                    class="text-danger">*</span></label>
                                             <div class="time-options">
-                                                <div class="time-option active" data-minutes="5">5 Minutes</div>
+                                                <div class="time-option" data-minutes="5">5 Minutes</div>
                                                 <div class="time-option" data-minutes="15">15 Minutes</div>
                                                 <div class="time-option" data-minutes="30">30 Minutes</div>
                                                 <div class="time-option" data-minutes="60">1 Hour</div>
@@ -418,15 +423,18 @@
                                                 <div class="row">
                                                     <div class="col-md-6">
                                                         <label>Hours</label>
-                                                        <input type="number" class="form-control" id="customHours" min="0" max="23" value="0">
+                                                        <input type="number" class="form-control" id="customHours"
+                                                            min="0" max="23" value="0">
                                                     </div>
                                                     <div class="col-md-6">
                                                         <label>Minutes</label>
-                                                        <input type="number" class="form-control" id="customMinutes" min="5" max="59" value="30">
+                                                        <input type="number" class="form-control" id="customMinutes"
+                                                            min="5" max="59" value="30">
                                                     </div>
                                                 </div>
                                             </div>
-                                            <input type="hidden" name="interval_minutes" id="interval_minutes" value="5">
+                                            <input type="hidden" name="interval_minutes" id="interval_minutes"
+                                                value="5">
                                         </div>
                                     </div>
                                 </div>
@@ -627,7 +635,7 @@
             modalInstance.hide();
         }
 
-        function previewIcons(url){
+        function previewIcons(url) {
             $('#banner_icon_img').attr('src', url);
             $('#banner_icon').attr('src', url);
             $('#icon_prv').attr('src', url);
@@ -639,33 +647,33 @@
         function calculateTimeDifference() {
             const startTime = $('#daily_start_time').val();
             const endTime = $('#daily_end_time').val();
-            
+
             if (!startTime || !endTime) return true;
-            
+
             const startDate = new Date('2000-01-01 ' + startTime);
             const endDate = new Date('2000-01-01 ' + endTime);
             const minEndDate = new Date(startDate.getTime() + 5 * 60000); // 5 minutes later
-            
+
             // Clear previous errors
             $('#daily_end_time').removeClass('is-invalid');
             $('.time-difference-error').remove();
             $('.time-option').removeClass('disabled');
-            
+
             if (endDate < startDate) {
                 showTimeError('End time must be after start time');
                 return false;
             }
-            
+
             if (endDate < minEndDate) {
                 showTimeError('End time must be at least 5 minutes after start time');
                 return false;
             }
-            
+
             const diffMs = endDate - startDate;
             const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
             const diffMinutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
             const totalMinutes = (diffHours * 60) + diffMinutes;
-            
+
             let diffText = '';
             if (diffHours > 0) {
                 diffText += diffHours + ' hour' + (diffHours !== 1 ? 's' : '');
@@ -674,12 +682,12 @@
                 if (diffText) diffText += ' ';
                 diffText += diffMinutes + ' minute' + (diffMinutes !== 1 ? 's' : '');
             }
-            
+
             $('.time-difference').html(`
                 <span>Available Time Window: </span>
                 <span class="time-difference-value">${diffText}</span>
             `);
-            
+
             // Rest of the function remains the same...
             $('.time-option').each(function() {
                 const optionMinutes = $(this).data('minutes');
@@ -687,7 +695,7 @@
                     $(this).addClass('disabled');
                 }
             });
-            
+
             validateCurrentInterval(totalMinutes);
             return true;
         }
@@ -711,7 +719,7 @@
                 const hours = parseInt($('#customHours').val()) || 0;
                 const minutes = parseInt($('#customMinutes').val()) || 0;
                 const totalCustomMinutes = (hours * 60) + minutes;
-                
+
                 if (totalCustomMinutes > availableMinutes) {
                     showIntervalError('Custom interval exceeds available time window');
                     return false;
@@ -775,7 +783,7 @@
                 return false;
             } else {
                 clearIntervalError();
-                $('#interval_minutes').val(totalMinutes);  // Set the custom interval to the hidden input
+                $('#interval_minutes').val(totalMinutes); // Set the custom interval to the hidden input
                 return true;
             }
         }
@@ -794,10 +802,10 @@
             // Time option selection
             $(document).on('click', '.time-option:not(.disabled)', function() {
                 if ($(this).hasClass('disabled')) return;
-                
+
                 $('.time-option').removeClass('active');
                 $(this).addClass('active');
-                
+
                 if ($(this).data('minutes') === 'custom') {
                     $('.custom-time-input').show();
                     updateCustomTime();
@@ -805,13 +813,13 @@
                     $('.custom-time-input').hide();
                     const startTime = $('#daily_start_time').val();
                     const endTime = $('#daily_end_time').val();
-                    
+
                     if (startTime && endTime) {
                         const startDate = new Date('2000-01-01 ' + startTime);
                         const endDate = new Date('2000-01-01 ' + endTime);
                         const availableMinutes = Math.floor((endDate - startDate) / (1000 * 60));
                         const optionMinutes = $(this).data('minutes');
-                        
+
                         if (optionMinutes > availableMinutes) {
                             showIntervalError('Selected interval exceeds available time window');
                             $('#interval_minutes').val('');
@@ -833,7 +841,7 @@
             // Form submission validation
             $('#rss_create').on('submit', function(e) {
                 const selectedOption = $('.time-option.active');
-                
+
                 // Validate time difference first
                 if (!calculateTimeDifference()) {
                     e.preventDefault();
@@ -951,13 +959,14 @@
                 },
                 unhighlight: function(element, errorClass, validClass) {
                     $(element).removeClass('is-invalid').addClass('is-valid');
-                },submitHandler: function(form,e) {
+                },
+                submitHandler: function(form, e) {
 
                     if (!calculateTimeDifference()) {
                         e.preventDefault();
                         return false;
                     }
-                    
+
                     // Then validate interval selection
                     const selectedOption = $('.time-option.active');
                     if (selectedOption.length === 0) {
@@ -965,21 +974,23 @@
                         e.preventDefault();
                         return false;
                     }
-                    
+
                     if (selectedOption.data('minutes') === 'custom') {
                         if (!updateCustomTime()) {
                             e.preventDefault();
                             return false;
                         }
                     }
-                    
+
                     // Disable button and show spinner
-                    var $btn = $('#sendNotification').prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-2"></i> Processing...');
+                    var $btn = $('#sendNotification').prop('disabled', true).html(
+                        '<i class="fas fa-spinner fa-spin me-2"></i> Processing...');
                     form.submit();
                 },
                 invalidHandler: function(event, validator) {
                     // Re-enable button if validation fails
-                    $('#sendNotification').prop('disabled', false).html('<i class="far fa-save pe-2"></i>Save & Exit');
+                    $('#sendNotification').prop('disabled', false).html(
+                        '<i class="far fa-save pe-2"></i>Save & Exit');
                 }
             });
 
@@ -987,13 +998,13 @@
             $.validator.addMethod("greaterThanStart", function(value, element) {
                 const startTime = $('#daily_start_time').val();
                 const endTime = $(element).val();
-                
+
                 if (!startTime || !endTime) return true;
-                
+
                 const startDate = new Date('2000-01-01 ' + startTime);
                 const endDate = new Date('2000-01-01 ' + endTime);
                 const minEndDate = new Date(startDate.getTime() + 5 * 60000); // 5 minutes later
-                
+
                 return endDate >= minEndDate;
             }, "End time must be at least 5 minutes after start time");
 
@@ -1089,7 +1100,7 @@
                 if (!isValidUrl(feedUrl)) {
                     $('#message').html(
                         '<span class="text-danger">Please enter a valid URL starting with http:// or https://</span>'
-                        );
+                    );
                     return;
                 }
 
@@ -1112,7 +1123,7 @@
                         if (response.status) {
                             $('#message').html(
                                 '<span class="text-success">Feed loaded successfully!</span>'
-                                );
+                            );
                             displayFeedItems(response.items);
 
                             // Show additional sections
@@ -1304,4 +1315,162 @@
             calculateTimeDifference();
         });
     </script>
+    <script>
+        $(document).ready(function() {
+            const feedData = @json($feed);
+
+            // If feed data exists (i.e., in the edit mode)
+            if (feedData) {
+                // Set Feed Name, URL, etc., from the feed data
+                $('#rssfeedname').val(feedData.name);
+                $('#rssFeedUrlLink').val(feedData.url);
+                $('#fetchRssData').click();
+
+                // Set Feed Type (Latest or Random)
+                if (feedData.type === 'random') {
+                    $('#rssTypeRandom').prop('checked', true);
+                    $('#randomFeed').show();
+                    $('#random_feed').val(feedData.random_count);
+                    $('#random_feed').attr('required', true);
+                } else {
+                    $('#rssTypeLatest').prop('checked', true);
+                    $('#randomFeed').hide();
+                    $('#random_feed').removeAttr('required');
+                }
+
+                // Set Daily Start and End Time
+                $('#daily_start_time').val(feedData.start_time.substring(0, 5));
+                $('#daily_end_time').val(feedData.end_time.substring(0, 5));
+
+                // Use the interval_min field for the time difference (in minutes)
+                const intervalMin = feedData.interval_min;
+
+                if (intervalMin) {
+                    let isCustomSelected = false;
+                    let predefinedSelected = false;
+
+                    // Check if the time difference matches any predefined options
+                    $('.time-option').each(function() {
+                        const optionMinutes = $(this).data('minutes');
+
+                        // Check if the interval matches any predefined options (5, 15, 30, 1 hour)
+                        if (optionMinutes === intervalMin) {
+                            $(this).addClass('active');  // Mark the matched option as active
+                            predefinedSelected = true;   // Set predefined selection flag to true
+                            isCustomSelected = false;    // Reset custom selection
+                        }
+                    });
+
+                    // If no predefined option matched, select "Custom"
+                    if (!predefinedSelected) {
+                        $('.time-option[data-minutes="custom"]').addClass('active');
+                        $('.custom-time-input').show();
+
+                        // Calculate hours and minutes correctly for custom time
+                        let hours = Math.floor(intervalMin / 60); // Calculate hours
+                        let minutes = intervalMin % 60; // Remainder is minutes
+
+                        // Set the custom time inputs
+                        $('#customHours').val(hours); // Hours part
+                        $('#customMinutes').val(minutes); // Minutes part
+
+                        // Indicate that custom time has been selected
+                        isCustomSelected = true;
+                    }
+
+                    // Set the hidden interval_minutes field to the selected option or custom time
+                    $('#interval_minutes').val(isCustomSelected ? intervalMin : 'custom');
+                }
+
+                // Set Banner Image and Icon
+                $('#banner_image').val(feedData.icon);
+                $('#banner_url').attr('src', feedData.icon);
+                $('#banner_icon_img').attr('src', feedData.icon);
+                $('#banner_icon').val(feedData.icon);
+                $('#icon_prv').attr('src', feedData.icon || '{{ asset('images/default-icon.png') }}');
+                $('#icon_prv_android').attr('src', feedData.icon || '{{ asset('images/default-icon.png') }}');
+
+                // Set Call to Action (CTA) buttons
+                if (feedData.cta_enabled) {
+                    $('#ctaCheckbox').prop('checked', true);
+                    $('#ctaSection').show();
+                    $('#button_1_title').val(feedData.button1_title);
+                    $('#button_1_url').val(feedData.button1_url);
+                    $('#btn_title1').show().text(feedData.button1_title || 'Click Here');
+                    $('#btn_title1_android').show().text(feedData.button1_title || 'Click Here');
+                    if (feedData.button2_title) {
+                        $('#secondCta').show();
+                        $('#button_2_title').val(feedData.button2_title);
+                        $('#button_2_url').val(feedData.button2_url);
+                        $('#btn_title2').show().text(feedData.button2_title || 'Click Here');
+                        $('#btn_title2_android').show().text(feedData.button2_title || 'Click Here');
+                        $('#btn2_prv').show();
+                    }
+                } else {
+                    $('#ctaCheckbox').prop('checked', false);
+                    $('#ctaSection').hide();
+                    $('#secondCta').hide();
+                }
+
+                // Show time interval section and Save & Exit button
+                $('#timeIntervalSection').show();
+                $('#btnSaveDiv').show();
+
+                // Disable the Fetch button as we are loading the data directly
+                $('#fetchRssData').prop('disabled', true);
+            }
+
+            // Update Preview (for Windows and Android views)
+            function updatePreview() {
+                const button1Text = $('#button_1_title').val() || 'Click Here';
+                const button2Text = $('#button_2_title').val() || 'Click Here';
+
+                // Update button texts for Windows Preview
+                $('#btn_title1').text(button1Text);
+                $('#btn_title2').text(button2Text);
+
+                // Update button texts for Android Preview
+                $('#btn_title1_android').text(button1Text);
+                $('#btn_title2_android').text(button2Text);
+
+                // Update button visibility
+                if ($('#ctaCheckbox').is(':checked')) {
+                    $('#btn_prv').show();
+                    $('#btn_prv_android').show();
+
+                    if (button2Text != "") {
+                        $('#btn2_prv').show();
+                        $('#btn2_prv_android').show();
+                    } else {
+                        $('#btn2_prv').hide();
+                        $('#btn2_prv_android').hide();
+                    }
+                } else {
+                    $('#btn_prv').hide();
+                    $('#btn_prv_android').hide();
+                    $('#btn2_prv').hide();
+                    $('#btn2_prv_android').hide();
+                }
+            }
+
+            // Event handlers for CTA buttons
+            $('#button_1_title, #button_2_title').on('input', function() {
+                updatePreview();
+            });
+
+            // Handle changes in CTA visibility
+            $('#ctaCheckbox').on('change', function() {
+                updatePreview();
+            });
+
+            // Handle changes in second CTA visibility
+            $('#secondCta').on('change', function() {
+                updatePreview();
+            });
+
+            // Initialize preview based on initial values
+            updatePreview();
+        });
+    </script>
+
 @endpush

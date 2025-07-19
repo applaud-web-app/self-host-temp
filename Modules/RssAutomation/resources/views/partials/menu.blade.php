@@ -24,13 +24,18 @@
         </a>
         <ul aria-expanded="false">
             <li>
-                <a href="{{ route('rss.report') }}">
-                    <span class="nav-text">RSS Feed Report</span>
+                <a href="{{ route('rss.create') }}">
+                    <span class="nav-text">Create Feed</span>
                 </a>
             </li>
             <li>
-                <a href="{{ route('rss.create') }}">
-                    <span class="nav-text">Add RSS Feed</span>
+                <a href="{{ route('rss.view') }}">
+                    <span class="nav-text">Feed List</span>
+                </a>
+            </li>
+            <li>
+                <a href="{{ route('rss.report') }}">
+                    <span class="nav-text">Feed Report</span>
                 </a>
             </li>
         </ul>
