@@ -16,6 +16,7 @@ use App\Models\PushSubscriptionHead;
 use App\Models\PushSubscriptionPayload;
 use App\Models\PushSubscriptionMeta;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Redis;
 
 class SubscribePushSubscriptionJob implements ShouldQueue
 {
@@ -41,9 +42,9 @@ class SubscribePushSubscriptionJob implements ShouldQueue
         $filterToken = $oldToken ?: $newToken;
         $head = null;
 
-        DB::beginTransaction();
-
         try {
+
+            DB::beginTransaction();
 
             // STEP 1: Head
             $head = PushSubscriptionHead::firstOrNew(['token' => $filterToken]);
@@ -62,14 +63,22 @@ class SubscribePushSubscriptionJob implements ShouldQueue
             );
 
             DB::commit();
-        } catch (Throwable $e) {
+        } catch (\Illuminate\Database\QueryException $e){
             DB::rollBack();
-
-            Log::error('SubscribePushSubscriptionJob DB error', [
-                'error'   => $e->getMessage()
-            ]);
-
-            throw $e; // Let Laravel handle retry
+            if ($e->getCode() === '23000') {
+                Log::warning('Duplicate entry detected', [
+                    'token' => $filterToken,
+                    'domain' => $domain
+                ]);
+            } else {
+                Log::error('SubscribePushSubscriptionJob DB error', [
+                    'error' => $e->getMessage()
+                ]);
+                throw $e;
+            }
+        }catch (Throwable $e) {
+            DB::rollBack();
+            throw $e;
         }
 
         // STEP 3: Metadata (outside DB transaction)
