@@ -338,13 +338,13 @@
                                             <div class="mb-2" id="firstCta">
                                                 <h6 class="mb-3">Primary Button</h6>
                                                 <div class="row">
-                                                    <div class="col-md-4 mb-3">
+                                                    <div class="col-md-12 mb-3">
                                                         <label for="button_1_title" class="form-label">Button Text <span
                                                                 class="text-danger">*</span></label>
                                                         <input type="text" class="form-control" name="button_1_title"
                                                             id="button_1_title" placeholder="e.g. Read More">
                                                     </div>
-                                                    <div class="col-md-8 mb-3">
+                                                    <div class="col-md-8 mb-3 d-none">
                                                         <label for="button_1_url" class="form-label">Button URL <span
                                                                 class="text-danger">*</span></label>
                                                         <input type="url" class="form-control" name="button_1_url"
@@ -362,13 +362,13 @@
                                                     </button>
                                                 </div>
                                                 <div class="row">
-                                                    <div class="col-md-4 mb-3">
+                                                    <div class="col-md-12 mb-3">
                                                         <label for="button_2_title" class="form-label">Button Text <span
                                                                 class="text-danger">*</span></label>
                                                         <input type="text" class="form-control" name="button_2_title"
                                                             id="button_2_title" placeholder="e.g. Learn More">
                                                     </div>
-                                                    <div class="col-md-8 mb-3">
+                                                    <div class="col-md-8 mb-3 d-none">
                                                         <label for="button_2_url" class="form-label">Button URL <span
                                                                 class="text-danger">*</span></label>
                                                         <input type="url" class="form-control" name="button_2_url"
@@ -464,7 +464,7 @@
                                                     class="text-danger">*</span></label>
                                             <select name="random_feed" id="random_feed" class="form-control">
                                                 <option value="" disabled selected>Select count</option>
-                                                @for ($i = 2; $i <= 10; $i++)
+                                                @for ($i = 2; $i <= 20; $i++)
                                                     <option value="{{ $i }}">{{ $i }}</option>
                                                 @endfor
                                             </select>

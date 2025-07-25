@@ -124,7 +124,7 @@ class RssAutomationController extends Controller
     public function store(Request $request)
     {
         // Validate the input
-        $validator = Validator::make($request->all(), [
+        $validator = validator::make($request->all(), [
             'rssfeedname' => 'required|max:100',
             'rssFeedUrl' => 'required|url',
             'daily_start_time' => 'required|date_format:H:i',
@@ -132,13 +132,13 @@ class RssAutomationController extends Controller
             'interval_minutes' => 'required|integer|min:5',
             'feed_type' => 'required|in:latest,random',
             'random_feed' => 'required_if:feed_type,random|integer|min:1',
-            'cta_enabled' => 'nullable|on', 
+            'cta_enabled' => 'nullable|accepted', 
             'button_1_title' => 'nullable|string',
             'button_1_url' => 'nullable|url',
             'button_2_title' => 'nullable|string',
             'button_2_url' => 'nullable|url',
             'banner_image' => 'nullable|url',
-            'banner_icon' => 'nullable',
+            'banner_icon' => 'nullable|string',
         ]);
 
         if ($validator->fails()) {
@@ -154,15 +154,15 @@ class RssAutomationController extends Controller
             'end_time' => $request->daily_end_time,
             'interval_min' => $request->interval_minutes,
             'icon' => $request->banner_icon,
-            'cta_enabled' => $request->cta_enabled ? true : false,
+            'cta_enabled' => $request->cta_enabled == "on" ? true : false,
             'is_active' => true,
         ];
 
-        if ($request->cta_enabled) {
+        if ($request->cta_enabled == "on") {
             $dataToStore['button1_title'] = $request->button_1_title;
-            $dataToStore['button1_url'] = $request->button_1_url;
+            $dataToStore['button1_url'] = null; // $request->button_1_url
             $dataToStore['button2_title'] = $request->button_2_title;
-            $dataToStore['button2_url'] = $request->button_2_url;
+            $dataToStore['button2_url'] = null; // $request->button_2_url
         } else {
             $dataToStore['button1_title'] = null;
             $dataToStore['button1_url'] = null;
@@ -375,7 +375,7 @@ class RssAutomationController extends Controller
             'interval_minutes' => 'required|integer|min:5',
             'feed_type' => 'required|in:latest,random',
             'random_feed' => 'required_if:feed_type,random|integer|min:1',
-            'cta_enabled' => 'nullable|on',
+            'cta_enabled' => 'nullable|accepted',
             'button_1_title' => 'nullable|string',
             'button_1_url' => 'nullable|url',
             'button_2_title' => 'nullable|string',
@@ -406,9 +406,9 @@ class RssAutomationController extends Controller
 
             if ($request->cta_enabled == "on") {
                 $dataToUpdate['button1_title'] = $request->button_1_title;
-                $dataToUpdate['button1_url'] = $request->button_1_url;
+                $dataToUpdate['button1_url'] = null; // $request->button_1_url
                 $dataToUpdate['button2_title'] = $request->button_2_title;
-                $dataToUpdate['button2_url'] = $request->button_2_url;
+                $dataToUpdate['button2_url'] = null; // $request->button_2_url
             } else {
                 $dataToUpdate['button1_title'] = null;
                 $dataToUpdate['button1_url'] = null;

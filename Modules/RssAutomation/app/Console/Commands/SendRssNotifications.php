@@ -47,7 +47,12 @@ class SendRssNotifications extends Command
 
                             // If no record found or if interval has passed
                             if (!$notificationRecord || $this->shouldSendNotification($notificationRecord->last_sent_at, $feed->interval_min)) {
-                                $rssData = $this->fetchRssFeed($feed->url, $feed->type, $feed->random_count);
+
+                                $randomCount = ($feed->type === 'random' && $feed->random_count)
+                                ? (int) $feed->random_count
+                                : 1;
+
+                                $rssData = $this->fetchRssFeed($feed->url, $feed->type, $randomCount);
                                 $itemToSend = $this->selectItemToSend($rssData, $feed->type);
 
                                 if ($itemToSend) {
@@ -79,7 +84,7 @@ class SendRssNotifications extends Command
         Log::info('Finished RSS dispatch', ['total_dispatched' => $this->totalDispatched]);
     }
 
-    private function fetchRssFeed(string $url, string $feedType, int $randomCount)
+    private function fetchRssFeed(string $url, string $feedType, int $randomCount = 1)
     {
         // Retry logic for fetching RSS feed with timeouts and error handling
         return retry(3, function () use ($url, $feedType, $randomCount) {
@@ -197,11 +202,11 @@ class SendRssNotifications extends Command
 
 
         $image = trim($item['image']);
-        if (strlen($image) > 225) {
-            $image = null;
-        } else {
-            $image = Str::limit($image, 225);
-        }
+        // if (strlen($image) > 225) {
+        //     $image = null;
+        // } else {
+        //     $image = Str::limit($image, 225);
+        // }
 
         $targetUrl = strlen($item['link']) > 225 ? $link : $item['link'];
         
@@ -216,9 +221,9 @@ class SendRssNotifications extends Command
             'segment_type'      => 'rss',
             'segment_id'        => null,
             'btn_1_title'       => $feed->button1_title,
-            'btn_1_url'         => $feed->button1_url,
+            'btn_1_url'         => $targetUrl, // $feed->button1_url
             'btn_title_2'       => $feed->button2_title,
-            'btn_url_2'         => $feed->button2_url,
+            'btn_url_2'         => $targetUrl, // $feed->button2_url
         ];
     }
 
