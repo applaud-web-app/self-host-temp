@@ -1,6 +1,5 @@
 {
     "ApluAnalytics": true,
     "RssAutomation": true,
-    "Import": true,
     "CustomPrompt": true
 }
