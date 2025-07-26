@@ -14,6 +14,7 @@ use App\Http\Controllers\SegmentationController;
 use App\Http\Controllers\AddonController; 
 use App\Http\Controllers\UpdateController;
 use App\Http\Controllers\IconController;
+use App\Http\Controllers\ImportExportController;
 use Intervention\Image\Facades\Image;
 
 // REMOVED CODE
@@ -132,6 +133,20 @@ Route::middleware(['auth','ensure_push_config'])->group(function() {
             Route::get('/view-log', 'viewLog')->name('view-log');
         });
     });
+
+Route::middleware(['auth'])->controller(ImportExportController::class)->prefix('import-export')->name('import-export.')->group(function () {
+    // Show import page
+    Route::get('/import', 'showImportForm')->name('import');
+    
+    // Show export page
+    Route::get('/export', 'showExportForm')->name('export');
+    
+    // Import data (for future implementation)
+    Route::post('/import', 'importData')->name('import-data');
+    
+    // Export data (for future implementation)
+    Route::get('/export-data', 'exportData')->name('export-data');
+});
     
     Route::prefix('update')->group(function () {
         Route::get('/', [UpdateController::class, 'index'])->name('update.index');

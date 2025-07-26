@@ -53,8 +53,17 @@ class DomainController extends Controller
                     $param = ['domain' => $row->name];
                     $integrateEncryptUrl = encryptUrl($integrateUrl, $param);
 
+                     $importUrl = route('import-export.import');
+                     $exportUrl = route('import-export.export');
+
                     return '<a href="'.$integrateEncryptUrl.'" class="btn btn-sm btn-secondary">
-                        <i class="fas fa-plug me-1"></i> Integrate </a>';
+                        <i class="fas fa-plug me-1"></i> Integrate </a>
+                        <a href="'.$importUrl.'" class="btn btn-sm btn-primary ms-2">
+                        <i class="fas fa-download me-1"></i> Import 
+                    </a>
+                    <a href="'.$exportUrl.'" class="btn btn-sm btn-success ms-2">
+                        <i class="fas fa-upload me-1"></i> Export 
+                    </a>';
                 })
                 ->rawColumns(['actions','status'])
                 ->make(true);
