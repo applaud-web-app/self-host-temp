@@ -51,10 +51,10 @@ class DomainController extends Controller
                 $importUrl = route('import-export.import');
                 $exportUrl = route('import-export.export');
 
-                return '<a href="'.$importUrl.'" class="btn btn-sm btn-primary">
+                return '<a href="'.$importUrl.'" class="btn btn-sm btn-outline-primary">
                             <i class="fas fa-download"></i> Import
                         </a>
-                        <a href="'.$exportUrl.'" class="btn btn-sm btn-success ms-2">
+                        <a href="'.$exportUrl.'" class="btn btn-sm btn-outline-success ms-2">
                             <i class="fas fa-upload"></i> Export
                         </a>';
             })
