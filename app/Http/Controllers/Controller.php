@@ -11,13 +11,13 @@ use Illuminate\Support\Facades\Auth;
 
 class Controller extends \Illuminate\Routing\Controller
 {    
-    public function __construct(Request $request)
-    {
+    // public function __construct(Request $request)
+    // {
         // if (Auth::check() && isUserRequest($request)) {
         //     if (!DriverConfig::sync()) {
         //         Log::error("Middleware integrity check failed for: Global Controller");
         //         LicenseCache::warmUpKeys();
         //     }
         // }
-    }
+    // }
 }
