@@ -42,15 +42,15 @@ class AppServiceProvider extends ServiceProvider
             }
         }
 
-        $request = Request::capture();
-        if (Auth::check() && isUserRequest($request)) {
-            if (!str_starts_with(request()->path(), 'install') && !LicenseCache::validate()) {
-                register_shutdown_function(function () {
-                    Log::error("check DOmain AppServiceProvider");
-                    \App\Support\LicenseCache::warmUpKeys();
-                });
-            }
-        }
+        // $request = Request::capture();
+        // if (Auth::check() && isUserRequest($request)) {
+        //     if (!str_starts_with(request()->path(), 'install') && !LicenseCache::validate()) {
+        //         register_shutdown_function(function () {
+        //             Log::error("check DOmain AppServiceProvider");
+        //             \App\Support\LicenseCache::warmUpKeys();
+        //         });
+        //     }
+        // }
     }
 
 }

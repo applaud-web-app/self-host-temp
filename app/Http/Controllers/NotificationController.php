@@ -484,7 +484,6 @@ class NotificationController extends Controller
     public function send(Notification $notification)
     {
         SendNotificationJob::dispatch($notification);
-
         return back()->with('success', 'Notification re-queued for sending.');
     }
 }

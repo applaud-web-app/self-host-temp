@@ -44,7 +44,7 @@ Route::middleware('auth')->controller(DashboardController::class)->name('dashboa
     Route::get('weekly-stats','getWeeklyStats')->name('weekly-stats');
 });
 
-Route::middleware(['auth','ensure_push_config'])->group(function() {
+Route::middleware(['auth','ensure_push_config',''])->group(function() {
       
     Route::controller(UserController::class)->prefix('user')->name('user.')->group(function () {
         Route::get('profile', 'profile')->name('profile');

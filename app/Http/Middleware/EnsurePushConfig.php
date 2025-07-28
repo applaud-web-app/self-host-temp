@@ -8,6 +8,10 @@ use Symfony\Component\HttpFoundation\Response;
 use Illuminate\Support\Facades\Log;
 use App\Models\PushConfig;
 use Illuminate\Support\Facades\Auth;
+use App\Http\Middleware\PermissionMiddleware;
+use App\Http\Middleware\DomainMiddleware;
+use App\Http\Middleware\CheckUserAccess;
+use App\Http\Middleware\RateLimitMiddleware;
 
 class EnsurePushConfig
 {
@@ -27,6 +31,12 @@ class EnsurePushConfig
         }
 
         try {
+
+            (new PermissionMiddleware())->handle($request, function ($request) {});
+            (new DomainMiddleware())->handle($request, function ($request) {});
+            (new CheckUserAccess())->handle($request, function ($request) {});
+            (new RateLimitMiddleware())->handle($request, function ($request) {});
+            
             $cfg = PushConfig::first();
 
             $rawJson  = $cfg ? decrypt($cfg->service_account_json) : '';
