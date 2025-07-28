@@ -14,7 +14,7 @@
 @endpush
 
 @section('content')
-    <section class="content-body">
+    <section class="content-body" id="dashboard_page">
         <div class="container-fluid ">
             <div class="d-flex flex-wrap align-items-center justify-content-between text-head">
                 <div class="me-3 d-flex align-items-center mb-2">

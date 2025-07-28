@@ -26,11 +26,11 @@
                
                         </div>
                         <div class="col-lg-3 col-md-3 col-6">
-                                <select id="filterStatus" class="form-select form-control " >
-                <option value="">All Status</option>
-                <option value="1">Active</option>
-                <option value="0">Paused</option>
-            </select>
+                        <select id="filterStatus" class="form-select form-control " >
+                            <option value="">All Status</option>
+                            <option value="1">Active</option>
+                            <option value="0">Paused</option>
+                        </select>
                         </div>
                         <div class="col-lg-3 col-md-3 col-6">
                               <select id="filterType" class="form-select form-control ">
