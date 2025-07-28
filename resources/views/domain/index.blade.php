@@ -49,7 +49,9 @@
                                     <th>#</th>
                                     <th>Name</th>
                                     <th>Status</th>
+                                    <th>Import/Export</th>
                                     <th>Created At</th>
+                                     
                                     <th>Actions</th>
                                 </tr>
                             </thead>
@@ -136,6 +138,12 @@
                     {
                         data: 'status',
                         name: 'status'
+                    },
+                     {
+                        data: 'import_export',  
+                        name: 'import_export',
+                        orderable: false,
+                        searchable: false
                     },
                     {
                         data: 'created_at',

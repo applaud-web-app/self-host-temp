@@ -24,53 +24,56 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class DomainController extends Controller
 {
-    public function view(Request $request)
-    {
-        if ($request->ajax()) {
-            $query = Domain::select(['id', 'name', 'status', 'created_at']);
+   public function view(Request $request)
+{
+    if ($request->ajax()) {
+        $query = Domain::select(['id', 'name', 'status', 'created_at']);
 
-            // server-side “search by name”
-            if ($request->filled('search_name')) {
-                $query->where('name', 'like', '%'.$request->search_name.'%');
-            }
-            // server-side “filter by status”
-            if ($request->filled('filter_status') && in_array($request->filter_status, [1,0])) {
-                $query->where('status', $request->filter_status);
-            }
-
-            return DataTables::of($query)
-                ->addIndexColumn()
-                ->addColumn('status', function ($row){
-                    $checked = $row->status == 1 ? "checked" : "";
-                    return  '<div class="form-check form-switch">
-                        <input class="form-check-input status_input" data-name="' . $row->name . '" type="checkbox" role="switch" ' . $checked . '>
-                    </div>';
-                })
-                ->editColumn('created_at', fn($row) => $row->created_at->format('d-M, Y'))
-                ->addColumn('actions', function ($row) {
-
-                    $integrateUrl = route('domain.integrate');
-                    $param = ['domain' => $row->name];
-                    $integrateEncryptUrl = encryptUrl($integrateUrl, $param);
-
-                     $importUrl = route('import-export.import');
-                     $exportUrl = route('import-export.export');
-
-                    return '<a href="'.$integrateEncryptUrl.'" class="btn btn-sm btn-secondary">
-                        <i class="fas fa-plug me-1"></i> Integrate </a>
-                        <a href="'.$importUrl.'" class="btn btn-sm btn-primary ms-2">
-                        <i class="fas fa-download me-1"></i> Import 
-                    </a>
-                    <a href="'.$exportUrl.'" class="btn btn-sm btn-success ms-2">
-                        <i class="fas fa-upload me-1"></i> Export 
-                    </a>';
-                })
-                ->rawColumns(['actions','status'])
-                ->make(true);
+        // server-side “search by name”
+        if ($request->filled('search_name')) {
+            $query->where('name', 'like', '%'.$request->search_name.'%');
+        }
+        // server-side “filter by status”
+        if ($request->filled('filter_status') && in_array($request->filter_status, [1, 0])) {
+            $query->where('status', $request->filter_status);
         }
 
-        return view('domain.index');
+        return DataTables::of($query)
+            ->addIndexColumn()
+            ->addColumn('status', function ($row) {
+                $checked = $row->status == 1 ? "checked" : "";
+                return  '<div class="form-check form-switch">
+                            <input class="form-check-input status_input" data-name="' . $row->name . '" type="checkbox" role="switch" ' . $checked . '>
+                        </div>';
+            })
+            ->editColumn('created_at', fn($row) => $row->created_at->format('d-M, Y'))
+            ->addColumn('import_export', function ($row) {
+                $importUrl = route('import-export.import');
+                $exportUrl = route('import-export.export');
+
+                return '<a href="'.$importUrl.'" class="btn btn-sm btn-primary">
+                            <i class="fas fa-download"></i> Import
+                        </a>
+                        <a href="'.$exportUrl.'" class="btn btn-sm btn-success ms-2">
+                            <i class="fas fa-upload"></i> Export
+                        </a>';
+            })
+            ->addColumn('actions', function ($row) {
+                $integrateUrl = route('domain.integrate');
+                $param = ['domain' => $row->name];
+                $integrateEncryptUrl = encryptUrl($integrateUrl, $param);
+
+                return '<a href="'.$integrateEncryptUrl.'" class="btn btn-sm btn-secondary">
+                            <i class="fas fa-plug"></i> Integrate
+                        </a>';
+            })
+            ->rawColumns(['status', 'import_export', 'actions'])
+            ->make(true);
     }
+
+    return view('domain.index');
+}
+
 
     public function create(Request $request)
     {
