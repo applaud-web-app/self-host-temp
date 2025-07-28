@@ -1,6 +1,6 @@
 @extends('layouts.master')
 @section('content')
-<section class="content-body">
+<section class="content-body" id="server_info_page">
   <div class="container-fluid">
     {{-- Page Header --}}
     <div class="text-head mb-3">

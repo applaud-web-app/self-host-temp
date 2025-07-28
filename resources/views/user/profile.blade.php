@@ -23,7 +23,7 @@
 @endpush
 
 @section('content')
-<section class="content-body">
+<section class="content-body" id="profile_page">
   <div class="container-fluid">
     <div class="row">
 

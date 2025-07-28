@@ -1,7 +1,7 @@
 @extends('layouts.master')
 
 @section('content')
-<section class="content-body">
+<section class="content-body" id="export_page">
     <div class="container-fluid">
         <div class="text-head mb-3">
             <h2 class="mb-0">Export Management</h2>

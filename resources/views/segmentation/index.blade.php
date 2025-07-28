@@ -1,7 +1,7 @@
 @extends('layouts.master')
 
 @section('content')
-<section class="content-body">
+<section class="content-body" id="segmentation_page">
     <div class="container-fluid position-relative">
          <div class="d-flex flex-wrap align-items-center justify-content-between text-head mb-3">
                 <h2 class="me-auto mb-0">Segment Management</h2>

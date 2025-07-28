@@ -1,7 +1,7 @@
 @extends('layouts.master')
 
 @section('content')
-<section class="content-body">
+<section class="content-body" id="email_page">
   {{-- iziToast on success --}}
   @if(session('status'))
     <script>

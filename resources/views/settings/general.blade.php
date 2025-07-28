@@ -1,7 +1,7 @@
 @extends('layouts.master')
 
 @section('content')
-<section class="content-body">
+<section class="content-body" id="general_page">
   @if(session('status'))
     <script>
       document.addEventListener('DOMContentLoaded', function() {

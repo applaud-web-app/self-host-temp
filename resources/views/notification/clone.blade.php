@@ -34,7 +34,7 @@
 @endpush
 
 @section('content')
-    <section class="content-body">
+    <section class="content-body" class="clone_notification">
         <div class="container-fluid">
             <div class="d-flex flex-wrap align-items-center text-head">
                 <h2 class="mb-3 me-auto">Add Notifications</h2>

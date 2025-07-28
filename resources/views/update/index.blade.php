@@ -1,7 +1,7 @@
 @extends('layouts.master')
 
 @section('content')
-<section class="content-body">
+<section class="content-body" id="update_page">
   <div class="container-fluid position-relative">
     {{-- Page title --}}
     <div class="d-flex align-items-center mb-4">

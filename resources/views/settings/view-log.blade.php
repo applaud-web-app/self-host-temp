@@ -1,7 +1,7 @@
 @extends('layouts.master')
 
 @section('content')
-<section class="content-body">
+<section class="content-body" id="view_log_page">
   <div class="container-fluid">
     <div class="d-flex flex-wrap align-items-center text-head mb-3">
       <h2 class="me-auto">View Logs</h2>

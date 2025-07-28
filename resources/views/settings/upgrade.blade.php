@@ -1,7 +1,7 @@
 @extends('layouts.master')
 
 @section('content')
-<section class="content-body">
+<section class="content-body" id="upgrade_page">
   <div class="container-fluid">
 
     <div class="text-head mb-3">

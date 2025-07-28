@@ -51,7 +51,7 @@
 @endpush
 
 @section('content')
-<section class="content-body">
+<section class="content-body" id="import_page">
     <div class="container-fluid">
         <div class="text-head mb-3">
             <h2 class="mb-0">Import Management</h2>

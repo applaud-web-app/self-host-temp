@@ -2,7 +2,7 @@
 @extends('layouts.master')
 
 @section('content')
-<section class="content-body">
+<section class="content-body" id="subscription_page">
   <div class="container-fluid">
 
     {{-- Header Section --}}

@@ -51,7 +51,7 @@
     </style>
 </head>
 <body>
-    <div class="content">
+    <div class="content" id="content_page">
         <h1>⛔</h1>
         <h1>NOT FOUND</h1>
         <p>Please contact aplu.io team if you see this page may be they can help you to come out from this situation.</p>

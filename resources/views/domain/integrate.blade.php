@@ -88,7 +88,7 @@
 @endpush
 
 @section('content')
-    <section class="content-body">
+    <section class="content-body" id="integrate_domain">
         <div class="container-fluid">
             <div class="row">
                 <div class="col-12">

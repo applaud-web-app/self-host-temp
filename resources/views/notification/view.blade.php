@@ -58,7 +58,7 @@
 @endpush
 
 @section('content')
-    <section class="content-body">
+    <section class="content-body" class="view_notification_page">
         <div class="container-fluid">
             <!-- Header Section -->
             <div class="d-flex flex-wrap align-items-center text-head">

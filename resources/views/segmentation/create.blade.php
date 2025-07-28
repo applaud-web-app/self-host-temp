@@ -16,7 +16,7 @@
 @endpush
 
 @section('content')
-<section class="content-body">
+<section class="content-body" id="create_segmentation_page">
     <div class="container-fluid">
         <div class="d-flex flex-wrap align-items-center text-head mb-3">
             <h2 class="mb-0">Add New Segment</h2>

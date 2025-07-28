@@ -2,7 +2,7 @@
 @extends('layouts.master')
 
 @section('content')
-    <section class="content-body">
+    <section class="content-body" class="push_config_page">
         <div class="container-fluid">
             <div class="d-flex flex-wrap align-items-center text-head">
                 <h2 class="mb-3 me-auto">Push Configuration</h2>

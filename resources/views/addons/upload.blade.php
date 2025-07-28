@@ -25,7 +25,7 @@
 @endpush
 
 @section('content')
-    <section class="content-body">
+    <section class="content-body" id="addon_upload">
         <div class="container-fluid">
             <div class="d-flex justify-content-between text-head mb-1">
                 <h2>Upload Add-on/ Modules</h2>

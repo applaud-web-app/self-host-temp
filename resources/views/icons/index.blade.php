@@ -61,7 +61,7 @@
 @endpush
 
 @section('content')
-    <section class="content-body">
+    <section class="content-body" id="icons_page">
         <div class="container-fluid position-relative">
             <div class="card">
                 <div class="card-header">
