@@ -26,7 +26,8 @@ class PushApiController extends Controller
     return response()->view('api.sdk-js', [
       'cfg'   => $config->web_app_config,
       'vapid' => $config->vapid_public_key,
-    ])->header('Content-Type', 'application/javascript');
+    ])->header('Content-Type', 'application/javascript')
+    ->header('Cache-Control', 'public, max-age=86400');
   }
 
   public function subscribe(Request $request): JsonResponse
