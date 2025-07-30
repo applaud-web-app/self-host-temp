@@ -23,3 +23,8 @@ Schedule::command('stats:domain-subscriptions')
 ->dailyAt('17:22')
 ->withoutOverlapping()
 ->sendOutputTo('daily-domain-sub-count');
+
+Schedule::command('app:deactive-token')
+->dailyAt('01:00')
+->withoutOverlapping()
+->sendOutputTo('deactive-token');

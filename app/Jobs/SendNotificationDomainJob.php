@@ -39,6 +39,7 @@ class SendNotificationDomainJob implements ShouldQueue
             $now       = now();
 
             $success = $failed = 0;
+            $totalSent = 0; // Track total notifications sent
 
             // chunk only id+token for this domain
             PushSubscriptionHead::where('status',1)
@@ -46,26 +47,33 @@ class SendNotificationDomainJob implements ShouldQueue
                 ->select('id','token')
                 ->orderBy('id')
                 ->chunkById(500, function($subs) use (
-                    $messaging, $message, &$success, &$failed, $now
+                    $messaging, $message, &$success, &$failed, &$totalSent, $now
                 ) {
                     $list   = $subs->values()->all();
                     $tokens = array_column($list, 'token');
                     if (!$tokens) return;
 
                     $report = $messaging->sendMulticast($message, $tokens);
-                    $s      = $report->successes()->count();
-                    $f      = $report->failures()->count();
+                    $s = $report->successes()->count();
+                    $f = $report->failures()->count();
                     $success += $s;
                     $failed  += $f;
+                    
+                    // Increase the total sent count
+                    $totalSent += count($tokens);
+
+                    // After sending 10,000 notifications, add a 1-second delay
+                    if ($totalSent >= 10000) {
+                        sleep(1); // Add a 1-second delay
+                        $totalSent = 0; // Reset the counter for the next set
+                    }
 
                     // deactivate bad tokens
-                    $idxs = array_keys($report->failures()->getItems());
-                    if ($idxs) {
-                        $bad = array_map(fn($i) => $list[$i]->id, $idxs);
-                        DB::table('push_subscriptions_head')
-                          ->whereIn('id',$bad)
-                          ->update(['status'=>0]);
-                    }
+                    // $idxs = array_keys($report->failures()->getItems());
+                    // if ($idxs) {
+                    //     $bad = array_map(fn($i) => $list[$i]->id, $idxs);
+                    //     DB::table('push_subscriptions_head')->whereIn('id',$bad)->update(['status'=>0]);
+                    // }
 
                     // record each send in bulk
                     $rows = [];
