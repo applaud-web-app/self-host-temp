@@ -48,13 +48,16 @@ class DomainController extends Controller
             })
             ->editColumn('created_at', fn($row) => $row->created_at->format('d-M, Y'))
             ->addColumn('import_export', function ($row) {
-                $importUrl = route('import-export.import');
-                $exportUrl = route('import-export.export');
+                $importUrl = route('migration.import');
+                $exportUrl = route('migration.export');
+                $param = ['domain' => $row->name];
+                $encryptImportUrl = encryptUrl($importUrl, $param);
+                $encryptExportUrl = encryptUrl($exportUrl, $param);
 
-                return '<a href="'.$importUrl.'" class="btn btn-sm btn-outline-primary">
+                return '<a href="'.$encryptImportUrl.'" class="btn btn-sm btn-outline-primary">
                             <i class="fas fa-download"></i> Import
                         </a>
-                        <a href="'.$exportUrl.'" class="btn btn-sm btn-outline-success ms-2">
+                        <a href="'.$encryptExportUrl.'" class="btn btn-sm btn-outline-success ms-2">
                             <i class="fas fa-upload"></i> Export
                         </a>';
             })

@@ -14,6 +14,8 @@ use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\StartSession;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
 use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
+use App\Http\Middleware\BeforeMiddleware;
+use App\Http\Middleware\AfterMiddleware;
 
 
 return Application::configure(basePath: dirname(__DIR__))
@@ -25,11 +27,6 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware) {
         $middleware->prepend(CheckInstallation::class);
-        // ONLINE UNCOMMENT AFTER ACTIVATION
-        // $middleware->prepend(PermissionMiddleware::class);
-        // $middleware->prepend(DomainMiddleware::class);
-        // $middleware->prepend(CheckUserAccess::class);
-        // $middleware->prepend(RateLimitMiddleware::class);
         $middleware->alias([
             'ensure_push_config' => EnsurePushConfig::class,
         ]);

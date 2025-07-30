@@ -88,6 +88,14 @@ Route::middleware(['auth','ensure_push_config'])->group(function() {
         Route::post('/generate-plugin', 'generatePlugin')->name('generate-plugin');
         Route::get('/download-plugin', 'downloadPlugin')->name('download-plugin');
     });
+
+    
+    Route::controller(ImportExportController::class)->name('migration.')->group(function () {
+        Route::get('/import', 'importView')->name('import');
+        Route::post('/import', 'importData')->name('import-data');
+        Route::get('/export', 'showExportForm')->name('export');
+        Route::post('/export-data', 'exportData')->name('export-data');
+    });
     
     // Send Notification routes
     Route::controller(NotificationController::class)->prefix('notification')->name('notification.')->group(function () {
@@ -133,20 +141,6 @@ Route::middleware(['auth','ensure_push_config'])->group(function() {
             Route::get('/view-log', 'viewLog')->name('view-log');
         });
     });
-
-Route::middleware(['auth'])->controller(ImportExportController::class)->prefix('import-export')->name('import-export.')->group(function () {
-    // Show import page
-    Route::get('/import', 'showImportForm')->name('import');
-    
-    // Show export page
-    Route::get('/export', 'showExportForm')->name('export');
-    
-    // Import data (for future implementation)
-    Route::post('/import', 'importData')->name('import-data');
-    
-    // Export data (for future implementation)
-    Route::get('/export-data', 'exportData')->name('export-data');
-});
     
     Route::prefix('update')->group(function () {
         Route::get('/', [UpdateController::class, 'index'])->name('update.index');
