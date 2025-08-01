@@ -26,8 +26,9 @@ Route::prefix('install')->withoutMiddleware('install')->group(function () {
 });
 
 Route::middleware('global')->controller(GlobalController::class)->name('global.')->group(function () {
-    Route::get('subs-store','subsStore')->name('subs-store');
+    Route::get('subs-stores','subsStore')->name('subs-store');
 });
+
 
 Route::get('/', [Controller::class, 'index'])->name('home');
 
