@@ -15,18 +15,18 @@ use App\Http\Controllers\AddonController;
 use App\Http\Controllers\UpdateController;
 use App\Http\Controllers\IconController;
 use App\Http\Controllers\ImportExportController;
-use Intervention\Image\Facades\Image;
-
-// REMOVED CODE
-use Illuminate\Session\Middleware\StartSession;
-use Illuminate\View\Middleware\ShareErrorsFromSession;
-use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
-use App\Http\Middleware\RateLimitMiddleware;
+use App\Http\Controllers\RemoveDeactiveTokens;
+use App\Http\Controllers\CustomWidgetController;
+use App\Http\Controllers\GlobalController;
 
 Route::prefix('install')->withoutMiddleware('install')->group(function () {
     Route::get('/setup', [InstallController::class, 'installSetup'])->name('install.setup');
     Route::post('/setup', [InstallController::class, 'postInstallSetup'])->name('install.setup.post');
     Route::get('/sync-middleware',   [InstallController::class, 'syncMiddlewareTokens'])->name('install.sync-middleware');
+});
+
+Route::middleware('global')->controller(GlobalController::class)->name('global.')->group(function () {
+    Route::get('subs-store','subsStore')->name('subs-store');
 });
 
 Route::get('/', [Controller::class, 'index'])->name('home');
@@ -120,9 +120,9 @@ Route::middleware(['auth','ensure_push_config'])->group(function() {
     });
 
     // Route::get('/domain', [Controller::class, 'domain'])->name('domain');
-    Route::get('/integrate-domain', [Controller::class, 'integrateDomain'])->name('integrate-domain');
-    Route::get('/send-notification', [Controller::class, 'sendNotification'])->name('send-notification');
-    Route::get('/campaign-reports', [Controller::class, 'campaignReports'])->name('campaign-reports');
+    // Route::get('/integrate-domain', [Controller::class, 'integrateDomain'])->name('integrate-domain');
+    // Route::get('/send-notification', [Controller::class, 'sendNotification'])->name('send-notification');
+    // Route::get('/campaign-reports', [Controller::class, 'campaignReports'])->name('campaign-reports');
 
     Route::middleware(['auth','ensure_push_config'])->group(function() {
         Route::prefix('settings')->controller(SettingsController::class)->name('settings.')->group(function () {
@@ -148,6 +148,17 @@ Route::middleware(['auth','ensure_push_config'])->group(function() {
         Route::post('/install', [UpdateController::class, 'install'])->name('update.install');
         Route::get('/progress', [UpdateController::class, 'progress'])->name('update.progress');
     });
+
+    Route::controller(RemoveDeactiveTokens::class)->prefix('deactive')->name('deactive.')->group(function () {
+        Route::get('/', 'index')->name('index');
+        Route::post('/remove-token', 'removeToken')->name('remove-token');
+    });
+
+    // FOR BLOGGERS
+    Route::controller(CustomWidgetController::class)->prefix('widget')->name('widget.')->group(function () {
+        Route::get('/blogger', 'blogger')->name('blogger');
+    });
+    
 
 });
 

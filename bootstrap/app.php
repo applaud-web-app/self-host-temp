@@ -16,7 +16,7 @@ use Illuminate\View\Middleware\ShareErrorsFromSession;
 use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
 use App\Http\Middleware\BeforeMiddleware;
 use App\Http\Middleware\AfterMiddleware;
-
+use App\Http\Middleware\FrameHeadersMiddleware;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -29,6 +29,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->prepend(CheckInstallation::class);
         $middleware->alias([
             'ensure_push_config' => EnsurePushConfig::class,
+            'global' => FrameHeadersMiddleware::class,
         ]);
         $middleware->group('install', [
             StartSession::class,
