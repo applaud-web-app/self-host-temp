@@ -47,10 +47,32 @@ class SubscribePushSubscriptionJob implements ShouldQueue
             DB::beginTransaction();
 
             // STEP 1: Head
-            $head = PushSubscriptionHead::firstOrNew(['token' => $filterToken]);
-            $head->token  = $newToken;
-            $head->domain = $domain;
-            $head->save();
+            // $head = PushSubscriptionHead::firstOrNew(['token' => $filterToken]);
+            // $head->token  = $newToken;
+            // $head->domain = $domain;
+            // $head->save();
+
+            // STEP 1: Check if the newToken exists in the DB, if so, update, otherwise create
+            $head = PushSubscriptionHead::where('token', $newToken)->first();
+            if (!$head) {
+                // If no head exists for newToken, check for the oldToken
+                $head = PushSubscriptionHead::where('token', $oldToken)->first();
+                if ($head) {
+                    $head->token = $newToken;
+                    $head->domain = $domain;
+                    $head->save();
+                } else {
+                    $head = new PushSubscriptionHead();
+                    $head->token = $newToken;
+                    $head->domain = $domain;
+                    $head->save();
+                }
+            } else {
+                // If newToken exists, simply update the domain
+                $head->domain = $domain;
+                $head->save();
+            }
+
 
             // STEP 2: Payload
             PushSubscriptionPayload::updateOrCreate(
