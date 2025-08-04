@@ -9,7 +9,7 @@
                     <p>Copy the code below to include the widget on your site.</p>
 
                     <!-- Script Display with Copy Icon -->
-                    <div class="card">
+                    <div class="card h-auto">
                         <div class="card-body">
                             <!-- Code Preview with Syntax Highlighting (Prism.js) -->
                             <pre class="line-numbers  rounded-1 mb-3">
