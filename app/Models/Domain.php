@@ -16,7 +16,7 @@ class Domain extends Model
 
    public function subscriptions()
    {
-      return $this->hasMany(PushSubscriptionHead::class, 'domain', 'name');
+      return $this->hasMany(PushSubscriptionHead::class, 'parent_origin', 'name');
    }
 
    public function license()

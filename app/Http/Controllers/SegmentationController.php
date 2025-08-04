@@ -399,7 +399,7 @@ class SegmentationController extends Controller
         $q = DB::table('push_subscriptions_head as h')
             ->join('push_subscriptions_meta as m', 'm.head_id', '=', 'h.id')
             ->where('h.status', 1)
-            ->where('h.domain', $data['domain_name']);
+            ->where('h.parent_origin', $data['domain_name']);
 
             /* Device filter */
             if ($data['segment_type'] === 'device') {

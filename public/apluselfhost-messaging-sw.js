@@ -20,15 +20,15 @@ firebase.initializeApp({
 });
 
 const messaging = firebase.messaging();
-const ANALYTICS_ENDPOINT = "{{route('api.push.notify')}}";
-const SUBSCRIBE_ENDPOINT = "{{route('api.subscribe')}}";
+const ANALYTICS_ENDPOINT = self.location.origin + "/api/push/analytics";
+const SUBSCRIBE_ENDPOINT = self.location.origin + "/api/push/subscribe";
 const DEFAULT_ICON       = '/favicon.ico';
 
 // 3) Analytics helper
 function sendAnalytics(eventType, messageId) {
   return fetch(ANALYTICS_ENDPOINT, {
     method: "POST",
-    credentials: "same-origin",          // keep cookies (e.g. Sanctum) if needed
+    credentials: "same-origin",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       message_id: messageId,
