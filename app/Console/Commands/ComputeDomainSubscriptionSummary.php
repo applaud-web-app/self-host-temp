@@ -34,7 +34,7 @@ class ComputeDomainSubscriptionSummary extends Command
 
             // Preload new-subscriber counts by domain for yesterday
             $counts = DB::table('push_subscriptions_head')
-                ->select('domain as domain_name', DB::raw('COUNT(*) as cnt'))
+                ->select('parent_origin as domain_name', DB::raw('COUNT(*) as cnt'))
                 ->whereDate('created_at', $yesterday)
                 ->groupBy('domain')
                 ->pluck('cnt', 'domain_name');

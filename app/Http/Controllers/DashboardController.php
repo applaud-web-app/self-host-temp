@@ -49,7 +49,7 @@ class DashboardController extends Controller
 
         $stats = Cache::remember($cacheKey, now()->addMinutes(5), function() use($domain) {
             return DB::table('push_subscriptions_head')
-                ->where('domain', $domain->name)
+                ->where('parent_origin', $domain->name)
                 ->selectRaw('COUNT(*) AS total')
                 ->selectRaw("SUM(CASE WHEN status='1'   THEN 1 ELSE 0 END) AS active")
                 ->selectRaw("SUM(CASE WHEN created_at >= ? THEN 1 ELSE 0 END) AS monthly", [ now()->startOfMonth() ])
@@ -158,7 +158,7 @@ class DashboardController extends Controller
         // fetch subscriber counts
         $subsData = Cache::remember($subKey, now()->addMinutes(5), function() use($domain, $startOfWeek) {
             return DB::table('push_subscriptions_head')
-                ->where('domain', $domain->name)
+                ->where('parent_origin', $domain->name)
                 ->where('created_at','>=', $startOfWeek)
                 ->selectRaw("DATE(created_at) AS day, COUNT(*) AS cnt")
                 ->groupBy('day')

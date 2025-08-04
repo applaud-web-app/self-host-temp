@@ -37,7 +37,7 @@ class SubscribePushSubscriptionJob implements ShouldQueue
     {
         $newToken = $this->data['token'];
         $domain   = $this->data['domain'];
-        $parent_origin   = $this->data['parent_origin'];
+        $parent_origin   = $this->data['parent_origin'] ?? null;
         $oldToken = $this->data['old_token'] ?? null;
 
         $filterToken = $oldToken ?: $newToken;
@@ -61,13 +61,13 @@ class SubscribePushSubscriptionJob implements ShouldQueue
                 if ($head) {
                     $head->token = $newToken;
                     $head->domain = $domain;
-                    $head->parent_origin = $parent_origin;
+                    $head->parent_origin = $parent_origin ?? $domain;
                     $head->save();
                 } else {
                     $head = new PushSubscriptionHead();
                     $head->token = $newToken;
                     $head->domain = $domain;
-                    $head->parent_origin = $parent_origin;
+                    $head->parent_origin = $parent_origin ?? $domain;
                     $head->save();
                 }
             } else {

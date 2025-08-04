@@ -30,7 +30,7 @@ Route::middleware('global')->controller(GlobalController::class)->name('global.'
 });
 
 
-Route::get('/', [Controller::class, 'index'])->name('home');
+// Route::get('/', [Controller::class, 'index'])->name('home');
 
 // First page is login
 Route::controller(AuthController::class)->group(function () {
@@ -158,6 +158,7 @@ Route::middleware(['auth','ensure_push_config'])->group(function() {
     // FOR BLOGGERS
     Route::controller(CustomWidgetController::class)->prefix('widget')->name('widget.')->group(function () {
         Route::get('/blogger', 'blogger')->name('blogger');
+        Route::get('/amp', 'amp')->name('amp');
     });
     
 
