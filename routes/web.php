@@ -26,7 +26,7 @@ Route::prefix('install')->withoutMiddleware('install')->group(function () {
 });
 
 Route::middleware('global')->controller(GlobalController::class)->name('global.')->group(function () {
-    Route::get('subs-stores','subsStore')->name('subs-store');
+    Route::get('permission.html','subsStore')->name('subs-store');
 });
 
 

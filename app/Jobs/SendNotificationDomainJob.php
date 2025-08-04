@@ -69,7 +69,7 @@ class SendNotificationDomainJob implements ShouldQueue
                     }
 
                     // deactivate bad tokens
-                    // $idxs = array_keys($report->failures()->getItems());
+                    $idxs = array_keys($report->failures()->getItems());
                     // if ($idxs) {
                     //     $bad = array_map(fn($i) => $list[$i]->id, $idxs);
                     //     DB::table('push_subscriptions_head')->whereIn('id',$bad)->update(['status'=>0]);

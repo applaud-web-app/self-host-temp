@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class PushSubscriptionHead extends Model
 {
     protected $table = 'push_subscriptions_head';
-    protected $fillable = ['token', 'domain','status'];
+    protected $fillable = ['token', 'domain','parent_origin','status'];
 
     /**
      * Owning domain.

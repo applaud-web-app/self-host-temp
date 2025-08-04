@@ -87,12 +87,12 @@ class SendSegmentNotificationDomainJob implements ShouldQueue
                           $failed  += $f;
 
                           $idxs = array_keys($report->failures()->getItems());
-                          if (! empty($idxs)) {
-                              $bad = array_map(fn($i) => $list[$i]->id, $idxs);
-                              DB::table('push_subscriptions_head')
-                                ->whereIn('id', $bad)
-                                ->update(['status'=>0]);
-                          }
+                        //   if (! empty($idxs)) {
+                        //       $bad = array_map(fn($i) => $list[$i]->id, $idxs);
+                        //       DB::table('push_subscriptions_head')
+                        //         ->whereIn('id', $bad)
+                        //         ->update(['status'=>0]);
+                        //   }
 
                           $rows = [];
                           foreach ($list as $i => $sub) {

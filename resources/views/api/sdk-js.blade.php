@@ -93,7 +93,8 @@
       url:       location.href,
       endpoint,
       auth,
-      p256dh
+      p256dh,
+      parent_origin: new URLSearchParams(window.location.search).get('parentOrigin') || location.hostname
     });
 
     // 6e) store locally so next time we update instead of insert

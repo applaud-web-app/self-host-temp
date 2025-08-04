@@ -40,11 +40,12 @@ class PushApiController extends Controller
             'old_token' => 'nullable|string',
             'endpoint'  => 'required|url',
             'auth'      => 'required|string',
+            'parent_origin' => 'nullable|string',
             'p256dh'    => 'required|string',
             'url'       => 'nullable|url',
           ]);
 
-          // Step 2: Enrich data with IP & User Agent
+          // Step 2: Enrich data with IP - User Agent
           $data['ip_address'] = $request->header('CF-Connecting-IP') ?? $request->getClientIp();
           $data['user_agent'] = $request->userAgent();
           $data['timestamp']  = now()->timestamp;
