@@ -11,7 +11,9 @@
                     <!-- Script Display with Copy Icon -->
                     <div class="card">
                         <div class="card-body">
-                            <pre id="scriptToCopy" class="bg-light p-3 rounded">
+                            <!-- Code Preview with Syntax Highlighting (Prism.js) -->
+                            <pre class="line-numbers  rounded-1 mb-3">
+                                <code class="language-html">
 &lt;script src='{{asset('widget.js')}}'&gt;&lt;/script&gt;
 
 &lt;script&gt;
@@ -20,14 +22,15 @@
         "You can unsubscribe anytime later.", // Subheading
         "Yes", // Yes button text
         "Later", // No Button Text 
-        "{{asset('images\push\icons\alarm-clock.png')}}", // Bell Icon
+        "{{asset('images/push/icons/alarm-clock.png')}}", // Bell Icon
         "Please click 'Allow' when asked about notifications to subscribe to updates." // Popup Text
     );
     apluPush.init(); 
 &lt;/script&gt;
+                                </code>
                             </pre>
                             <!-- Copy Icon Button -->
-                            <button id="copyButton" class="btn btn-outline-primary mt-2">
+                            <button id="copyButton" class="btn btn-outline-primary btn-sm w-100 mt-2">
                                 <i class="fas fa-copy"></i> Copy Code
                             </button>
                         </div>
@@ -37,9 +40,19 @@
         </div>
     </section>
 @endsection
+
+@push('styles')
+    <!-- Prism.js Stylesheet for syntax highlighting -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.24.0/themes/prism-okaidia.min.css" rel="stylesheet" />
+@endpush
+
 @push('scripts')
+    <!-- Include Prism.js for syntax highlighting -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.24.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.24.0/plugins/line-numbers/prism-line-numbers.min.js"></script>
+
+    <!-- Copy to Clipboard Function -->
     <script>
-        // Copy to Clipboard Function
         document.getElementById('copyButton').addEventListener('click', function() {
             var copyText = document.getElementById('scriptToCopy').innerText;
 
@@ -55,8 +68,20 @@
             // Remove the temporary textarea from the document
             document.body.removeChild(textArea);
 
-            // Alert the user
-            alert("Script copied to clipboard!");
+            // Display a success alert with a similar vibe to Sublime's feedback
+            iziToast.success({
+                title: 'Copied!',
+                message: 'The script has been copied to clipboard.',
+                position: 'topRight',
+                timeout: 3000,
+                close: true,
+                displayMode: 'replace'
+            });
         });
     </script>
+
+    <!-- Include iziToast CSS for the success alert -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/izitoast/1.4.0/css/iziToast.min.css">
+    <!-- Include iziToast JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/izitoast/1.4.0/js/iziToast.min.js"></script>
 @endpush
