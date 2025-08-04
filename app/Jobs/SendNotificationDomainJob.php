@@ -43,7 +43,7 @@ class SendNotificationDomainJob implements ShouldQueue
 
             // chunk only id+token for this domain
             PushSubscriptionHead::where('status',1)
-                ->where('domain',$this->domainName)
+                ->where('parent_origin',$this->domainName)
                 ->select('id','token')
                 ->orderBy('id')
                 ->chunkById(500, function($subs) use (

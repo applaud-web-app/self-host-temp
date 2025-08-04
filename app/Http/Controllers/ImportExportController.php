@@ -174,7 +174,7 @@ class ImportExportController extends Controller
             $privateKey = decrypt($config->vapid_private_key) ?? '';
 
             // Query subscriptions for the specified domain
-            $subscriptions = PushSubscriptionHead::where('domain', $domain)->with([
+            $subscriptions = PushSubscriptionHead::where('parent_origin', $domain)->with([
                 'payload', 'meta'
             ])->chunk(500, function ($subscriptions) use ($publicKey, $privateKey, $fullPath) {
                 $rows = $subscriptions->map(function ($subscription) use ($publicKey, $privateKey) {

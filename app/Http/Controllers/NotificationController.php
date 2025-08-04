@@ -35,7 +35,7 @@ class NotificationController extends Controller
             ->leftJoin('domains as d', 'd.id', '=', 'dn.domain_id')
             ->leftJoin('push_event_counts as pec', function ($join) {
                 $join->on('pec.message_id', '=', 'n.message_id')
-                     ->on('pec.domain',      '=', 'd.name')
+                    //  ->on('pec.domain',      '=', 'd.name')
                      ->where('pec.event', 'click');
             })
             ->select([
@@ -212,7 +212,7 @@ class NotificationController extends Controller
 
             // counts ------------------------------------------------------------
             $counts = PushEventCount::where('message_id', $notification->message_id)
-                        ->where('domain', $domain)
+                        // ->where('domain', $domain)
                         ->whereIn('event', ['received', 'click'])
                         ->pluck('count', 'event');
 

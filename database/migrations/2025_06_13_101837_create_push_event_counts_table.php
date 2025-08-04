@@ -15,7 +15,6 @@ return new class extends Migration
             $table->id();
             $table->string('message_id');
             $table->string('domain');
-            $table->foreign('domain')->references('name')->on('domains')->onDelete('cascade');
             $table->string('event');
             $table->unsignedBigInteger('count')->default(0);
             $table->unique(['message_id', 'event', 'domain']);

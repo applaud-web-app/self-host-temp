@@ -46,7 +46,7 @@ class SendSegmentNotificationDomainJob implements ShouldQueue
             $success = $failed = 0;
 
             $query = PushSubscriptionHead::where('status', 1)
-                ->where('domain', $this->domainName);
+                ->where('parent_origin', $this->domainName);
 
             // apply device rules via meta.device
             $deviceTypes = SegmentDeviceRule::where('segment_id', $this->segmentId)
