@@ -1,42 +1,73 @@
 @extends('layouts.master')
 
 @section('content')
-    <section class="content-body" id="profile_page">
+    <section class="content-body">
         <div class="container-fluid">
-
-            <div class="d-flex flex-wrap align-items-center justify-content-between text-head mb-3">
-                <h2 class="me-auto mb-0">AMP Widget</h2>
+            <div class="text-head mb-3">
+                <h2 class="fw-bold mb-0 ">AMP Widget Integration</h2>
             </div>
 
             <div class="row">
                 <div class="col-12">
-                    <div class="card">
-                        <div class="card-body">
-                       
-                            <!-- Step 1: Download Buttons -->
-                            <div class="border rounded-1 p-4 mb-4">
-                                <h4 class="mb-3">Step 1: Download Required Files</h4>
-                                <p>Start by downloading the required JavaScript files and hosting them on your server. Please upload the downloaded files to the <code>root</code> directory of your website.</p>
-                               
-                                <div class="d-flex gap-3">
-                                    <a href="{{ asset('firebase-messaging.js') }}" class="btn btn-secondary" download>
-                                        <i class="fas fa-download"></i> Download Firebase Messaging JS
-                                    </a>
-                                    <a href="{{ asset('widget.js') }}" class="btn btn-secondary" download>
-                                        <i class="fas fa-download"></i> Download Widget JS
-                                    </a>
+                    <!-- Step 1: Download Files Card -->
+                    <div class="card h-auto mb-4">
+                        <div class="card-body p-4">
+                            <div class="step-header d-flex align-items-center mb-3">
+                                <div class="step-number bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 32px; height: 32px;">1</div>
+                                <h4 class="mb-0">Download Required Files</h4>
+                            </div>
+                            <p class="text-muted mb-3">Start by downloading these essential files and upload them to your website's root directory.</p>
+                            <div class="row g-3">
+                                <div class="col-lg-4 col-md-6">
+                                    <div class="download-card p-4 border text-primary rounded-2 bg-white h-100">
+                                        <div class="d-flex align-items-center mb-2">
+                                            <i class="fas fa-file-code text-primary me-2"></i>
+                                            <h6 class="mb-0">Firebase Messaging</h6>
+                                        </div>
+                                        <p class="small text-muted mb-2">Core functionality for push notifications</p>
+                                        <a href="{{ $downloadSwEncryptUrl }}" class="btn btn-sm btn-outline-primary w-100" download>
+                                            <i class="fas fa-download me-1"></i> Download
+                                        </a>
+                                    </div>
+                                </div>
+                                <div class="col-lg-4 col-md-6">
+                                    <div class="download-card p-4 border text-success rounded-2 bg-white h-100">
+                                        <div class="d-flex align-items-center mb-2">
+                                            <i class="fas fa-file-alt text-success me-2"></i>
+                                            <h6 class="mb-0">Helper Frame</h6>
+                                        </div>
+                                        <p class="small text-muted mb-2">Supporting HTML for the widget</p>
+                                        <a href="{{ asset('widget.js') }}" class="btn btn-sm btn-outline-success w-100" download>
+                                            <i class="fas fa-download me-1"></i> Download
+                                        </a>
+                                    </div>
+                                </div>
+                                <div class="col-lg-4 col-md-6">
+                                    <div class="download-card p-4 border text-info rounded-2 bg-white h-100">
+                                        <div class="d-flex align-items-center mb-2">
+                                            <i class="fas fa-file-word text-info me-2"></i>
+                                            <h6 class="mb-0">Permission Dialog</h6>
+                                        </div>
+                                        <p class="small text-muted mb-2">User permission interface</p>
+                                        <a href="{{ asset('widget.js') }}" class="btn btn-sm btn-outline-info w-100" download>
+                                            <i class="fas fa-download me-1"></i> Download
+                                        </a>
+                                    </div>
                                 </div>
                             </div>
+                        </div>
+                    </div>
 
-                            <!-- Step 2: Embed Script -->
-                            <div class="border rounded-1 p-4 mb-4">
-                                <h4 class="mb-3">Step 2: Embed Script</h4>
-                                <p>Next, copy and paste the following script into the <strong><code>&lt;head&gt;</code></strong> tag of your HTML file. This will load the widget functionality on your website.</p>
-                                
-                                <!-- Code Preview: Syntax Highlighting -->
-                                <pre class="line-numbers  rounded-1 mb-3">
-<code class="language-html">
-&lt;script src='{{ asset('widget.js') }}'&gt;&lt;/script&gt;
+                    <!-- Step 2: Embed Script Card -->
+                    <div class="card h-auto mb-4">
+                        <div class="card-body p-4">
+                            <div class="step-header d-flex align-items-center mb-3">
+                                <div class="step-number bg-success text-white rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 32px; height: 32px;">2</div>
+                                <h4 class="mb-0">Embed the Script</h4>
+                            </div>
+                            <p class="text-muted mb-3">Add this code to your <code>&lt;head&gt;</code> section to initialize the widget.</p>
+                            <div class="position-relative">
+                                <pre class="line-numbers rounded-2 mb-3"><code class="language-html">&lt;script src='{{ asset('widget.js') }}'&gt;&lt;/script&gt;
 
 &lt;script&gt;
     let apluPush = new ApluPush(
@@ -48,36 +79,33 @@
         "Please click 'Allow' when asked about notifications to subscribe to updates." // Popup Text
     );
     apluPush.init(); 
-&lt;/script&gt;
-</code>
-                                </pre>
-
-                                <button id="copyScriptButton" class="btn btn-sm w-100 btn-outline-success">
-                                    <i class="fas fa-copy"></i> Copy Script
+&lt;/script&gt;</code></pre>
+                                <button id="copyScriptButton" class="btn btn-sm btn-success position-absolute top-0 end-0 m-2">
+                                    <i class="fas fa-copy me-1"></i> Copy
                                 </button>
                             </div>
-
-                            <!-- Step 3: Button Code -->
-                            <div class="border rounded-1 p-4 mb-4">
-                                <h4 class="mb-3">Step 3: Add Button Code</h4>
-                                <p>To trigger the notification widget, you will need to place the following button code in the <strong><code>&lt;body&gt;</code></strong> tag of your HTML, where you want the button to appear.</p>
-                                
-                                <!-- Code Preview: Syntax Highlighting -->
-                                <pre class="line-numbers  rounded-1 mb-3">
-<code class="language-html">
-&lt;button id="notificationButton" class="btn btn-primary"&gt;
-    &lt;i class="fas fa-bell"&gt;&lt;/i&gt; Enable Notifications
-&lt;/button&gt;
-</code>
-                                </pre>
-
-                                <button id="copyButtonCodeButton" class="btn btn-sm w-100 btn-outline-success">
-                                    <i class="fas fa-copy"></i> Copy Button Code
-                                </button>
-                            </div>
-
                         </div>
                     </div>
+
+                    <!-- Step 3: Button Code Card -->
+                    <div class="card h-auto mb-4">
+                        <div class="card-body p-4">
+                            <div class="step-header d-flex align-items-center mb-3">
+                                <div class="step-number bg-warning text-white rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 32px; height: 32px;">3</div>
+                                <h4 class="mb-0">Add Trigger Button</h4>
+                            </div>
+                            <p class="text-muted mb-3">Place this button anywhere in your <code>&lt;body&gt;</code> where you want users to enable notifications.</p>
+                            <div class="position-relative">
+                                <pre class="line-numbers rounded-2 mb-3"><code class="language-html">&lt;button id="notificationButton" class="btn btn-primary"&gt;
+    &lt;i class="fas fa-bell me-2"&gt;&lt;/i&gt; Enable Notifications
+&lt;/button&gt;</code></pre>
+                                <button id="copyButtonCodeButton" class="btn btn-sm btn-success position-absolute top-0 end-0 m-2">
+                                    <i class="fas fa-copy me-1"></i> Copy
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
                 </div>
             </div>
         </div>
@@ -87,6 +115,24 @@
 @push('styles')
     <!-- Prism.js Stylesheet for syntax highlighting -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.24.0/themes/prism-okaidia.min.css" rel="stylesheet" />
+    <style>
+        .download-card {
+            transition: transform 0.2s ease;
+        }
+        .download-card:hover {
+            transform: translateY(-5px);
+            border: 1px solid !important;
+        }
+        .step-number {
+            font-weight: bold;
+            font-size: 14px;
+        }
+        pre {
+            position: relative;
+            background: #2d2d2d;
+            border-left: 4px solid #4CAF50;
+        }
+    </style>
 @endpush
 
 @push('scripts')
@@ -102,32 +148,47 @@
     <script>
         // Copy Script to Clipboard
         document.getElementById('copyScriptButton').addEventListener('click', function() {
-            copyToClipboard('scriptToCopy', "Script copied to clipboard!");
+            const scriptContent = `<script src='{{ asset('widget.js') }}'><\/script>
+
+<script>
+    let apluPush = new ApluPush(
+        "We want to notify you about the latest updates.", // Heading
+        "You can unsubscribe anytime later.", // Subheading
+        "Yes", // Yes button text
+        "Later", // No Button Text 
+        "{{ asset('images/push/icons/alarm-clock.png') }}", // Bell Icon
+        "Please click 'Allow' when asked about notifications to subscribe to updates." // Popup Text
+    );
+    apluPush.init(); 
+<\/script>`;
+            copyToClipboard(scriptContent, "Script copied to clipboard!");
         });
 
         // Copy Button Code to Clipboard
         document.getElementById('copyButtonCodeButton').addEventListener('click', function() {
-            copyToClipboard('buttonCodeToCopy', "Button code copied to clipboard!");
+            const buttonContent = `<button id="notificationButton" class="btn btn-primary">
+    <i class="fas fa-bell me-2"></i> Enable Notifications
+</button>`;
+            copyToClipboard(buttonContent, "Button code copied to clipboard!");
         });
 
         // Reusable Copy Function with iziToast
-        function copyToClipboard(elementId, successMessage) {
-            var copyText = document.getElementById(elementId).innerText;
-            var textArea = document.createElement('textarea');
-            textArea.value = copyText;
-            document.body.appendChild(textArea);
-            textArea.select();
-            document.execCommand("copy");
-            document.body.removeChild(textArea);
-            
-            // Show iziToast notification
-            iziToast.success({
-                title: 'Success',
-                message: successMessage,
-                position: 'topRight',
-                timeout: 3000,
-                close: true,
-                displayMode: 'replace'
+        function copyToClipboard(text, successMessage) {
+            navigator.clipboard.writeText(text).then(function() {
+                iziToast.success({
+                    title: 'Success',
+                    message: successMessage,
+                    position: 'topRight',
+                    timeout: 3000,
+                    close: true,
+                    displayMode: 'replace'
+                });
+            }, function() {
+                iziToast.error({
+                    title: 'Error',
+                    message: 'Failed to copy text',
+                    position: 'topRight'
+                });
             });
         }
     </script>

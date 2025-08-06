@@ -20,7 +20,7 @@ Schedule::command('notifications:dispatch-scheduled-segment')
 ->sendOutputTo('dispatch-scheduled-segment.log');
 
 Schedule::command('stats:domain-subscriptions')
-->dailyAt('17:22')
+->dailyAt('10:55')
 ->withoutOverlapping()
 ->sendOutputTo('daily-domain-sub-count');
 

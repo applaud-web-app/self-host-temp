@@ -184,7 +184,7 @@
                 const iconUrl = $('#iconUrl').val() || "{{ asset('images/push/icons/alarm-clock.png') }}";
 
                 const script = `
-<script src="{{ asset('widget.js') }}"><\/script>
+<script src="{{ asset('blogger.js') }}"><\/script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     let apluPush = new ApluPush(

@@ -66,9 +66,22 @@ class DomainController extends Controller
                 $param = ['domain' => $row->name];
                 $integrateEncryptUrl = encryptUrl($integrateUrl, $param);
 
-                return '<a href="'.$integrateEncryptUrl.'" class="btn btn-sm btn-secondary">
-                            <i class="fas fa-plug"></i> Integrate
-                        </a>';
+                $bloggerUrl = route('widget.blogger');
+
+                $ampUrl = route('widget.amp');
+                $integrateAmpUrl = encryptUrl($ampUrl, $param);
+
+                return '<div class="" role="group">
+                            <a href="'.$integrateEncryptUrl.'" class="btn btn-sm btn-info" title="Integrate">
+                                <i class="fas fa-link me-1"></i> Integrate
+                            </a>
+                            <a href="'.$bloggerUrl.'" class="btn btn-sm btn-primary mx-2" title="Blogger">
+                                <i class="fab fa-blogger-b me-1"></i> Blogger
+                            </a>
+                            <a href="'.$integrateAmpUrl.'" class="btn btn-sm btn-secondary" title="AMP">
+                                <i class="fas fa-bolt me-1"></i> AMP
+                            </a>
+                        </div>';
             })
             ->rawColumns(['status', 'import_export', 'actions'])
             ->make(true);
