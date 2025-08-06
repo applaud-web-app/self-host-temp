@@ -59,14 +59,7 @@
                                     <div class="col-md-6 form-group mb-4">
                                         <label class="mb-2">Icon URL</label>
                                         <div class="input-group">
-                                            <input type="text" id="iconUrl" class="form-control"
-                                                value="{{ asset('images/push/icons/alarm-clock.png') }}">
-                                            <div class="input-group-append">
-                                                <button class="btn btn-outline-secondary" type="button"
-                                                    id="iconPreviewBtn">
-                                                    <i class="fas fa-eye"></i>
-                                                </button>
-                                            </div>
+                                            <input type="text" id="iconUrl" class="form-control" value="{{ asset('images/push/icons/alarm-clock.png') }}">
                                         </div>
                                         <small class="form-text text-muted">URL of the notification icon</small>
                                     </div>
@@ -119,10 +112,7 @@
                             </div>
 
                             <div class="position-relative mb-4">
-                                <pre class="bg-dark rounded p-3 mb-0" id="scriptPre"><code class="language-html" id="scriptCode"></code></pre>
-                                <div class="position-absolute top-0 right-0 mt-2 mr-2">
-                                    <span class="badge badge-light">HTML</span>
-                                </div>
+                                <pre class="rounded p-3 mb-0" id="scriptPre"><code class="language-html" id="scriptCode"></code></pre>
                             </div>
 
                             <div class="d-flex flex-column flex-md-row">
@@ -178,35 +168,12 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.24.0/plugins/line-numbers/prism-line-numbers.min.js">
     </script>
     <script src="https://cdn.jsdelivr.net/npm/clipboard@2.0.8/dist/clipboard.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     <script>
         $(document).ready(function() {
             // Update color hex display when color picker changes
             $('#btnColor').on('input', function() {
                 $('#colorHex').text($(this).val());
-            });
-
-            // Preview icon button
-            $('#iconPreviewBtn').click(function() {
-                const iconUrl = $('#iconUrl').val();
-                if (iconUrl) {
-                    Swal.fire({
-                        title: 'Icon Preview',
-                        imageUrl: iconUrl,
-                        imageAlt: 'Notification icon preview',
-                        showConfirmButton: false,
-                        background: 'transparent',
-                        backdrop: `
-                            rgba(0,0,0,0.4)
-                            url("${iconUrl}")
-                            center left
-                            no-repeat
-                        `
-                    });
-                } else {
-                    Swal.fire('Error', 'Please enter a valid icon URL first', 'error');
-                }
             });
 
             // Generate script button
@@ -230,22 +197,22 @@
 
                     // Generate the script with proper escaping
                     const script = `
-<script src='{{ asset('widget.js') }}'><\/script>
+                        <script src='{{ asset('widget.js') }}'><\/script>
 
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        let apluPush = new ApluPush(
-            ${JSON.stringify(heading)},
-            ${JSON.stringify(subheading)},
-            ${JSON.stringify(yesText)},
-            ${JSON.stringify(noText)},
-            ${JSON.stringify(iconUrl)},
-            ${JSON.stringify(popupText)},
-            ${JSON.stringify(btnColor)}
-        );
-        apluPush.init();
-    });
-<\/script>
+                        <script>
+                            document.addEventListener('DOMContentLoaded', function() {
+                                let apluPush = new ApluPush(
+                                    ${JSON.stringify(heading)},
+                                    ${JSON.stringify(subheading)},
+                                    ${JSON.stringify(yesText)},
+                                    ${JSON.stringify(noText)},
+                                    ${JSON.stringify(iconUrl)},
+                                    ${JSON.stringify(popupText)},
+                                    ${JSON.stringify(btnColor)}
+                                );
+                                apluPush.init();
+                            });
+                        <\/script>
                     `.trim();
 
                     // Display the script
@@ -258,11 +225,10 @@
                     });
                 } catch (e) {
                     console.error('Error generating script:', e);
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Generation Error',
-                        text: 'An error occurred while generating the script: ' + e.message,
-                        confirmButtonColor: '#4e73df'
+                    iziToast.error({
+                        title: 'Error',
+                        message: 'Generation Error: ' + e.message,
+                        position: 'topRight'
                     });
                 }
             });
@@ -282,61 +248,21 @@
             });
 
             clipboard.on('success', function(e) {
-                Swal.fire({
-                    icon: 'success',
-                    title: 'Copied!',
-                    text: 'The embed code has been copied to your clipboard',
-                    timer: 2000,
-                    showConfirmButton: false,
-                    position: 'top-end',
-                    toast: true,
-                    background: '#f8f9fa'
+                iziToast.success({
+                    title: 'Success',
+                    message: 'The embed code has been copied to your clipboard',
+                    position: 'topRight'
                 });
                 e.clearSelection();
             });
 
             clipboard.on('error', function(e) {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Not Copied',
-                    text: 'Failed to copy text to clipboard',
-                    confirmButtonColor: '#4e73df'
+                iziToast.error({
+                    title: 'Error',
+                    message: 'Failed to copy text to clipboard',
+                    position: 'topRight'
                 });
             });
-
-            // Test widget button
-            // $('#testWidgetBtn').click(function() {
-            //     try {
-            //         // Remove any existing widget
-            //         $('.aplu-push-container').remove();
-
-            //         const scriptText = $('#scriptCode').text();
-            //         const scriptBlock = document.createElement('script');
-            //         scriptBlock.innerHTML = scriptText;
-
-            //         // Append to body and execute
-            //         document.body.appendChild(scriptBlock);
-
-            //         Swal.fire({
-            //             icon: 'success',
-            //             title: 'Widget Loaded',
-            //             text: 'The notification widget should now appear on this page',
-            //             timer: 2000,
-            //             showConfirmButton: false,
-            //             position: 'top-end',
-            //             toast: true,
-            //             background: '#f8f9fa'
-            //         });
-            //     } catch (e) {
-            //         console.error('Error testing widget:', e);
-            //         Swal.fire({
-            //             icon: 'error',
-            //             title: 'Test Failed',
-            //             text: 'Could not test the widget: ' + e.message,
-            //             confirmButtonColor: '#4e73df'
-            //         });
-            //     }
-            // });
         });
     </script>
 @endpush
