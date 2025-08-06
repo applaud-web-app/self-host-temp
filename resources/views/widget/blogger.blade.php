@@ -1,5 +1,35 @@
 @extends('layouts.master')
 
+
+@push('styles')
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.24.0/themes/prism-okaidia.min.css" rel="stylesheet">
+    <style>
+        /* Code block styling */
+        pre {
+            background: #1e1e1e !important;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            max-height: 400px;
+            overflow: auto;
+        }
+
+        /* Smooth transitions */
+        .fade-in {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+@endpush
 @section('content')
     <section class="content-body" id="profile_page">
         <div class="container-fluid">
@@ -112,11 +142,11 @@
                             </div>
 
                             <div class="position-relative mb-4">
-                                <pre class="rounded p-3 mb-0" id="scriptPre"><code class="language-html" id="scriptCode"></code></pre>
+                                <pre class="rounded p-3 mb-0" id="scriptPre"  contenteditable="true"><code class="language-html" id="scriptCode"></code></pre>
                             </div>
 
                             <div class="d-flex flex-column flex-md-row">
-                                <button id="copyButton"
+                                <button id="copyButton" data-clipboard-target="#scriptCode"
                                     class="btn btn-primary mb-2 mb-md-0 mr-md-3 py-2 d-flex align-items-center justify-content-center">
                                     <i class="fas fa-copy me-2"></i> Copy to Clipboard
                                 </button>
@@ -133,136 +163,78 @@
     </section>
 @endsection
 
-@push('styles')
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.24.0/themes/prism-okaidia.min.css" rel="stylesheet">
-    <style>
-        /* Code block styling */
-        pre {
-            background: #1e1e1e !important;
-            border: 1px solid rgba(0, 0, 0, 0.1);
-            max-height: 400px;
-            overflow: auto;
-        }
-
-        /* Smooth transitions */
-        .fade-in {
-            animation: fadeIn 0.5s ease-in-out;
-        }
-
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(10px);
-            }
-
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-    </style>
-@endpush
-
 @push('scripts')
+    <!-- Prism.js for syntax highlighting -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.24.0/prism.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.24.0/plugins/line-numbers/prism-line-numbers.min.js">
-    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.24.0/plugins/line-numbers/prism-line-numbers.min.js"></script>
+
+    <!-- ClipboardJS -->
     <script src="https://cdn.jsdelivr.net/npm/clipboard@2.0.8/dist/clipboard.min.js"></script>
 
     <script>
-        $(document).ready(function() {
-            // Update color hex display when color picker changes
-            $('#btnColor').on('input', function() {
-                $('#colorHex').text($(this).val());
-            });
+        $(document).ready(function () {
+            // Generate Script Button
+            $('#generateScriptBtn').click(function () {
+                const heading = $('#heading').val() || "We want to notify you about the latest updates.";
+                const subheading = $('#subheading').val() || "You can unsubscribe anytime later.";
+                const yesText = $('#yesText').val() || "Yes";
+                const noText = $('#noText').val() || "Later";
+                const popupText = $('#popupText').val() || "Please click 'Allow'...";
+                const btnColor = $('#btnColor').val() || "#4e73df";
+                const iconUrl = $('#iconUrl').val() || "{{ asset('images/push/icons/alarm-clock.png') }}";
 
-            // Generate script button
-            $('#generateScriptBtn').click(function() {
-                try {
-                    // Get all values with proper fallbacks
-                    const heading = $('#heading').val() ||
-                    "We want to notify you about the latest updates.";
-                    const subheading = $('#subheading').val() || "You can unsubscribe anytime later.";
-                    const yesText = $('#yesText').val() || "Yes";
-                    const noText = $('#noText').val() || "Later";
-                    let iconUrl = $('#iconUrl').val();
-                    const popupText = $('#popupText').val() ||
-                        "Please click 'Allow' when asked about notifications to subscribe to updates.";
-                    const btnColor = $('#btnColor').val() || "#4e73df";
+                const script = `
+<script src="{{ asset('widget.js') }}"><\/script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    let apluPush = new ApluPush(
+        ${JSON.stringify(heading)},
+        ${JSON.stringify(subheading)},
+        ${JSON.stringify(yesText)},
+        ${JSON.stringify(noText)},
+        ${JSON.stringify(iconUrl)},
+        ${JSON.stringify(popupText)},
+        ${JSON.stringify(btnColor)}
+    );
+    apluPush.init();
+});
+<\/script>
+                `.trim();
 
-                    // Validate icon URL
-                    if (!iconUrl) {
-                        iconUrl = "{{ asset('images/push/icons/alarm-clock.png') }}";
-                    }
-
-                    // Generate the script with proper escaping
-                    const script = `
-                        <script src='{{ asset('widget.js') }}'><\/script>
-
-                        <script>
-                            document.addEventListener('DOMContentLoaded', function() {
-                                let apluPush = new ApluPush(
-                                    ${JSON.stringify(heading)},
-                                    ${JSON.stringify(subheading)},
-                                    ${JSON.stringify(yesText)},
-                                    ${JSON.stringify(noText)},
-                                    ${JSON.stringify(iconUrl)},
-                                    ${JSON.stringify(popupText)},
-                                    ${JSON.stringify(btnColor)}
-                                );
-                                apluPush.init();
-                            });
-                        <\/script>
-                    `.trim();
-
-                    // Display the script
-                    $('#scriptCode').text(script);
-
-                    // Switch cards with animation
-                    $('#configFormCard').fadeOut(300, function() {
-                        $('#scriptDisplayCard').addClass('fade-in').fadeIn(300);
-                        Prism.highlightAll();
-                    });
-                } catch (e) {
-                    console.error('Error generating script:', e);
-                    iziToast.error({
-                        title: 'Error',
-                        message: 'Generation Error: ' + e.message,
-                        position: 'topRight'
-                    });
-                }
-            });
-
-            // Back to form button
-            $('#backToFormBtn').click(function() {
-                $('#scriptDisplayCard').fadeOut(300, function() {
-                    $('#configFormCard').addClass('fade-in').fadeIn(300);
+                $('#scriptCode').text(script);
+                $('#configFormCard').fadeOut(300, function () {
+                    $('#scriptDisplayCard').fadeIn(300);
+                    Prism.highlightAll();
                 });
             });
 
-            // Initialize clipboard
-            const clipboard = new ClipboardJS('#copyButton', {
-                text: function() {
-                    return $('#scriptCode').text();
-                }
+            // Back to form button
+            $('#backToFormBtn').click(function () {
+                $('#scriptDisplayCard').fadeOut(300, function () {
+                    $('#configFormCard').fadeIn(300);
+                });
             });
 
-            clipboard.on('success', function(e) {
+            // Initialize ClipboardJS
+            const clipboard = new ClipboardJS('#copyButton');
+
+            clipboard.on('success', function (e) {
                 iziToast.success({
-                    title: 'Success',
-                    message: 'The embed code has been copied to your clipboard',
+                    title: 'Copied',
+                    message: 'Embed code copied to clipboard!',
                     position: 'topRight'
                 });
                 e.clearSelection();
             });
 
-            clipboard.on('error', function(e) {
+            clipboard.on('error', function (e) {
                 iziToast.error({
                     title: 'Error',
-                    message: 'Failed to copy text to clipboard',
+                    message: 'Failed to copy to clipboard.',
                     position: 'topRight'
                 });
             });
         });
     </script>
 @endpush
+
