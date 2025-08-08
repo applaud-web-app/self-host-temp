@@ -751,6 +751,8 @@
                                 message: 'Metadata loaded.',
                                 position: 'topRight'
                             });
+                               $('#urlInput1').val(url);
+                            $('#urlInput2').val(url);
                         } else {
                             iziToast.error({
                                 title: 'Error',

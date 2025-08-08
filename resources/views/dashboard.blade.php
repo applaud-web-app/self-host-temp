@@ -103,24 +103,24 @@
                 <div class="col-xl-6 mb-4">
                     <div class="card">
                         <div class="card-header d-flex justify-content-between">
-                            <h4 class="mb-0">Weekly Subscribers</h4>
+                            <h4 class="mb-0">7 Days Subscribers</h4>
                             <i class="fas fa-sync-alt chart-refresh text-primary" data-metric="subscribers"
                                 style="cursor:pointer"></i>
                         </div>
                         <div class="card-body">
-                            <div id="weeklySubscribersChart" style="height:300px; width:100%;"></div>
+                            <div id="weeklySubscribersChart" style="height:350px; width:100%;"></div>
                         </div>
                     </div>
                 </div>
                 <div class="col-xl-6 mb-4">
                     <div class="card">
                         <div class="card-header d-flex justify-content-between">
-                            <h4 class="mb-0">Weekly Notifications</h4>
+                            <h4 class="mb-0">7 Days Notifications</h4>
                             <i class="fas fa-sync-alt chart-refresh text-primary" data-metric="notifications"
                                 style="cursor:pointer"></i>
                         </div>
                         <div class="card-body">
-                            <div id="weeklyNotificationsChart" style="height:300px; width:100%;"></div>
+                            <div id="weeklyNotificationsChart" style="height:350px; width:100%;"></div>
                         </div>
                     </div>
                 </div>
@@ -240,16 +240,16 @@
 
         const charts = {};
         function renderChart(domId, labels, data, name) {
-            let chart = charts[domId] || echarts.init(document.getElementById(domId));
-            chart.setOption({
-                tooltip: { trigger: 'axis' },
-                xAxis: { type: 'category', data: labels },
-                yAxis: { type: 'value' },
-                series: [{ name, type: 'bar', data }]
-            });
-            window.addEventListener('resize', () => chart.resize());
-            charts[domId] = chart;
-        }
+    let chart = charts[domId] || echarts.init(document.getElementById(domId));
+    chart.setOption({
+        tooltip: { trigger: 'axis' },
+        xAxis: { type: 'category', data: labels }, // The last 7 days
+        yAxis: { type: 'value' },
+        series: [{ name, type: 'bar', data }]
+    });
+    window.addEventListener('resize', () => chart.resize());
+    charts[domId] = chart;
+}
 
         // ——— Bootstrap empty charts —————————————————————————————————
         const defaultLabels = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
@@ -266,13 +266,11 @@
             if (!currentDomain) return $.Deferred().reject().promise();
             return $.getJSON(notifUrl, { domain_name: currentDomain, refresh: refresh?1:0 });
         }
-        function fetchWeeklyStats(refresh = false, metric = null) {
-            if (!currentDomain) return $.Deferred().reject().promise();
-            const params = { domain_name: currentDomain, refresh: refresh?1:0 };
-            if (metric) params.metric = metric;
-            return $.getJSON(weeklyUrl, params);
-        }
-
+function fetchWeeklyStats(refresh = false) {
+    if (!currentDomain) return $.Deferred().reject().promise();
+    const params = { domain_name: currentDomain, refresh: refresh ? 1 : 0 };
+    return $.getJSON(weeklyUrl, params);
+}
         // ——— Select2 setup ——————————————————————————————————————
         $('#domain-select').select2({
             placeholder: 'Search for Domain…',
@@ -317,13 +315,13 @@
                 }
             });
 
-            fetchWeeklyStats().done(res => {
-                if (res.status) {
-                    const { labels, subscribers, notifications } = res.data;
-                    renderChart('weeklySubscribersChart', labels, subscribers, 'Subscribers');
-                    renderChart('weeklyNotificationsChart', labels, notifications, 'Notifications');
-                    iziToast.success({ title:'Charts Updated', message:'Weekly charts refreshed', position:'topRight' });
-                }
+            fetchWeeklyStats(false).done(res => {
+    if (res.status) {
+        const { labels, subscribers, notifications } = res.data;
+        renderChart('weeklySubscribersChart', labels, subscribers, 'Subscribers');
+        renderChart('weeklyNotificationsChart', labels, notifications, 'Notifications');
+    }
+
             });
         });
 

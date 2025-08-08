@@ -120,16 +120,16 @@ class DashboardController extends Controller
         }
         $domain = $dq->first();
 
-        // prepare 7-day labels
-        $startOfWeek = Carbon::now()->startOfWeek(); // Monday
+        // prepare 7-day labels including today
+        $startOfLast7Days = Carbon::now()->subDays(6);  // Start from 6 days ago to include today in the last 7 days
         $days = [];
-        for ($i=0; $i<7; $i++) {
-            $days[] = $startOfWeek->copy()->addDays($i)->format('Y-m-d');
+        for ($i = 0; $i < 7; $i++) {
+            $days[] = $startOfLast7Days->copy()->addDays($i)->format('Y-m-d');
         }
-        $labels = array_map(fn($d)=> Carbon::parse($d)->format('D'), $days);
-        $zeros  = array_fill(0,7,0);
+        $labels = array_map(fn($d) => Carbon::parse($d)->format('D'), $days); // Convert to short day name (Mon, Tue, etc.)
+        $zeros  = array_fill(0, 7, 0); // Default zero values
 
-        if (! $domain) {
+        if (!$domain) {
             return response()->json([
                 'status' => true,
                 'data'   => [
@@ -145,9 +145,9 @@ class DashboardController extends Controller
 
         // selective cache bust
         if ($refresh) {
-            if ($metric==='subscribers') {
+            if ($metric === 'subscribers') {
                 Cache::forget($subKey);
-            } elseif ($metric==='notifications') {
+            } elseif ($metric === 'notifications') {
                 Cache::forget($notKey);
             } else {
                 Cache::forget($subKey);
@@ -156,30 +156,30 @@ class DashboardController extends Controller
         }
 
         // fetch subscriber counts
-        $subsData = Cache::remember($subKey, now()->addMinutes(5), function() use($domain, $startOfWeek) {
+        $subsData = Cache::remember($subKey, now()->addMinutes(5), function () use ($domain, $startOfLast7Days) {
             return DB::table('push_subscriptions_head')
                 ->where('parent_origin', $domain->name)
-                ->where('created_at','>=', $startOfWeek)
+                ->where('created_at', '>=', $startOfLast7Days)
                 ->selectRaw("DATE(created_at) AS day, COUNT(*) AS cnt")
                 ->groupBy('day')
-                ->pluck('cnt','day')
+                ->pluck('cnt', 'day')
                 ->toArray();
         });
 
         // fetch notification counts
-        $notData = Cache::remember($notKey, now()->addMinutes(5), function() use($domain, $startOfWeek) {
+        $notData = Cache::remember($notKey, now()->addMinutes(5), function () use ($domain, $startOfLast7Days) {
             return DomainNotification::query()
                 ->where('domain_id', $domain->id)
-                ->where('sent_at', '>=', $startOfWeek)
+                ->where('sent_at', '>=', $startOfLast7Days)
                 ->selectRaw('DATE(sent_at) AS day, COUNT(*) AS cnt')
                 ->groupBy('day')
-                ->pluck('cnt','day')
+                ->pluck('cnt', 'day')
                 ->toArray();
         });
 
         // build series aligned to $days
-        $subsSeries = array_map(fn($d)=> $subsData[$d] ?? 0, $days);
-        $notSeries  = array_map(fn($d)=> $notData[$d]  ?? 0, $days);
+        $subsSeries = array_map(fn($d) => $subsData[$d] ?? 0, $days);
+        $notSeries  = array_map(fn($d) => $notData[$d] ?? 0, $days);
 
         return response()->json([
             'status' => true,
