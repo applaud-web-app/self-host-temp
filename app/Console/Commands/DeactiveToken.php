@@ -32,7 +32,7 @@ class DeactiveToken extends Command
             $this->cleanupOldNotificationData();
 
             DB::table('notification_sends')
-                ->select('subscription_head_id')
+                ->select('id,subscription_head_id')
                 ->where('status', 0)
                 ->groupBy('subscription_head_id')
                 ->chunkById(1000, function ($tokensToDeactivate) {
