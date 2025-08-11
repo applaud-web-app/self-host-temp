@@ -36,8 +36,8 @@ class CustomWidgetController extends Controller
 
          $param = ['domain' => $domain->name];
          $downloadSwEncryptUrl = encryptUrl(route('domain.download-sw'), $param);
-         $ampScript = "https://".$domain->name."/amp.js";
-         return view('widget.amp', compact('downloadSwEncryptUrl','ampScript'));
+         $clientDomain = "https://".$domain->name."/";
+         return view('widget.amp', compact('downloadSwEncryptUrl','clientDomain'));
       } catch (\Throwable $th) {
          return redirect()->route('domain.view')->with('error', 'An error occurred.');
       }

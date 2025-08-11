@@ -69,9 +69,9 @@
         <div class="position-relative">
             <pre class="line-numbers rounded-2 mb-3"><code class="language-html">&lt;script async custom-element="amp-web-push" src="https://cdn.ampproject.org/v0/amp-web-push-0.1.js"&gt;&lt;/script&gt;
 &lt;amp-web-push id="amp-web-push" layout="nodisplay" 
-    helper-iframe-url="{{asset('amp-helper-frame.html')}}" 
-    permission-dialog-url="{{asset('permission.html')}}" 
-    service-worker-url="{{asset('apluselfhost-messaging-sw.js')}}"&gt;
+    helper-iframe-url="{{ $clientDomain }}amp-helper-frame.html" 
+    permission-dialog-url="{{ $clientDomain }}permission.html" 
+    service-worker-url="{{ $clientDomain }}apluselfhost-messaging-sw.js"&gt;
 &lt;/amp-web-push&gt;
 &lt;style amp-custom&gt;
     .apluPushBtn{
@@ -164,9 +164,9 @@
         document.getElementById('copyScriptButton').addEventListener('click', function() {
             const scriptContent = `<script async custom-element="amp-web-push" src="https://cdn.ampproject.org/v0/amp-web-push-0.1.js"><\/script>
         <amp-web-push id="amp-web-push" layout="nodisplay" 
-            helper-iframe-url="{{ asset('amp-helper-frame.html') }}" 
-            permission-dialog-url="{{ asset('permission.html') }}" 
-            service-worker-url="{{ asset('apluselfhost-messaging-sw.js') }}">
+            helper-iframe-url="{{ $clientDomain }}amp-helper-frame.html" 
+            permission-dialog-url="{{ $clientDomain }}permission.html" 
+            service-worker-url="{{ $clientDomain }}apluselfhost-messaging-sw.js">
         </amp-web-push>
         <style amp-custom>
             .apluPushBtn{
