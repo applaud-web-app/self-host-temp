@@ -36,7 +36,7 @@ class ComputeDomainSubscriptionSummary extends Command
             $counts = DB::table('push_subscriptions_head')
                 ->select('parent_origin as domain_name', DB::raw('COUNT(*) as cnt'))
                 ->whereDate('created_at', $yesterday)
-                ->groupBy('domain')
+                ->groupBy('parent_origin')
                 ->pluck('cnt', 'domain_name');
 
             Domain::chunk(50, function ($domains) use ($counts, $yesterday, $resetMonthly) {

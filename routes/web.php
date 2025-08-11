@@ -25,9 +25,9 @@ Route::prefix('install')->withoutMiddleware('install')->group(function () {
     Route::get('/sync-middleware',   [InstallController::class, 'syncMiddlewareTokens'])->name('install.sync-middleware');
 });
 
-Route::middleware('global')->controller(GlobalController::class)->name('global.')->group(function () {
-    Route::get('permission.html','subsStore')->name('subs-store');
-});
+// Route::middleware('global')->controller(GlobalController::class)->name('global.')->group(function () {
+//     Route::get('permission.html','subsStore')->name('subs-store');
+// });
 
 
 // Route::get('/', [Controller::class, 'index'])->name('home');
@@ -159,6 +159,7 @@ Route::middleware(['auth','ensure_push_config'])->group(function() {
     Route::controller(CustomWidgetController::class)->prefix('widget')->name('widget.')->group(function () {
         Route::get('/blogger', 'blogger')->name('blogger');
         Route::get('/amp', 'amp')->name('amp');
+        Route::get('/amp-permission', 'ampPermission')->name('amp-permission');
     });
     
 

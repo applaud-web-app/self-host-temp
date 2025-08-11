@@ -102,7 +102,7 @@ class ApluPush {
     allowNotifications() {
         localStorage.setItem('apluPushOptIn', 'allowed');
         const parentOrigin = new URL(window.location.origin).hostname;
-        const url = `http://localhost:8000/api/permission.html?parentOrigin=${encodeURIComponent(parentOrigin)}&popupText=${encodeURIComponent(this.popupText)}`;
+        const url = `{{route('api.permission.ask')}}?parentOrigin=${encodeURIComponent(parentOrigin)}&popupText=${encodeURIComponent(this.popupText)}`;
         window.open(url, "SubscriptionWindow", `width=600,height=400`);
         this.closeOptInForm();
     }

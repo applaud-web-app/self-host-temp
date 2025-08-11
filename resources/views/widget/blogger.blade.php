@@ -194,7 +194,7 @@ document.addEventListener('DOMContentLoaded', function() {
         ${JSON.stringify(noText)},
         ${JSON.stringify(iconUrl)},
         ${JSON.stringify(popupText)},
-        ${JSON.stringify(btnColor)}
+        ${JSON.stringify(btnColor)},
     );
     apluPush.init();
 });

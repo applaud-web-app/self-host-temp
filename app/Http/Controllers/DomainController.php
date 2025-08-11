@@ -96,10 +96,11 @@ class DomainController extends Controller
         $validated = $request->validate([
             'domain_name' => [
                 'required',
-                'regex:/^[a-z0-9]+(?:\.[a-z0-9]+)+$/',
+                'regex:/^[a-z0-9-]+(?:\.[a-z0-9-]+)+$/',
                 'unique:domains,name',
             ],
         ]);
+
 
         $domainName = strtolower($validated['domain_name']);
 

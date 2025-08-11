@@ -37,7 +37,7 @@
                                             <h6 class="mb-0">Helper Frame</h6>
                                         </div>
                                         <p class="small text-muted mb-2">Supporting HTML for the widget</p>
-                                        <a href="{{ asset('widget.js') }}" class="btn btn-sm btn-outline-success w-100" download>
+                                        <a href="{{ asset('amp.js') }}" class="btn btn-sm btn-outline-success w-100" download>
                                             <i class="fas fa-download me-1"></i> Download
                                         </a>
                                     </div>
@@ -49,7 +49,7 @@
                                             <h6 class="mb-0">Permission Dialog</h6>
                                         </div>
                                         <p class="small text-muted mb-2">User permission interface</p>
-                                        <a href="{{ asset('widget.js') }}" class="btn btn-sm btn-outline-info w-100" download>
+                                        <a href="{{ route('widget.amp-permission') }}" class="btn btn-sm btn-outline-info w-100" download="permission.html">
                                             <i class="fas fa-download me-1"></i> Download
                                         </a>
                                     </div>
@@ -59,33 +59,45 @@
                     </div>
 
                     <!-- Step 2: Embed Script Card -->
-                    <div class="card h-auto mb-4">
-                        <div class="card-body p-4">
-                            <div class="step-header d-flex align-items-center mb-3">
-                                <div class="step-number bg-success text-white rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 32px; height: 32px;">2</div>
-                                <h4 class="mb-0">Embed the Script</h4>
-                            </div>
-                            <p class="text-muted mb-3">Add this code to your <code>&lt;head&gt;</code> section to initialize the widget.</p>
-                            <div class="position-relative">
-                                <pre class="line-numbers rounded-2 mb-3"><code class="language-html">&lt;script src='{{ asset('widget.js') }}'&gt;&lt;/script&gt;
-
-&lt;script&gt;
-    let apluPush = new ApluPush(
-        "We want to notify you about the latest updates.", // Heading
-        "You can unsubscribe anytime later.", // Subheading
-        "Yes", // Yes button text
-        "Later", // No Button Text 
-        "{{ asset('images/push/icons/alarm-clock.png') }}", // Bell Icon
-        "Please click 'Allow' when asked about notifications to subscribe to updates." // Popup Text
-    );
-    apluPush.init(); 
-&lt;/script&gt;</code></pre>
-                                <button id="copyScriptButton" class="btn btn-sm btn-success position-absolute top-0 end-0 m-2">
-                                    <i class="fas fa-copy me-1"></i> Copy
-                                </button>
-                            </div>
-                        </div>
-                    </div>
+<div class="card h-auto mb-4">
+    <div class="card-body p-4">
+        <div class="step-header d-flex align-items-center mb-3">
+            <div class="step-number bg-success text-white rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 32px; height: 32px;">2</div>
+            <h4 class="mb-0">Embed the Script</h4>
+        </div>
+        <p class="text-muted mb-3">Add this code to your <code>&lt;head&gt;</code> section to initialize the widget.</p>
+        <div class="position-relative">
+            <pre class="line-numbers rounded-2 mb-3"><code class="language-html">&lt;script async custom-element="amp-web-push" src="https://cdn.ampproject.org/v0/amp-web-push-0.1.js"&gt;&lt;/script&gt;
+&lt;amp-web-push id="amp-web-push" layout="nodisplay" 
+    helper-iframe-url="{{asset('amp-helper-frame.html')}}" 
+    permission-dialog-url="{{asset('permission.html')}}" 
+    service-worker-url="{{asset('apluselfhost-messaging-sw.js')}}"&gt;
+&lt;/amp-web-push&gt;
+&lt;style amp-custom&gt;
+    .apluPushBtn{
+        background-color:#007bff;
+        color:#fff;
+        border:none;
+        padding:10px 20px;
+        border-radius:5px;
+        cursor:pointer;
+        font-size:16px;
+    }
+    .apluPushBtn:hover{ 
+        background-color:#0056b3;
+    }
+    .apluPushAmpBtn{ 
+        display:inline-flex;
+        align-items:center;
+        gap:.5rem;
+    }
+&lt;/style&gt;</code></pre>
+            <button id="copyScriptButton" class="btn btn-sm btn-success position-absolute top-0 end-0 m-2">
+                <i class="fas fa-copy me-1"></i> Copy
+            </button>
+        </div>
+    </div>
+</div>
 
                     <!-- Step 3: Button Code Card -->
                     <div class="card h-auto mb-4">
@@ -96,7 +108,7 @@
                             </div>
                             <p class="text-muted mb-3">Place this button anywhere in your <code>&lt;body&gt;</code> where you want users to enable notifications.</p>
                             <div class="position-relative">
-                                <pre class="line-numbers rounded-2 mb-3"><code class="language-html">&lt;button id="notificationButton" class="btn btn-primary"&gt;
+                                <pre class="line-numbers rounded-2 mb-3"><code class="language-html">&lt;button id="apluPushAmpBtn" class="apluPushAmpBtn apluPushBtn"&gt;
     &lt;i class="fas fa-bell me-2"&gt;&lt;/i&gt; Enable Notifications
 &lt;/button&gt;</code></pre>
                                 <button id="copyButtonCodeButton" class="btn btn-sm btn-success position-absolute top-0 end-0 m-2">
@@ -148,27 +160,37 @@
     <script>
         // Copy Script to Clipboard
         document.getElementById('copyScriptButton').addEventListener('click', function() {
-            const scriptContent = `<script src='{{ asset('widget.js') }}'><\/script>
-
-<script>
-    let apluPush = new ApluPush(
-        "We want to notify you about the latest updates.", // Heading
-        "You can unsubscribe anytime later.", // Subheading
-        "Yes", // Yes button text
-        "Later", // No Button Text 
-        "{{ asset('images/push/icons/alarm-clock.png') }}", // Bell Icon
-        "Please click 'Allow' when asked about notifications to subscribe to updates." // Popup Text
-    );
-    apluPush.init(); 
-<\/script>`;
+            const scriptContent = `<script async custom-element="amp-web-push" src="https://cdn.ampproject.org/v0/amp-web-push-0.1.js"><\/script>
+        <amp-web-push id="amp-web-push" layout="nodisplay" 
+            helper-iframe-url="{{ asset('amp-helper-frame.html') }}" 
+            permission-dialog-url="{{ asset('permission.html') }}" 
+            service-worker-url="{{ asset('apluselfhost-messaging-sw.js') }}">
+        </amp-web-push>
+        <style amp-custom>
+            .apluPushBtn{
+                background-color:#007bff;
+                color:#fff;
+                border:none;
+                padding:10px 20px;
+                border-radius:5px;
+                cursor:pointer;
+                font-size:16px;
+            }
+            .apluPushBtn:hover{ 
+                background-color:#0056b3;
+            }
+            .apluPushAmpBtn{ 
+                display:inline-flex;
+                align-items:center;
+                gap:.5rem;
+            }
+        </style>`;
             copyToClipboard(scriptContent, "Script copied to clipboard!");
         });
 
         // Copy Button Code to Clipboard
         document.getElementById('copyButtonCodeButton').addEventListener('click', function() {
-            const buttonContent = `<button id="notificationButton" class="btn btn-primary">
-    <i class="fas fa-bell me-2"></i> Enable Notifications
-</button>`;
+            const buttonContent = `<button id="apluPushAmpBtn" class="apluPushAmpBtn apluPushBtn"> <i class="fas fa-bell me-2"></i> Enable Notifications </button>`;
             copyToClipboard(buttonContent, "Button code copied to clipboard!");
         });
 

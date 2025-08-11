@@ -1,6 +1,11 @@
+const SW_IDENTIFIER = 'my-custom-sw-v1';  
+
 // 0) Immediate SW activation
 self.addEventListener('install', event => self.skipWaiting());
-self.addEventListener('activate', event => event.waitUntil(self.clients.claim()));
+self.addEventListener('activate', event => {
+  storeSWIdentifier(SW_IDENTIFIER);
+  event.waitUntil(self.clients.claim());
+});
 
 // 1) Import Firebase compat libraries
 importScripts(
@@ -24,8 +29,18 @@ const ANALYTICS_ENDPOINT = "{{ route('api.analytics') }}";
 const SUBSCRIBE_ENDPOINT = "{{ route('api.subscribe') }}";
 const DEFAULT_ICON       = '/favicon.ico';
 
+function isCorrectServiceWorkerActive() {
+  return getSWIdentifierFromDB().then(activeSW => activeSW === SW_IDENTIFIER); 
+}
+
 // 3) Analytics helper
 function sendAnalytics(eventType, messageId) {
+  
+  if (!isCorrectServiceWorkerActive()) {
+    console.log('Not the correct Service Worker. Skipping analytics.');
+    return;
+  }
+  
   return fetch(ANALYTICS_ENDPOINT, {
     method: "POST",
     credentials: "same-origin",          // keep cookies (e.g. Sanctum) if needed
@@ -165,3 +180,37 @@ self.addEventListener('pushsubscriptionchange', event => {
       : Promise.resolve()
   );
 });
+
+// IndexedDB helper functions
+function openDB() {
+  return new Promise((resolve, reject) => {
+    const request = indexedDB.open('serviceWorkerDB', 1);
+    request.onupgradeneeded = () => {
+      const db = request.result;
+      db.createObjectStore('swData', { keyPath: 'key' });
+    };
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject('Failed to open IndexedDB');
+  });
+}
+
+function storeSWIdentifier(identifier) {
+  return openDB().then(db => {
+    const transaction = db.transaction('swData', 'readwrite');
+    const store = transaction.objectStore('swData');
+    store.put({ key: 'activeSW', value: identifier });
+    return transaction.complete;
+  });
+}
+
+function getSWIdentifierFromDB() {
+  return openDB().then(db => {
+    return new Promise((resolve, reject) => {
+      const transaction = db.transaction('swData', 'readonly');
+      const store = transaction.objectStore('swData');
+      const request = store.get('activeSW');
+      request.onsuccess = () => resolve(request.result ? request.result.value : null);
+      request.onerror = () => reject('Failed to retrieve SW identifier');
+    });
+  });
+}

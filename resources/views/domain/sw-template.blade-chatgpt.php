@@ -1,6 +1,13 @@
+// Define the global constant for SW identifier
+const SW_IDENTIFIER = 'my-custom-sw-v1';  // Global constant for SW identifier
+
 // 0) Immediate SW activation
 self.addEventListener('install', event => self.skipWaiting());
-self.addEventListener('activate', event => event.waitUntil(self.clients.claim()));
+self.addEventListener('activate', event => {
+  // Store the SW identifier in localStorage or IndexedDB
+  localStorage.setItem('activeSW', SW_IDENTIFIER);
+  event.waitUntil(self.clients.claim());
+});
 
 // 1) Import Firebase compat libraries
 importScripts(
@@ -25,10 +32,20 @@ const SUBSCRIBE_ENDPOINT = "{{ route('api.subscribe') }}";
 const DEFAULT_ICON       = '/favicon.ico';
 
 // 3) Analytics helper
+function isCorrectServiceWorkerActive() {
+  const activeSW = localStorage.getItem('activeSW');  // Get the active SW identifier
+  return activeSW === SW_IDENTIFIER;  // Ensure the active SW is this one
+}
+
 function sendAnalytics(eventType, messageId) {
+  if (!isCorrectServiceWorkerActive()) {
+    console.log('Not the correct Service Worker. Skipping analytics.');
+    return;
+  }
+
   return fetch(ANALYTICS_ENDPOINT, {
     method: "POST",
-    credentials: "same-origin",          // keep cookies (e.g. Sanctum) if needed
+    credentials: "same-origin",          // Keep cookies if needed
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       message_id: messageId,
@@ -43,11 +60,10 @@ function sendAnalytics(eventType, messageId) {
 
 // 4) Background Firebase messages
 messaging.onBackgroundMessage(payload => {
-
   const d = payload.data || {};
   const messageId = d.message_id || '';
-  
-  // always ping "received" first
+
+  // Always ping "received" first
   sendAnalytics('received', messageId);
 
   let actions = [];
@@ -116,7 +132,7 @@ self.addEventListener('push', event => {
   event.waitUntil(
     Promise.all([
       sendAnalytics('received', messageId),
-      self.registration.showNotification(title, opts)
+      self.registration.showNotification(title, options)
     ])
   );
 });
@@ -137,7 +153,7 @@ self.addEventListener('notificationclick', event => {
     }
   }
 
-  const analytics  = sendAnalytics('click', messageId);
+  const analytics = sendAnalytics('click', messageId);
   const openTab = clients.openWindow(url);
   event.waitUntil(Promise.all([analytics, openTab]));
 });
@@ -164,4 +180,10 @@ self.addEventListener('pushsubscriptionchange', event => {
           })
       : Promise.resolve()
   );
+});
+
+// 9) Handle uninstall event
+self.addEventListener('uninstall', event => {
+  console.log('Service Worker uninstalled. Clearing SW identifier.');
+  localStorage.removeItem('activeSW');  // Remove the identifier from localStorage
 });

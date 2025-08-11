@@ -4,11 +4,20 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Domain;
+use Illuminate\Support\Facades\File;
 
 class CustomWidgetController extends Controller
 {
-   public function blogger(){
-    return view('widget.blogger');
+   public function blogger()
+   {
+      $jsFilePath = public_path('blogger.js');
+      if (!File::exists($jsFilePath)) {
+         $jsContent = view('widget.blogger-script')->render();
+         File::put($jsFilePath, $jsContent);
+      }
+
+      // Return the view that renders the page
+      return view('widget.blogger');
    }
 
    public function amp(Request $request){
@@ -27,9 +36,14 @@ class CustomWidgetController extends Controller
 
          $param = ['domain' => $domain->name];
          $downloadSwEncryptUrl = encryptUrl(route('domain.download-sw'), $param);
-         return view('widget.amp', compact('downloadSwEncryptUrl'));
+         $ampScript = "https://".$domain->name."/amp.js";
+         return view('widget.amp', compact('downloadSwEncryptUrl','ampScript'));
       } catch (\Throwable $th) {
          return redirect()->route('domain.view')->with('error', 'An error occurred.');
       }
+   }
+
+   public function ampPermission(){
+      return view('widget.amp-permission');
    }
 }
