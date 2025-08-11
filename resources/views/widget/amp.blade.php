@@ -69,7 +69,7 @@
         <div class="position-relative">
             <pre class="line-numbers rounded-2 mb-3"><code class="language-html">&lt;script async custom-element="amp-web-push" src="https://cdn.ampproject.org/v0/amp-web-push-0.1.js"&gt;&lt;/script&gt;
 &lt;amp-web-push id="amp-web-push" layout="nodisplay" 
-    helper-iframe-url="{{ $clientDomain }}amp-helper-frame.html" 
+    helper-iframe-url="{{ $clientDomain }}amp.js" 
     permission-dialog-url="{{ $clientDomain }}permission.html" 
     service-worker-url="{{ $clientDomain }}apluselfhost-messaging-sw.js"&gt;
 &lt;/amp-web-push&gt;
@@ -90,6 +90,9 @@
         display:inline-flex;
         align-items:center;
         gap:.5rem;
+    }
+    amp-web-push-widget {
+        visibility: visible !important;
     }
 &lt;/style&gt;</code></pre>
             <button id="copyScriptButton" class="btn btn-sm btn-success position-absolute top-0 end-0 m-2">
@@ -164,7 +167,7 @@
         document.getElementById('copyScriptButton').addEventListener('click', function() {
             const scriptContent = `<script async custom-element="amp-web-push" src="https://cdn.ampproject.org/v0/amp-web-push-0.1.js"><\/script>
         <amp-web-push id="amp-web-push" layout="nodisplay" 
-            helper-iframe-url="{{ $clientDomain }}amp-helper-frame.html" 
+            helper-iframe-url="{{ $clientDomain }}amp.js" 
             permission-dialog-url="{{ $clientDomain }}permission.html" 
             service-worker-url="{{ $clientDomain }}apluselfhost-messaging-sw.js">
         </amp-web-push>
@@ -185,6 +188,9 @@
                 display:inline-flex;
                 align-items:center;
                 gap:.5rem;
+            }
+            amp-web-push-widget {
+                visibility: visible !important;
             }
         </style>`;
             copyToClipboard(scriptContent, "Script copied to clipboard!");
