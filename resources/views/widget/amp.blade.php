@@ -100,23 +100,25 @@
 </div>
 
                     <!-- Step 3: Button Code Card -->
-                    <div class="card h-auto mb-4">
-                        <div class="card-body p-4">
-                            <div class="step-header d-flex align-items-center mb-3">
-                                <div class="step-number bg-warning text-white rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 32px; height: 32px;">3</div>
-                                <h4 class="mb-0">Add Trigger Button</h4>
-                            </div>
-                            <p class="text-muted mb-3">Place this button anywhere in your <code>&lt;body&gt;</code> where you want users to enable notifications.</p>
-                            <div class="position-relative">
-                                <pre class="line-numbers rounded-2 mb-3"><code class="language-html">&lt;button id="apluPushAmpBtn" class="apluPushAmpBtn apluPushBtn"&gt;
-    &lt;i class="fas fa-bell me-2"&gt;&lt;/i&gt; Enable Notifications
-&lt;/button&gt;</code></pre>
-                                <button id="copyButtonCodeButton" class="btn btn-sm btn-success position-absolute top-0 end-0 m-2">
-                                    <i class="fas fa-copy me-1"></i> Copy
-                                </button>
-                            </div>
-                        </div>
-                    </div>
+<div class="card h-auto mb-4">
+    <div class="card-body p-4">
+        <div class="step-header d-flex align-items-center mb-3">
+            <div class="step-number bg-warning text-white rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 32px; height: 32px;">3</div>
+            <h4 class="mb-0">Add Trigger Button</h4>
+        </div>
+        <p class="text-muted mb-3">Place this widget anywhere in your <code>&lt;body&gt;</code> where you want users to enable notifications.</p>
+        <div class="position-relative">
+            <pre class="line-numbers rounded-2 mb-3"><code class="language-html">&lt;amp-web-push-widget visibility="unsubscribed" layout="fixed" width="250" height="50"&gt;
+    &lt;button class="apluPushAmpBtn apluPushBtn" on="tap:amp-web-push.subscribe"&gt;
+        &lt;i class="fas fa-bell me-2" aria-hidden="true"&gt;&lt;/i&gt; Enable Notifications
+    &lt;/button&gt;
+&lt;/amp-web-push-widget&gt;</code></pre>
+            <button id="copyButtonCodeButton" class="btn btn-sm btn-success position-absolute top-0 end-0 m-2">
+                <i class="fas fa-copy me-1"></i> Copy
+            </button>
+        </div>
+    </div>
+</div>
 
                 </div>
             </div>
@@ -190,8 +192,12 @@
 
         // Copy Button Code to Clipboard
         document.getElementById('copyButtonCodeButton').addEventListener('click', function() {
-            const buttonContent = `<button id="apluPushAmpBtn" class="apluPushAmpBtn apluPushBtn"> <i class="fas fa-bell me-2"></i> Enable Notifications </button>`;
-            copyToClipboard(buttonContent, "Button code copied to clipboard!");
+            const buttonContent = `<amp-web-push-widget visibility="unsubscribed" layout="fixed" width="250" height="50">
+            <button class="apluPushAmpBtn apluPushBtn" on="tap:amp-web-push.subscribe">
+                <i class="fas fa-bell me-2" aria-hidden="true"></i> Enable Notifications
+            </button>
+        </amp-web-push-widget>`;
+            copyToClipboard(buttonContent, "Button widget code copied to clipboard!");
         });
 
         // Reusable Copy Function with iziToast
