@@ -13,10 +13,78 @@ use App\Models\PushConfig;
 use App\Models\PushSubscriptionPayload;
 use Rap2hpoutre\FastExcel\FastExcel;
 use Illuminate\Support\Facades\DB;
-
+use App\Models\Setting;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\ValidationException;
 
 class SettingsController extends Controller
 {
+    public function viewSettings()
+    {
+        $setting = Setting::firstOrCreate(['id' => 1], [
+            'batch_size' => 100,
+            'daily_cleanup' => false,
+        ]);
+
+        // Convert numeric batch_size to text representation
+        $setting->sending_speed = match((int)$setting->batch_size) {
+            100 => 'slow',
+            250 => 'medium',
+            500 => 'fast',
+            default => 'slow' // fallback to slow if value doesn't match
+        };
+
+        return view('settings.setting', compact('setting'));
+    }
+
+    public function postSettings(Request $request)
+    {
+        try {
+            $data = $request->validate([
+                'sending_speed' => ['required', 'in:slow,medium,fast'], 
+                'daily_cleanup' => ['nullable','boolean'],
+            ]);
+
+            // Map speed options to numeric values
+            $batchSize = match($data['sending_speed']) {
+                'slow' => 100,
+                'medium' => 250,
+                'fast' => 500,
+                default => 100 // fallback
+            };
+            
+            // settings_batch_size, daily_cleanup_setting -- clear this cache each time when this setting updates
+            cache()->forget('daily_cleanup_setting');
+            cache()->forget('settings_batch_size');
+
+            $setting = Setting::firstOrCreate(['id' => 1]);
+            $setting->fill([
+                'batch_size' => $batchSize,
+                'daily_cleanup' => (bool)($data['daily_cleanup'] ?? false),
+            ])->save();
+
+            return back()->with('success', 'Settings saved.');
+        } catch (\Throwable $th) {
+            return back()->with('error', 'Failed to save settings. ' . $th->getMessage());
+        }
+    }
+
+    /** Logout from THIS device (works with redis session driver) */
+    public function logoutAllDevices(Request $request)
+    {
+        // Remove every session row for this user, including the current one
+        DB::table(config('session.table', 'sessions'))
+            ->where('user_id', $request->user()->getAuthIdentifier())
+            ->delete();
+
+        // Finally, log out THIS session cleanly
+        Auth::logout();
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+
+        return redirect()->route('login')->with('status', 'Logged out from all devices.');
+    }
+
     /**
      * Display the Email Settings form.
      */

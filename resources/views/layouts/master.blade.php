@@ -134,6 +134,14 @@
                                         <i class="far fa-user text-primary"></i>
                                         <span class="ms-1">Profile</span>
                                     </a>
+                                    <a href="{{ route('settings.view') }}" class="dropdown-item ai-icon">
+                                        <i class="far fa-cog text-primary"></i>
+                                        <span class="ms-1">Setting</span>
+                                    </a>
+                                    <a href="{{ route('settings.server-info') }}" class="dropdown-item ai-icon">
+                                        <i class="far fa-database text-primary"></i>
+                                        <span class="ms-1">Server Info</span>
+                                    </a>
                                     <a 
                                     class="dropdown-item ai-icon text-danger" 
                                     href="" 

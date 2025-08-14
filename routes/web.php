@@ -120,27 +120,25 @@ Route::middleware(['auth','ensure_push_config'])->group(function() {
         Route::get('segment-list','segmentList')->name('segment-list');
     });
 
-    // Route::get('/domain', [Controller::class, 'domain'])->name('domain');
-    // Route::get('/integrate-domain', [Controller::class, 'integrateDomain'])->name('integrate-domain');
-    // Route::get('/send-notification', [Controller::class, 'sendNotification'])->name('send-notification');
-    // Route::get('/campaign-reports', [Controller::class, 'campaignReports'])->name('campaign-reports');
+    Route::prefix('settings')->controller(SettingsController::class)->name('settings.')->group(function () {
 
-    Route::middleware(['auth','ensure_push_config'])->group(function() {
-        Route::prefix('settings')->controller(SettingsController::class)->name('settings.')->group(function () {
-            Route::get('/email', 'emailSettings')->name('email');
-            Route::post('/email', 'updateEmailSettings');
-            Route::get('/server-info', 'serverInfo')->name('server-info');
-            Route::get('/server-info/metrics', 'serverMetrics')->name('server-info.metrics');
-            Route::get('/utilities', 'utilities')->name('utilities');
-            Route::post('/utilities/purge-cache', 'purgeCache')->name('utilities.purge-cache');
-            Route::post('/utilities/clear-log', 'clearLog')->name('utilities.clear-log');
-            Route::post('/utilities/make-cache', 'makeCache')->name('utilities.make-cache');
-            Route::post('/utilities/queue-manage', 'queueManage')->name('utilities.queue-manage');
-            Route::get('/upgrade', 'upgrade')->name('upgrade');
-            Route::get('/backup-subscribers', 'backupSubscribers')->name('backup-subscribers');
-            Route::get('/backup-subscribers/download', 'downloadBackupSubscribers')->name('backup-subscribers.download');
-            Route::get('/view-log', 'viewLog')->name('view-log');
-        });
+        Route::get('/', 'viewSettings')->name('view');
+        Route::post('post-settings', 'postSettings')->name('post-settings');
+        Route::post('/logout-device', 'logoutAllDevices')->name('logout.device');
+
+        Route::get('/email', 'emailSettings')->name('email');
+        Route::post('/email', 'updateEmailSettings');
+        Route::get('/server-info', 'serverInfo')->name('server-info');
+        Route::get('/server-info/metrics', 'serverMetrics')->name('server-info.metrics');
+        Route::get('/utilities', 'utilities')->name('utilities');
+        Route::post('/utilities/purge-cache', 'purgeCache')->name('utilities.purge-cache');
+        Route::post('/utilities/clear-log', 'clearLog')->name('utilities.clear-log');
+        Route::post('/utilities/make-cache', 'makeCache')->name('utilities.make-cache');
+        Route::post('/utilities/queue-manage', 'queueManage')->name('utilities.queue-manage');
+        Route::get('/upgrade', 'upgrade')->name('upgrade');
+        Route::get('/backup-subscribers', 'backupSubscribers')->name('backup-subscribers');
+        Route::get('/backup-subscribers/download', 'downloadBackupSubscribers')->name('backup-subscribers.download');
+        Route::get('/view-log', 'viewLog')->name('view-log');
     });
     
     Route::prefix('update')->group(function () {

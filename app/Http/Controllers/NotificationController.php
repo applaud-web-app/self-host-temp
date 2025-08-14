@@ -397,7 +397,7 @@ class NotificationController extends Controller
             'cta_enabled'       => 'required|in:0,1',
             'btn_1_title'       => 'nullable|required_if:cta_enabled,1|string|max:255',
             'btn_1_url'         => 'nullable|required_if:cta_enabled,1|url',
-            'btn_title_2'       => 'nullable|required_with:btn_url_2|string|max:255',
+            'btn_title_2'       => 'nullable|string|max:255',
             'btn_url_2'         => 'nullable|required_with:btn_title_2|url',
             'segment_id'        => 'nullable|required_if:segment_type,particular|exists:segments,id',
         ], [], [

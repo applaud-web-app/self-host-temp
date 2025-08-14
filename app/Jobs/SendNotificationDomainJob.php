@@ -12,8 +12,10 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Kreait\Firebase\Messaging\CloudMessage;
 use Kreait\Firebase\Messaging\WebPushConfig;
+use Illuminate\Support\Facades\Cache;
 use Kreait\Firebase\Factory;
 use Throwable;
+use App\Models\Setting;
 
 class SendNotificationDomainJob implements ShouldQueue
 {
@@ -21,6 +23,10 @@ class SendNotificationDomainJob implements ShouldQueue
 
     public int $tries   = 1;
     public int $timeout = 7200;
+
+    private const DEFAULT_CHUNK = 200;
+    private const MAX_FCM_BATCH = 200;
+    private const THROTTLE_US   = 100_000;
 
     public function __construct(
         protected int     $notificationId,
@@ -33,6 +39,11 @@ class SendNotificationDomainJob implements ShouldQueue
     public function handle(): void
     {
         try {
+            $batchSize = Cache::remember('settings_batch_size', now()->addDay(), function () {
+                return (int) (Setting::query()->value('batch_size') ?? self::DEFAULT_CHUNK);
+            });
+            $batchSize = max(1, min(self::MAX_FCM_BATCH, $batchSize));
+
             $messaging = $this->factory->createMessaging();
             $config    = WebPushConfig::fromArray($this->webPush);
             $message   = CloudMessage::new()->withWebPushConfig($config);
@@ -46,7 +57,7 @@ class SendNotificationDomainJob implements ShouldQueue
                 ->where('parent_origin',$this->domainName)
                 ->select('id','token')
                 ->orderBy('id')
-                ->chunkById(500, function($subs) use (
+                ->chunkById(150, function($subs) use (
                     $messaging, $message, &$success, &$failed, &$totalSent, $now
                 ) {
                     $list   = $subs->values()->all();
@@ -86,7 +97,7 @@ class SendNotificationDomainJob implements ShouldQueue
                             'updated_at'           => $now,
                         ];
                     }
-                    foreach (array_chunk($rows,500) as $chunk) {
+                    foreach (array_chunk($rows,200) as $chunk) {
                         DB::table('notification_sends')->insertOrIgnore($chunk);
                     }
                 });
