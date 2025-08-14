@@ -3,19 +3,15 @@
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
-use App\Http\Middleware\CheckInstallation;
-use App\Http\Middleware\EnsurePushConfig;
-use App\Http\Middleware\PermissionMiddleware;
-use App\Http\Middleware\DomainMiddleware;
-use App\Http\Middleware\CheckUserAccess;
-use App\Http\Middleware\RateLimitMiddleware;
+
 use Illuminate\Foundation\Http\Middleware\ValidatePostSize;
 use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\StartSession;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
 use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
-use App\Http\Middleware\BeforeMiddleware;
-use App\Http\Middleware\AfterMiddleware;
+
+use App\Http\Middleware\CheckInstallation;
+use App\Http\Middleware\EnsurePushConfig;
 use App\Http\Middleware\FrameHeadersMiddleware;
 
 return Application::configure(basePath: dirname(__DIR__))
@@ -35,7 +31,6 @@ return Application::configure(basePath: dirname(__DIR__))
             StartSession::class,
             ShareErrorsFromSession::class,
             VerifyCsrfToken::class,
-            RateLimitMiddleware::class
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {

@@ -1,14 +1,10 @@
 <?php
 
-// app/Http/Middleware/CheckInstallation.php
 namespace App\Http\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Schema;
 use App\Models\Installation;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\Auth;
 
 class CheckInstallation

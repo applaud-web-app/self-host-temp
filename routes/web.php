@@ -25,13 +25,6 @@ Route::prefix('install')->withoutMiddleware('install')->group(function () {
     Route::get('/sync-middleware',   [InstallController::class, 'syncMiddlewareTokens'])->name('install.sync-middleware');
 });
 
-// Route::middleware('global')->controller(GlobalController::class)->name('global.')->group(function () {
-//     Route::get('permission.html','subsStore')->name('subs-store');
-// });
-
-
-// Route::get('/', [Controller::class, 'index'])->name('home');
-
 // First page is login
 Route::controller(AuthController::class)->group(function () {
     Route::get('login', 'login')->name('login');

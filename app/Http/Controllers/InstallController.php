@@ -160,31 +160,7 @@ class InstallController
                 'password' => Hash::make($password)
             ]);
 
-            Log::info('Admin user created.', ['email' => $email, 'password' => $password]);
-
-            $middlewares = [
-                'RateLimitMiddleware',
-                'CheckUserAccess',
-                'DomainMiddleware',
-                'EnsurePushConfig',
-                'PermissionMiddleware',
-            ];
-
-            foreach ($middlewares as $middleware) {
-                $filePath = md_dir($middleware);
-
-                if (!File::exists($filePath)) {
-                    continue;
-                }
-
-                $hash = hash_file('sha256', $filePath);
-
-                DB::table('middleware')->updateOrInsert(
-                    ['middleware' => $middleware],
-                    ['token' => $hash]
-                );
-            }
-             
+            Log::info('Admin user created.', ['email' => $email, 'password' => $password]);             
 
             return view('install.complete', [
                 'admin_email' => $email,
@@ -257,32 +233,6 @@ class InstallController
         }
 
         return $value;
-    }
-
-    public function syncMiddlewareTokens(){
-        $middlewares = [
-            'RateLimitMiddleware',
-            'CheckUserAccess',
-            'DomainMiddleware',
-            'EnsurePushConfig',
-            'PermissionMiddleware',
-        ];
-
-        foreach ($middlewares as $middleware) {
-            $filePath = md_dir($middleware);
-
-            if (!File::exists($filePath)) {
-                continue;
-            }
-
-            $hash = hash_file('sha256', $filePath);
-
-            DB::table('middleware')->updateOrInsert(
-                ['middleware' => $middleware],
-                ['token' => $hash]
-            );
-        }
-        return "done";
     }
 
 }
