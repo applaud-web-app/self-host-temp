@@ -8,6 +8,8 @@ class ApluPush {
         this.popupText = popupText;
         this.btnColor = btnColor;
         this.showPoweredBy = showPoweredBy;
+
+        this.showApluPushPoweredByRibbon();
     }
 
     init() {
@@ -16,6 +18,8 @@ class ApluPush {
             setTimeout(() => {
                 this.createOptInForm();
             }, 2000);
+        }else{
+            this.removePoweredByRibbon();
         }
     }
 
@@ -105,12 +109,13 @@ class ApluPush {
         const url = `http://localhost:8000/api/permission.html?parentOrigin=${encodeURIComponent(parentOrigin)}&popupText=${encodeURIComponent(this.popupText)}`;
         window.open(url, "SubscriptionWindow", `width=600,height=400`);
         this.closeOptInForm();
+        this.removePoweredByRibbon();
     }
 
     denyNotifications() {
         localStorage.setItem('apluPushOptIn', 'denied');
         this.closeOptInForm();
-        console.log("User denied notifications.");
+        this.removePoweredByRibbon();
     }
 
     closeOptInForm() {
@@ -123,4 +128,37 @@ class ApluPush {
             }, 300);
         }
     }
+    
+    showApluPushPoweredByRibbon = () => {
+        // Check if 'apluPushOptIn' is not set in localStorage
+        const optInStatus = localStorage.getItem('apluPushOptIn');
+        if (!optInStatus) {
+            const ribbon = document.createElement('div');
+            ribbon.id = 'apluPushPoweredBy';
+            ribbon.classList.add('ribbon-pop');
+            ribbon.innerHTML = '<a href="https://aplu.io" target="_blank" style="color:#fff !important;">Notifications Powered By <b>Aplu</b></a>';
+
+            Object.assign(ribbon.style, {
+                background: '#000000ad',
+                padding: '5px 10px',
+                color: 'white',
+                position: 'fixed',
+                fontSize: '12px',
+                top: '0px',
+                right: '0px',
+                zIndex: '1111111111',
+                fontFamily: 'monospace'
+            });
+
+            document.body.appendChild(ribbon);
+        }
+    };
+
+    removePoweredByRibbon() {
+        const ribbon = document.querySelector('#apluPushPoweredBy');
+        if (ribbon) {
+            ribbon.remove();
+        }
+    }
+
 }

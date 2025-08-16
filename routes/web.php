@@ -17,7 +17,6 @@ use App\Http\Controllers\IconController;
 use App\Http\Controllers\ImportExportController;
 use App\Http\Controllers\RemoveDeactiveTokens;
 use App\Http\Controllers\CustomWidgetController;
-use App\Http\Controllers\GlobalController;
 
 Route::prefix('install')->withoutMiddleware('install')->group(function () {
     Route::get('/setup', [InstallController::class, 'installSetup'])->name('install.setup');
@@ -152,7 +151,6 @@ Route::middleware(['auth','ensure_push_config'])->group(function() {
         Route::get('/amp', 'amp')->name('amp');
         Route::get('/amp-permission', 'ampPermission')->name('amp-permission');
     });
-    
 
 });
 

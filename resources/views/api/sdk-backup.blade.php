@@ -8,9 +8,6 @@
   const UNSUB_URL     = '{{route('api.unsubscribe')}}';
   const TOKEN_LS_KEY  = 'push_token';
 
-  // 👉 Ribbon config
-  const RIBBON_ID     = 'mainApluPushPoweredBy';
-
   // 1) dynamic script loader
   const load = src => new Promise((res, rej) => {
     const s = document.createElement('script');
@@ -50,57 +47,12 @@
     return res.json();
   };
 
-  // 👉 Helpers for ribbon + state
-  const isSubscribed = () => Boolean(localStorage.getItem(TOKEN_LS_KEY));
-
-  function showApluPushPoweredByRibbon() {
-    if (isSubscribed()) {
-      removePoweredByRibbon();
-      return;
-    }
-    if (document.getElementById(RIBBON_ID)) return; // already present
-
-    const ribbon = document.createElement('div');
-    ribbon.id = RIBBON_ID;
-    ribbon.classList.add('ribbon-pop-main');
-    ribbon.innerHTML =
-      '<a href="https://aplu.io" target="_blank" style="color:#fff !important;">Notifications Powered By <b>Aplu</b></a>';
-
-    Object.assign(ribbon.style, {
-      background: '#000000ad',
-      padding: '5px 10px',
-      color: 'white',
-      position: 'fixed',
-      fontSize: '12px',
-      top: '0px',
-      right: '0px',
-      zIndex: '1111111111',
-      fontFamily: 'monospace'
-    });
-
-    document.body.appendChild(ribbon);
-  }
-
-  function removePoweredByRibbon() {
-    const ribbon = document.getElementById(RIBBON_ID);
-    if (ribbon) ribbon.remove();
-  }
-
-  const onDomReady = (fn) => {
-    if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', fn, { once: true });
-    } else {
-      fn();
-    }
-  };
-
   // 6) subscribe (or update) function
   async function subscribe() {
     // ask for notification permission
     const perm = await Notification.requestPermission();
     if (perm !== 'granted') {
       console.warn('[Push] Notification permission not granted');
-      showApluPushPoweredByRibbon(); // NEW
       return null;
     }
 
@@ -118,7 +70,6 @@
     // If it hasn’t changed, skip the API call entirely
     if (oldToken && oldToken === newToken) {
       console.log('[Push] Token unchanged, skipping subscribe');
-      removePoweredByRibbon();
       return newToken;
     }
 
@@ -148,37 +99,22 @@
 
     // 6e) store locally so next time we update instead of insert
     localStorage.setItem(TOKEN_LS_KEY, newToken);
-    removePoweredByRibbon();
-
     console.log('[Push] Subscribed/Updated token', newToken);
     return newToken;
   }
 
-  // 7) initial subscribe on page load — replace this whole block
-  onDomReady(() => {
-    showApluPushPoweredByRibbon(); // show immediately if not subscribed/opted-in
-    subscribe().catch(e => {
-      console.error('[Push] subscribe error', e);
-      showApluPushPoweredByRibbon(); // keep ribbon visible on error
-    });
-  });
-
+  // 7) initial subscribe on page load
+  subscribe().catch(e => console.error('[Push] subscribe error', e));
 
   // 8) handle token refresh (v9 compat)
   if (typeof messaging.onTokenRefresh === 'function') {
     messaging.onTokenRefresh(async () => {
       try {
         await messaging.deleteToken();
-        const token = await subscribe();
-        if (token) {
-          removePoweredByRibbon(); 
-        } else {
-          showApluPushPoweredByRibbon();
-        }
+        await subscribe();
         console.log('[Push] Token refreshed and updated');
       } catch (err) {
         console.error('[Push] Token refresh error', err);
-        showApluPushPoweredByRibbon();
       }
     });
   }

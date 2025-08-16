@@ -89,20 +89,13 @@
                                     <div class="col-md-6 form-group mb-4">
                                         <label class="mb-2">Icon URL</label>
                                         <div class="input-group">
-                                            <input type="text" id="iconUrl" class="form-control" value="{{ asset('images/push/icons/alarm-clock.png') }}">
+                                            <input type="text" id="iconUrl" class="form-control" value="{{ asset('images/push/icons/alarm-1.png') }}">
                                         </div>
                                         <small class="form-text text-muted">URL of the notification icon</small>
                                     </div>
                                 </div>
 
-                                <div class="col-md-12 form-group mb-4">
-                                    <label class="mb-2">Popup Message</label>
-                                    <textarea class="form-control" id="popupText" maxlength="20" rows="1">Please click 'Allow' when asked about notifications to subscribe to updates.</textarea>
-                                    <small class="form-text text-muted">Message shown in the browser permission
-                                        popup</small>
-                                </div>
-
-                                <div class="text-center mt-4 pt-3">
+                                <div class="text-end">
                                     <button type="button" id="generateScriptBtn"
                                         class="btn btn-primary px-5 py-2 font-weight-bold">
                                         <i class="fas fa-code mr-2"></i> Generate Embed Code
@@ -179,9 +172,9 @@
                 const subheading = $('#subheading').val() || "You can unsubscribe anytime later.";
                 const yesText = $('#yesText').val() || "Yes";
                 const noText = $('#noText').val() || "Later";
-                const popupText = $('#popupText').val() || "Please click 'Allow'...";
+                const popupText = $('#popupText').val() || "Please click 'Allow' when asked about notifications to subscribe to updates.";
                 const btnColor = $('#btnColor').val() || "#4e73df";
-                const iconUrl = $('#iconUrl').val() || "{{ asset('images/push/icons/alarm-clock.png') }}";
+                const iconUrl = $('#iconUrl').val() || "{{ asset('images/push/icons/alarm-1.png') }}";
 
                 const script = `
 <script src="{{ asset('blogger.js') }}"><\/script>

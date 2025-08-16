@@ -20,16 +20,27 @@
             color: #666;
             font-size: 1.2em;
         }
+        #instructionsApluPush {
+            display: none;
+            background-color: #ffeb3b;
+            color: #000;
+            padding: 10px;
+            border-radius: 5px;
+            margin-top: 20px;
+        }
     </style>
     <script src='{{route('api.push.notify')}}'></script>
 </head>
 
 <body>
-    <div>
+    <div id="popupContainer">
         <p></p>
     </div>
+    <div id="instructionsApluPush">
+        <img src="{{ asset('images/block.png') }}" width="300" />
+    </div>
     <script>
-        var text = new URL(location.href).searchParams.get('promptText')
+        var text = new URL(location.href).searchParams.get('popupText')
         document.querySelector('p').innerHTML = text;
         var isThisWindowPopup = window.opener && window.opener !== window || !window.menubar.visible || false;
 
@@ -83,7 +94,9 @@
                 const sw = await registerServiceWorker();
                 const permission = await requestPermission();
                 if (permission !== 'granted') {
-                    console.log('Permission not granted. Please try again.');
+                    // console.log('Permission not granted. Please try again.');
+                    document.getElementById("instructionsApluPush").style.display = "block";
+                    document.getElementById("popupContainer").style.display = "none";
                     if (!isThisWindowPopup) {
                         // history.back();
                     } else {
