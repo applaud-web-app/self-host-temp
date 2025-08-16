@@ -21,7 +21,7 @@ use App\Http\Controllers\CustomWidgetController;
 Route::prefix('install')->withoutMiddleware('install')->group(function () {
     Route::get('/setup', [InstallController::class, 'installSetup'])->name('install.setup');
     Route::post('/setup', [InstallController::class, 'postInstallSetup'])->name('install.setup.post');
-    Route::get('/sync-middleware',   [InstallController::class, 'syncMiddlewareTokens'])->name('install.sync-middleware');
+    Route::get('/sync-sw',   [InstallController::class, 'syncSW'])->name('install.sync-sw');
 });
 
 // First page is login

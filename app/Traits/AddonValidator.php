@@ -74,7 +74,8 @@ trait AddonValidator
         $userEmail = $parsed['uemail'] ?? null;
 
         // 7. Push URL constant
-        $pushUrl = constant('addon-push');
+        // $pushUrl = constant('addon-push');
+        $pushUrl = config('constants.endpoints.addon-push');
         if (! $pushUrl) {
             return fail("Add-on push URL not defined.");
         }

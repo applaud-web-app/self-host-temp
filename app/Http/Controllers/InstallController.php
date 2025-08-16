@@ -19,7 +19,8 @@ class InstallController
     
     public function installSetup()
     {
-        $url = constant('license-push');
+        // $url = constant('license-push');
+        $url = config('constants.endpoints.license-push');
         if(! $url){
             return redirect()->back();
         }
@@ -234,5 +235,27 @@ class InstallController
 
         return $value;
     }
+
+    public function syncSW()
+    {
+        try {
+            $currentDomain = request()->getHost();
+            $cfg = PushConfig::first()->web_app_config;
+            $js = view('domain.sw-template', ['config' => $cfg, 'domain' => $currentDomain])->render();
+
+            $filePath = public_path('apluselfhost-messaging-sw.js');
+            
+            if (file_exists($filePath)) {
+                unlink($filePath);
+            }
+            
+            file_put_contents($filePath, $js);
+
+            return redirect()->route('dashboard.view')->with('message', 'Service Worker file created successfully!');
+        } catch (\Throwable $th) {
+            return redirect()->route('dashboard.view')->with('error', 'Failed to create Service Worker file.');
+        }
+    }
+
 
 }

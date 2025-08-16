@@ -80,7 +80,8 @@ trait SubscriptionValidator
         $userEmail = $parsed['uemail'] ?? null;
 
         // 6. Get push URL from config or env
-        $pushUrl = constant('subscription-push');
+        // $pushUrl = constant('subscription-push');
+        $pushUrl = config('constants.endpoints.subscription-push');
         if (! $pushUrl) {
             return fail("Subscription URL not defined.");
         }

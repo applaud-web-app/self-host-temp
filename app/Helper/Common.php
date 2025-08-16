@@ -145,11 +145,12 @@ if (! function_exists('checkSessionValidity')) {
      */
     function checkSessionValidity(): string
     {
-        if (!defined('verify_user')) {
+        if (!config('constants.secrets.app_domain')) {
             return '';
         }
 
-        $envKey = constant('verify_user');
+        // $envKey = constant('verify_user');
+        $envKey = config('constants.secrets.app_domain');
         $val = config("license.$envKey");
 
         if (is_null($val)) {

@@ -1,11 +1,6 @@
-const SW_IDENTIFIER = 'my-custom-sw-v1';  
-
 // 0) Immediate SW activation
 self.addEventListener('install', event => self.skipWaiting());
-self.addEventListener('activate', event => {
-  storeSWIdentifier(SW_IDENTIFIER);
-  event.waitUntil(self.clients.claim());
-});
+self.addEventListener('activate', event => event.waitUntil(self.clients.claim()));
 
 // 1) Import Firebase compat libraries
 importScripts(
@@ -15,35 +10,25 @@ importScripts(
 
 // 2) Initialize Firebase App
 firebase.initializeApp({
-  apiKey:            "{{ $config['apiKey'] }}",
-  authDomain:        "{{ $config['authDomain'] }}",
-  projectId:         "{{ $config['projectId'] }}",
-  storageBucket:     "{{ $config['storageBucket'] }}",
-  messagingSenderId: "{{ $config['messagingSenderId'] }}",
-  appId:             "{{ $config['appId'] }}",
-  measurementId:     "{{ $config['measurementId'] }}"
+  apiKey:            "AIzaSyCx9ie7q1flTUAjtBWKn9uZUpRpJdJvCtE",
+  authDomain:        "learn-react-78ccf.firebaseapp.com",
+  projectId:         "learn-react-78ccf",
+  storageBucket:     "learn-react-78ccf.firebasestorage.app",
+  messagingSenderId: "943408743701",
+  appId:             "1:943408743701:web:acbac44c9c8e4eb8a9951c",
+  measurementId:     "943408743701"
 });
 
 const messaging = firebase.messaging();
-const ANALYTICS_ENDPOINT = "{{ route('api.analytics') }}";
-const SUBSCRIBE_ENDPOINT = "{{ route('api.subscribe') }}";
+const ANALYTICS_ENDPOINT = self.location.origin + "/api/push/analytics";
+const SUBSCRIBE_ENDPOINT = self.location.origin + "/api/push/subscribe";
 const DEFAULT_ICON       = '/favicon.ico';
-
-function isCorrectServiceWorkerActive() {
-  return getSWIdentifierFromDB().then(activeSW => activeSW === SW_IDENTIFIER); 
-}
 
 // 3) Analytics helper
 function sendAnalytics(eventType, messageId) {
-  
-  if (!isCorrectServiceWorkerActive()) {
-    console.log('Not the correct Service Worker. Skipping analytics.');
-    return;
-  }
-  
   return fetch(ANALYTICS_ENDPOINT, {
     method: "POST",
-    credentials: "same-origin",         
+    credentials: "same-origin",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       message_id: messageId,
@@ -180,37 +165,3 @@ self.addEventListener('pushsubscriptionchange', event => {
       : Promise.resolve()
   );
 });
-
-// IndexedDB helper functions
-function openDB() {
-  return new Promise((resolve, reject) => {
-    const request = indexedDB.open('serviceWorkerDB', 1);
-    request.onupgradeneeded = () => {
-      const db = request.result;
-      db.createObjectStore('swData', { keyPath: 'key' });
-    };
-    request.onsuccess = () => resolve(request.result);
-    request.onerror = () => reject('Failed to open IndexedDB');
-  });
-}
-
-function storeSWIdentifier(identifier) {
-  return openDB().then(db => {
-    const transaction = db.transaction('swData', 'readwrite');
-    const store = transaction.objectStore('swData');
-    store.put({ key: 'activeSW', value: identifier });
-    return transaction.complete;
-  });
-}
-
-function getSWIdentifierFromDB() {
-  return openDB().then(db => {
-    return new Promise((resolve, reject) => {
-      const transaction = db.transaction('swData', 'readonly');
-      const store = transaction.objectStore('swData');
-      const request = store.get('activeSW');
-      request.onsuccess = () => resolve(request.result ? request.result.value : null);
-      request.onerror = () => reject('Failed to retrieve SW identifier');
-    });
-  });
-}

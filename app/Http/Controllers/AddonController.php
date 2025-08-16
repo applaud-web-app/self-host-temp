@@ -23,7 +23,9 @@ class AddonController extends Controller
         if (isset($addons['success']) && $addons['success'] === false) {
             return redirect()->route('dashboard.view')->with('error', 'Please try again later.');
         }
-        $url = defined('addon-licence-push') ? constant('addon-licence-push') : null;
+        
+        // $url = defined('addon-licence-push') ? constant('addon-licence-push') : null;
+        $url = config('constants.endpoints.addon-licence-push');
         return view('addons.view', compact('addons', 'url'));
     }
     
