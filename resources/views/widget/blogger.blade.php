@@ -28,15 +28,99 @@
                 transform: translateY(0);
             }
         }
+
+
+.blogger-popup {
+ 
+  background: #fff;
+  border-radius: 16px;
+  border: 1px solid #ccc;
+  padding: 20px;
+
+
+}
+
+.blogger-popup-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 15px;
+}
+
+.notification-icon {
+  width: 45px;
+  height: 45px;
+}
+
+
+.blogger-title {
+  font-size: 1.1rem;
+  font-weight: bold;
+  margin-bottom: 0px
+}
+
+.blogger-subtitle  {
+  font-size: 0.9rem;
+  color: #666;
+  margin-bottom: 0px
+}
+
+.blogger-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin: 15px 0;
+}
+
+.blogger-buttons .btn {
+  padding: 10px 18px;
+  border-radius: 10px;
+  width: 100%;
+  border: none;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+}
+
+
+.blogger-buttons .btn-joinnow {
+  background-color: var(--primary);
+  color: rgb(255, 255, 255);
+}
+
+
+.blogger-buttons .btn-cancel {
+    background-color: #f1f1f1;
+    color: black;
+}
+
+
+.blogger-note{
+   font-size:  0.875rem;
+   margin-bottom: 0px;
+   color: #666;
+   text-align: center
+}
+
+
+.blogger-note a {
+  color: var(--primary);
+}
+
+        
     </style>
 @endpush
 @section('content')
     <section class="content-body" id="profile_page">
         <div class="container-fluid">
+
+              <div class="d-flex flex-wrap align-items-center text-head mb-3">
+                <h2 class="me-auto mb-0">Blogger Integration</h2>
+            </div>
             <div class="row justify-content-center">
-                <div class="col-lg-12">
+                <div class="col-lg-8">
                     <!-- Form Card -->
-                    <div class="card  mb-4" id="configFormCard">
+                    <div class="card  h-auto" id="configFormCard">
                         <div class="card-header bg-white py-3">
                             <div class="d-flex align-items-center gap-3">
                                 <div class="bg-primary rounded-pill px-3 py-2">
@@ -81,7 +165,7 @@
                                     <div class="col-md-6 form-group mb-4">
                                         <label class="mb-2">Button Color</label>
                                         <div class="d-flex align-items-center">
-                                            <input type="color" id="btnColor" class="form-control p-1 w-100" value="#4e73df">
+                                            <input type="color" id="btnColor" class="form-control p-1 w-100" value="#f93a0b">
                                         </div>
                                         <small class="form-text text-muted">Primary color for buttons</small>
                                     </div>
@@ -151,6 +235,35 @@
                         </div>
                     </div>
                 </div>
+
+                    <div class="col-md-4">
+                    <div class="sticky-top">
+                        <div class="card h-auto">
+                            <div class="card-body">
+                                <h4 class="card-title fs-20">Preview</h4>
+
+                                <div class="blogger-popup">
+                                    <div class="blogger-popup-header">
+                                        <img src="{{ asset('images/push/icons/alarm-1.png') }}" alt="Notification Icon" class="notification-icon" id="previewIcon">
+                                    <div class="blogger-text">
+                                        <h4 class="blogger-title" id="previewHeading">We want to notify you about the latest updates.</h4>
+                                        <p class="blogger-subtitle" id="previewSubheading">You can unsubscribe anytime later.</p>
+                                    </div>
+                                   
+                                    </div>
+                                 
+                                    <div class="blogger-buttons">
+                                      <button class="btn btn-joinnow" id="previewYesBtn">Yes</button>
+                                     <button class="btn btn-cancel" id="previewNoBtn">Later</button>
+                                    </div>
+                                    <p class="blogger-note" id="popupText">Powered by <a href="https://aplu.io" target="_blank">Aplu.io</a></p>
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
             </div>
         </div>
     </section>
@@ -229,5 +342,91 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         });
     </script>
+
+
+   <script>
+  $(document).ready(function () {
+    // --- live preview bindings ---
+    function syncPreview() {
+      const heading    = $('#heading').val()    || "We want to notify you about the latest updates.";
+      const subheading = $('#subheading').val() || "You can unsubscribe anytime later.";
+      const yesText    = $('#yesText').val()    || "Yes";
+      const noText     = $('#noText').val()     || "Later";
+      const btnColor   = $('#btnColor').val()   || "#4e73df";
+      const iconUrl    = $('#iconUrl').val()    || "{{ asset('images/push/icons/alarm-1.png') }}";
+
+      // text
+      $('#previewHeading').text(heading);
+      $('#previewSubheading').text(subheading);
+      $('#previewYesBtn').text(yesText);
+      $('#previewNoBtn').text(noText);
+
+      // colors
+      $('#previewYesBtn').css('background-color', btnColor);
+
+      // icon
+      $('#previewIcon').attr('src', iconUrl);
+    }
+
+    // run once on load
+    syncPreview();
+
+    // re-sync whenever inputs change
+    $('#heading, #subheading, #yesText, #noText')
+      .on('input', syncPreview);
+
+    $('#btnColor').on('input change', syncPreview);
+    $('#iconUrl').on('input change', syncPreview);
+
+    // --- your existing code below (unchanged) ---
+    $('#generateScriptBtn').click(function () {
+      const heading = $('#heading').val() || "We want to notify you about the latest updates.";
+      const subheading = $('#subheading').val() || "You can unsubscribe anytime later.";
+      const yesText = $('#yesText').val() || "Yes";
+      const noText = $('#noText').val() || "Later";
+      const popupText = $('#popupText').val() || "Please click 'Allow' when asked about notifications to subscribe to updates.";
+      const btnColor = $('#btnColor').val() || "#4e73df";
+      const iconUrl = $('#iconUrl').val() || "{{ asset('images/push/icons/alarm-1.png') }}";
+
+      const script = `
+<script src="{{ asset('blogger.js') }}"><\/script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  let apluPush = new ApluPush(
+    ${JSON.stringify(heading)},
+    ${JSON.stringify(subheading)},
+    ${JSON.stringify(yesText)},
+    ${JSON.stringify(noText)},
+    ${JSON.stringify(iconUrl)},
+    ${JSON.stringify(popupText)},
+    ${JSON.stringify(btnColor)},
+  );
+  apluPush.init();
+});
+<\/script>`.trim();
+
+      $('#scriptCode').text(script);
+      $('#configFormCard').fadeOut(300, function () {
+        $('#scriptDisplayCard').fadeIn(300);
+        Prism.highlightAll();
+      });
+    });
+
+    $('#backToFormBtn').click(function () {
+      $('#scriptDisplayCard').fadeOut(300, function () {
+        $('#configFormCard').fadeIn(300);
+      });
+    });
+
+    const clipboard = new ClipboardJS('#copyButton');
+    clipboard.on('success', function (e) {
+      iziToast.success({ title: 'Copied', message: 'Embed code copied to clipboard!', position: 'topRight' });
+      e.clearSelection();
+    });
+    clipboard.on('error', function () {
+      iziToast.error({ title: 'Error', message: 'Failed to copy to clipboard.', position: 'topRight' });
+    });
+  });
+</script>
 @endpush
 
