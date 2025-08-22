@@ -12,15 +12,6 @@ use Illuminate\Support\Facades\File;
 class AppServiceProvider extends ServiceProvider
 {
     /**
-     * Register any application services.
-     */
-    public function register()
-    {
-        require_once base_path('vendor/max-mind/src/config.php');
-    }
-
-
-    /**
      * Bootstrap any application services.
      */
     public function boot(): void

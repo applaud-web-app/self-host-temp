@@ -212,7 +212,7 @@ class NotificationController extends Controller
 
             // counts ------------------------------------------------------------
             $counts = PushEventCount::where('message_id', $notification->message_id)
-                        // ->where('domain', $domain)
+                        ->where('domain', $domain)
                         ->whereIn('event', ['received', 'click'])
                         ->pluck('count', 'event');
 
@@ -453,12 +453,14 @@ class NotificationController extends Controller
             // Instant: fire off immediately
             if ($notification->schedule_type === 'instant') {
                 if ($data['segment_type'] === 'all') {
-                    SendNotificationJob::dispatch($notification->id);
+                    // SendNotificationJob::dispatch($notification->id);
+                    dispatch(new SendNotificationJob($notification->id)); 
                 } else {
-                    SendSegmentNotificationJob::dispatch(
-                        $notification->id,
-                        $notification->segment_id
-                    );
+                    // SendSegmentNotificationJob::dispatch(
+                    //     $notification->id,
+                    //     $notification->segment_id
+                    // );
+                    dispatch(new SendSegmentNotificationJob($notification->id, $notification->segment_id));
                 }
             }
 

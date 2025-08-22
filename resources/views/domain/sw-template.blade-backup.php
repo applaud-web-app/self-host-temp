@@ -15,18 +15,18 @@ importScripts(
 
 // 2) Initialize Firebase App
 firebase.initializeApp({
-  apiKey:            "AIzaSyCx9ie7q1flTUAjtBWKn9uZUpRpJdJvCtE",
-  authDomain:        "learn-react-78ccf.firebaseapp.com",
-  projectId:         "learn-react-78ccf",
-  storageBucket:     "learn-react-78ccf.firebasestorage.app",
-  messagingSenderId: "943408743701",
-  appId:             "1:943408743701:web:acbac44c9c8e4eb8a9951c",
-  measurementId:     "943408743701"
+  apiKey:            "{{ $config['apiKey'] }}",
+  authDomain:        "{{ $config['authDomain'] }}",
+  projectId:         "{{ $config['projectId'] }}",
+  storageBucket:     "{{ $config['storageBucket'] }}",
+  messagingSenderId: "{{ $config['messagingSenderId'] }}",
+  appId:             "{{ $config['appId'] }}",
+  measurementId:     "{{ $config['measurementId'] }}"
 });
 
 const messaging = firebase.messaging();
-const ANALYTICS_ENDPOINT = "http://localhost:8000/api/push/analytics";
-const SUBSCRIBE_ENDPOINT = "http://localhost:8000/api/push/subscribe";
+const ANALYTICS_ENDPOINT = "{{ route('api.analytics') }}";
+const SUBSCRIBE_ENDPOINT = "{{ route('api.subscribe') }}";
 const DEFAULT_ICON       = '/favicon.ico';
 
 function isCorrectServiceWorkerActive() {
@@ -43,7 +43,7 @@ function sendAnalytics(eventType, messageId) {
   
   return fetch(ANALYTICS_ENDPOINT, {
     method: "POST",
-    credentials: "same-origin",          // keep cookies (e.g. Sanctum) if needed
+    credentials: "same-origin",         
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       message_id: messageId,

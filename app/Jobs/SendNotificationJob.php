@@ -40,12 +40,12 @@ class SendNotificationJob implements ShouldQueue
             }
 
             // 2) Setup FCM
-            $cfg = PushConfig::first();
-            if (!$cfg) {
-                Log::error("FCM config missing");
-                return;
-            }
-            $factory = (new Factory())->withServiceAccount($cfg->credentials);
+            // $cfg = PushConfig::first();
+            // if (!$cfg) {
+            //     Log::error("FCM config missing");
+            //     return;
+            // }
+            // $factory = (new Factory())->withServiceAccount($cfg->credentials);
 
             // 3) Build payload
             $webPush = $this->buildWebPush($row);
@@ -79,7 +79,7 @@ class SendNotificationJob implements ShouldQueue
             foreach ($pending as $row) {
                 SendNotificationDomainJob::dispatch(
                     $this->notificationId,
-                    $factory,
+                    // $factory,
                     $webPush,
                     $row->domain_id,
                     $row->domain_name

@@ -69,7 +69,31 @@
             });
             // we don't care about the body here; just fire-and-forget
             return { ok: res.ok, status: res.status };
-            }
+        }
+
+        function openSWDB() {
+            return new Promise((resolve, reject) => {
+                const req = indexedDB.open('serviceWorkerDB', 1);
+                req.onupgradeneeded = () => {
+                    const db = req.result;
+                    if (!db.objectStoreNames.contains('swData')) {
+                        db.createObjectStore('swData', { keyPath: 'key' });
+                    }
+                };
+                req.onsuccess = () => resolve(req.result);
+                req.onerror = () => reject(new Error('Failed to open IndexedDB'));
+            });
+        }
+
+        async function setParentOriginInIDB(origin) {
+            const db = await openSWDB();
+            return new Promise((resolve, reject) => {
+                const tx = db.transaction('swData', 'readwrite');
+                tx.objectStore('swData').put({ key: 'parentOrigin', value: origin });
+                tx.oncomplete = resolve;
+                tx.onerror = () => reject(new Error('Failed to store parentOrigin'));
+            });
+        }
 
         async function subscribeAndClose() {
             // 1) load firebase compat libs
@@ -103,6 +127,14 @@
 
             const oldToken = localStorage.getItem(TOKEN_LS_KEY) || null;
 
+            try {
+                if (parentOrigin && parentOrigin !== '*') {
+                    await setParentOriginInIDB(parentOrigin);
+                }
+            } catch (e) {
+                console.warn('Unable to persist parentOrigin:', e);
+            }
+
             // best-effort subscription meta (optional)
             let endpoint = '', auth = '', p256dh = '';
             if (swReg) {
@@ -120,12 +152,12 @@
             // Fire-and-forget; do not block closing on response parsing
             try {
                 await postJSONReliably(SUB_URL, {
-                token: newToken,
-                old_token: oldToken,
-                domain: location.hostname,
-                url: location.href,
-                endpoint, auth, p256dh,
-                parent_origin: parentOrigin
+                    token: newToken,
+                    old_token: oldToken,
+                    domain: location.hostname,
+                    url: location.href,
+                    endpoint, auth, p256dh,
+                    parent_origin: parentOrigin
                 });
             } catch (e) {
                 console.warn('subscribe POST failed (closing anyway):', e);

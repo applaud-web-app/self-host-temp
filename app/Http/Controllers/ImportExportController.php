@@ -10,6 +10,7 @@ use App\Models\Domain;
 use Illuminate\Support\Facades\File;
 use Rap2hpoutre\FastExcel\FastExcel;
 use App\Models\PushConfig;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 
 class ImportExportController extends Controller
@@ -93,6 +94,7 @@ class ImportExportController extends Controller
         // Save Push Subscription Head
         $head = PushSubscriptionHead::firstOrNew(['token' => $token]);
         $head->domain = $domain;
+        $head->parent_origin = $domain;
         $head->token = $token;
         $head->save();
 
@@ -141,9 +143,9 @@ class ImportExportController extends Controller
         }
     }
 
-    public function exportData(Request $request){
+    public function exportData(Request $request)
+    {
         try {
-
             $request->validate([
                 'eq' => 'required|string',
             ]);
@@ -154,7 +156,7 @@ class ImportExportController extends Controller
             // Check if domain exists
             $domainRecord = Domain::where('name', $domain)->first();
             if (!$domainRecord) {
-                return response()->json(['error' => 'Domain not found.'], 404);
+                return response()->json(['error' => 'Domain not found.']);
             }
 
             // Define $relativePath before the chunking
@@ -176,33 +178,44 @@ class ImportExportController extends Controller
             // Query subscriptions for the specified domain
             $subscriptions = PushSubscriptionHead::where('parent_origin', $domain)->with([
                 'payload', 'meta'
-            ])->chunk(500, function ($subscriptions) use ($publicKey, $privateKey, $fullPath) {
-                $rows = $subscriptions->map(function ($subscription) use ($publicKey, $privateKey) {
-                    return [
-                        'token' => $subscription->token,
-                        'endpoint' => $subscription->payload->endpoint,
-                        'auth' => $subscription->payload->auth,
-                        'p256dh' => $subscription->payload->p256dh,
-                        'ip' => $subscription->meta->ip_address,
-                        'status' => $subscription->status,
-                        'url' => $subscription->meta->subscribed_url,
-                        'country' => $subscription->meta->country,
-                        'state' => $subscription->meta->state,
-                        'city' => $subscription->meta->city,
-                        'device' => $subscription->meta->device,
-                        'browser' => $subscription->meta->browser,
-                        'platform' => $subscription->meta->platform,
-                        'public_key' => $publicKey,
-                        'private_key' => $privateKey,
-                    ];
-                });
-                (new FastExcel($rows))->export($fullPath);
+            ])->get(); // Use get() instead of chunking to check data first
+
+            // Check if there are any subscriptions
+            if ($subscriptions->isEmpty()) {
+                return response()->json(['error' => 'No data found to export.']);
+            }
+
+            // Define rows to export
+            $rows = $subscriptions->map(function ($subscription) use ($publicKey, $privateKey) {
+                return [
+                    'token' => $subscription->token,
+                    'endpoint' => $subscription->payload->endpoint,
+                    'auth' => $subscription->payload->auth,
+                    'p256dh' => $subscription->payload->p256dh,
+                    'ip' => $subscription->meta->ip_address,
+                    'status' => $subscription->status,
+                    'url' => $subscription->meta->subscribed_url,
+                    'country' => $subscription->meta->country,
+                    'state' => $subscription->meta->state,
+                    'city' => $subscription->meta->city,
+                    'device' => $subscription->meta->device,
+                    'browser' => $subscription->meta->browser,
+                    'platform' => $subscription->meta->platform,
+                    'public_key' => $publicKey,
+                    'private_key' => $privateKey,
+                ];
             });
+
+            // Export the data to the file
+            (new FastExcel($rows))->export($fullPath);
+
             $downloadUrl = url("storage/{$relativePath}");
             return response()->json(['downloadUrl' => $downloadUrl]);
+
         } catch (\Throwable $th) {
             return response()->json(['error' => 'Export failed. Please try again.'], 500);
         }
     }
+
 
 }

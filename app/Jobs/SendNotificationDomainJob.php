@@ -2,9 +2,10 @@
 
 namespace App\Jobs;
 
+use App\Models\PushConfig;
 use App\Models\Notification;
 use App\Models\PushSubscriptionHead;
-use Illuminate\Bus\Queueable;
+use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
@@ -24,108 +25,52 @@ class SendNotificationDomainJob implements ShouldQueue
     public int $tries   = 1;
     public int $timeout = 7200;
 
-    private const DEFAULT_CHUNK = 200;
-    private const MAX_FCM_BATCH = 200;
-    private const THROTTLE_US   = 100_000;
+    private const DEFAULT_CHUNK = 20;
+    private const MAX_FCM_BATCH = 50; // Process in chunks of 50
 
     public function __construct(
-        protected int     $notificationId,
-        protected Factory $factory,
-        protected array   $webPush,
-        protected int     $domainId,
-        protected string  $domainName
+        protected int $notificationId,
+        protected array $webPush,
+        protected int $domainId,
+        protected string $domainName
     ) {}
 
     public function handle(): void
     {
         try {
-            $batchSize = Cache::remember('settings_batch_size', now()->addDay(), function () {
-                return (int) (Setting::query()->value('batch_size') ?? self::DEFAULT_CHUNK);
-            });
-            $batchSize = max(1, min(self::MAX_FCM_BATCH, $batchSize));
+            Log::info("Fetching subscribers for domain: {$this->domainName}");
 
-            $messaging = $this->factory->createMessaging();
-            $config    = WebPushConfig::fromArray($this->webPush);
-            $message   = CloudMessage::new()->withWebPushConfig($config);
-            $now       = now();
-
-            $success = $failed = 0;
-            $totalSent = 0; // Track total notifications sent
-
-            // chunk only id+token for this domain
-            PushSubscriptionHead::where('status',1)
-                ->where('parent_origin',$this->domainName)
-                ->select('id','token')
+            // Fetch the list of subscribers (tokens) for the domain
+            $subscribers = PushSubscriptionHead::where('status', 1)
+                ->where('parent_origin', $this->domainName)
+                ->select('id', 'token')
                 ->orderBy('id')
-                ->chunkById(150, function($subs) use (
-                    $messaging, $message, &$success, &$failed, &$totalSent, $now
-                ) {
-                    $list   = $subs->values()->all();
-                    $tokens = array_column($list, 'token');
-                    if (!$tokens) return;
+                ->get();
 
-                    $report = $messaging->sendMulticast($message, $tokens);
-                    $s = $report->successes()->count();
-                    $f = $report->failures()->count();
-                    $success += $s;
-                    $failed  += $f;
-                    
-                    // Increase the total sent count
-                    $totalSent += count($tokens);
+            // Log if no subscribers were found
+            if ($subscribers->isEmpty()) {
+                Log::warning("No active subscribers found for domain: {$this->domainName}");
+            }
 
-                    // After sending 10,000 notifications, add a 1-second delay
-                    if ($totalSent >= 10000) {
-                        sleep(1); // Add a 1-second delay
-                        $totalSent = 0; // Reset the counter for the next set
-                    }
+            $totalSubscribers = $subscribers->count();
+            Log::info("Total subscribers found for domain {$this->domainName}: {$totalSubscribers}");
 
-                    // deactivate bad tokens
-                    $idxs = array_keys($report->failures()->getItems());
-                    // if ($idxs) {
-                    //     $bad = array_map(fn($i) => $list[$i]->id, $idxs);
-                    //     DB::table('push_subscriptions_head')->whereIn('id',$bad)->update(['status'=>0]);
-                    // }
+            // Chunk them in batches of 50 tokens
+            $batches = $subscribers->chunk(self::MAX_FCM_BATCH); // Process them in chunks
 
-                    // record each send in bulk
-                    $rows = [];
-                    foreach ($list as $i => $sub) {
-                        $rows[] = [
-                            'notification_id'      => $this->notificationId,
-                            'subscription_head_id' => $sub->id,
-                            'status'               => in_array($i,$idxs) ? 0 : 1,
-                            'created_at'           => $now,
-                            'updated_at'           => $now,
-                        ];
-                    }
-                    foreach (array_chunk($rows,200) as $chunk) {
-                        DB::table('notification_sends')->insertOrIgnore($chunk);
-                    }
-                });
-
-            // bump global counters
-            DB::table('notifications')
-                ->where('id',$this->notificationId)
-                ->update([
-                    'active_count'  => DB::raw("active_count + ".($success+$failed)),
-                    'success_count' => DB::raw("success_count + {$success}"),
-                    'failed_count'  => DB::raw("failed_count + {$failed}"),
-                ]);
-
-            // mark this domain pivot
-            DB::table('domain_notification')
-                ->where('notification_id',$this->notificationId)
-                ->where('domain_id',$this->domainId)
-                ->update([
-                    'status'  => $success > 0 ? 'sent' : 'failed',
-                    'sent_at' => $now,
-                ]);
+            // For each batch, dispatch a job to send the notification to those 50 tokens
+            foreach ($batches as $batch) {
+                Log::info("Dispatching job for batch of 50 tokens for domain: {$this->domainName}");
+                // Dispatch a new job for each batch of 50 tokens
+                SendMulticastNotificationJob::dispatch($this->notificationId, $this->webPush, $batch->pluck('token', 'id')->toArray(), $this->domainId, $this->domainName);
+            }
 
         } catch (Throwable $e) {
-            Log::error("Domain job failed [notif={$this->notificationId},dom={$this->domainId}]: {$e->getMessage()}");
+            Log::error("Domain job failed [notif={$this->notificationId}, dom={$this->domainId}]: {$e->getMessage()}");
             DB::table('domain_notification')
-              ->where('notification_id',$this->notificationId)
-              ->where('domain_id',$this->domainId)
-              ->update(['status'=>'failed','sent_at'=>now()]);
+              ->where('notification_id', $this->notificationId)
+              ->where('domain_id', $this->domainId)
+              ->update(['status' => 'failed', 'sent_at' => now()]);
         }
     }
 }
