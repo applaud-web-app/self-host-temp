@@ -28,7 +28,7 @@ class SendMulticastNotificationJob implements ShouldQueue
     public function __construct(
         protected int $notificationId,
         protected array $webPush,
-        protected array $idTokenMap, // The 50 tokens we need to send to
+        protected array $idTokenMap,
         protected int $domainId,
         protected string $domainName
     ) {}
@@ -38,11 +38,15 @@ class SendMulticastNotificationJob implements ShouldQueue
         try {
             Log::info("Sending notification to batch of " . count($this->idTokenMap) . " tokens for domain: {$this->domainName}");
 
-            $cfg = PushConfig::first();
+            $cfg = Cache::remember("fcm:push_config:{$this->domainName}", now()->addMinutes(60), function () {
+                return PushConfig::first();
+            });
+
             if (!$cfg) {
                 Log::error("FCM config missing for domain: {$this->domainName}");
                 return;
             }
+
             $factory = (new Factory())->withServiceAccount($cfg->credentials);
             $messaging = $factory->createMessaging();
 

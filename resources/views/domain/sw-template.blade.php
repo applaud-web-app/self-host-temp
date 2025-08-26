@@ -34,7 +34,7 @@ function isCorrectServiceWorkerActive() {
 }
 
 // 3) Analytics helper
-function sendAnalytics(eventType, messageId) {
+async function sendAnalytics(eventType, messageId) {
   
   const correct = await isCorrectServiceWorkerActive();
   if (!correct) {

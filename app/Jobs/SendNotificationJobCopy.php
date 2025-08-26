@@ -12,7 +12,7 @@ use Illuminate\Support\Facades\Log;
 use Kreait\Firebase\Factory;
 use Throwable;
 
-class SendNotificationJobSlow implements ShouldQueue
+class SendNotificationJobCopy implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable;
 
@@ -39,18 +39,10 @@ class SendNotificationJobSlow implements ShouldQueue
                 return;
             }
 
-            // 2) Setup FCM
-            // $cfg = PushConfig::first();
-            // if (!$cfg) {
-            //     Log::error("FCM config missing");
-            //     return;
-            // }
-            // $factory = (new Factory())->withServiceAccount($cfg->credentials);
-
-            // 3) Build payload
+            // 2) Build payload
             $webPush = $this->buildWebPush($row);
 
-            // 4) In one transaction, fetch & mark all PENDING domains queued
+            // 3) In one transaction, fetch & mark all PENDING domains queued
             $pending = DB::transaction(function() {
                 $list = DB::table('domain_notification as dn')
                     ->join('domains as d','dn.domain_id','=','d.id')
@@ -79,7 +71,6 @@ class SendNotificationJobSlow implements ShouldQueue
             foreach ($pending as $row) {
                 SendNotificationDomainJob::dispatch(
                     $this->notificationId,
-                    // $factory,
                     $webPush,
                     $row->domain_id,
                     $row->domain_name
