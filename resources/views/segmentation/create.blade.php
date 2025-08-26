@@ -124,9 +124,6 @@
                                         <div class="col-lg-4 mb-3">
                                             <select class="form-select" name="state[]">
                                                 <option value="">State (optional)…</option>
-                                                <option>Maharashtra</option>
-                                                <option>California</option>
-                                                <option>Ontario</option>
                                             </select>
                                         </div>
                                         <div class="col-lg-1 mb-3">

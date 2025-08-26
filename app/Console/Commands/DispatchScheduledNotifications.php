@@ -20,11 +20,10 @@ class DispatchScheduledNotifications extends Command
         ->whereNotNull('one_time_datetime')
         ->where('segment_type','all')
         ->where('one_time_datetime','<=',$now)
-        ->whereHas('domains', function($q) {
-            $q->where('domain_notification.status','pending');
-        })
+        ->where('status','pending')
         ->each(function($n) {
-            SendNotificationJob::dispatch($n->id);
+            // SendNotificationJob::dispatch($n->id);
+            dispatch(new SendNotificationJob($n->id));
             $this->info("Dispatched Notification #{$n->id}");
         });
     }

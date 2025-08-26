@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Notification;
 use App\Models\Domain;
-use App\Jobs\SendNotificationJob;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Http;
 use Yajra\DataTables\Facades\DataTables;
@@ -16,7 +15,7 @@ use Illuminate\Support\Facades\DB;
 use App\Models\PushEventCount;
 use App\Models\Segment;
 use Illuminate\Http\JsonResponse;
-use App\Jobs\SendSegmentNotificationJob;
+use App\Jobs\CreateAndDispatchNotifications;
 
 class NotificationController extends Controller
 {
@@ -29,10 +28,9 @@ class NotificationController extends Controller
 
         /* --------------------------------------------------------------------
          |  Base query
-         * ------------------------------------------------------------------ */
+        * ------------------------------------------------------------------ */
         $query = DB::table('notifications as n')
-            ->leftJoin('domain_notification as dn', 'n.id', '=', 'dn.notification_id')
-            ->leftJoin('domains as d', 'd.id', '=', 'dn.domain_id')
+            ->leftJoin('domains as d', 'd.id', '=', 'n.domain_id')
             ->leftJoin('push_event_counts as pec', function ($join) {
                 $join->on('pec.message_id', '=', 'n.message_id')
                     //  ->on('pec.domain',      '=', 'd.name')
@@ -45,8 +43,8 @@ class NotificationController extends Controller
                 'n.segment_type',
                 'n.title',
                 'd.name as domain',
-                'dn.sent_at as sent_time',
-                'dn.status',
+                'n.sent_at as sent_time',
+                'n.status',
                 DB::raw('COALESCE(SUM(pec.count),0) as clicks'),
             ])
             ->groupBy(
@@ -56,15 +54,15 @@ class NotificationController extends Controller
                 'n.segment_type',
                 'n.title',
                 'd.name',
-                'dn.sent_at',
-                'dn.status',
+                'n.sent_at',
+                'n.status',
             );
 
         /* --------------------------------------------------------------------
          |  Dynamic filters
          * ------------------------------------------------------------------ */
         $query->when($request->filled('status'),
-                fn ($q) => $q->where('dn.status', $request->status))
+                fn ($q) => $q->where('n.status', $request->status))
                ->when($request->filled('search_term'), function ($q) use ($request) {
                     $term = "%{$request->search_term}%";
                     $q->where(function ($sub) use ($term) {
@@ -148,10 +146,9 @@ class NotificationController extends Controller
                 }
                 return $html;
             }
-                
-            )
-            ->rawColumns(['campaign_name', 'status', 'sent_time', 'action'])
-            ->make(true);
+        )
+        ->rawColumns(['campaign_name', 'status', 'sent_time', 'action'])
+        ->make(true);
     }
 
     public function cancel(Request $request)
@@ -175,15 +172,10 @@ class NotificationController extends Controller
         }
 
         // 3) Attempt to mark pending → cancelled
-        $affected = DB::table('domain_notification as dn')
-            ->join('domains as d', 'd.id', '=', 'dn.domain_id')
-            ->where('dn.notification_id', $notificationId)
-            ->where('dn.status',          'pending')
-            ->where('d.name',             $domainName)
-            ->update([
-                'dn.status'  => 'cancelled',
-                'dn.sent_at' => Carbon::now(),
-            ]);
+        $affected = DB::table('notifications')
+            ->where('id', $notificationId)
+            ->where('status', 'pending')
+            ->update(['status' => 'cancelled','sent_at' => Carbon::now()]);
 
         if (! $affected) {
             return response()->json([
@@ -202,15 +194,11 @@ class NotificationController extends Controller
     {
         try {
             $request->validate(['eq' => 'required|string']);
-
-            // decryptUrl() returns ['notification' => …, 'domain' => …]
             $payload = decryptUrl($request->eq);
             $domain  = $payload['domain'];
             $id      = $payload['notification'];
 
             $notification = Notification::where('id', $id)->firstOrFail();
-
-            // counts ------------------------------------------------------------
             $counts = PushEventCount::where('message_id', $notification->message_id)
                         ->where('domain', $domain)
                         ->whereIn('event', ['received', 'click'])
@@ -218,7 +206,7 @@ class NotificationController extends Controller
 
             $received = (int) $counts->get('received', 0);
             $clicked  = (int) $counts->get('click', 0);
-            $delivered = (int) $notification->success_count;   // total sent/delivered
+            $delivered = (int) $notification->success_count; 
 
             // buttons -----------------------------------------------------------
             $btns = [];
@@ -239,7 +227,7 @@ class NotificationController extends Controller
                     'banner_image' => $notification->banner_image ?: asset('images/default.png'),
                     'banner_icon'  => $notification->banner_icon  ?: asset('images/push/icons/alarm-1.png'),
                     'link'         => $notification->target_url,
-                    'btns'         => $btns,                       // may be empty
+                    'btns'         => $btns,                     
                     'analytics'    => [
                         'delivered' => $delivered,
                         'received'  => $received,
@@ -375,6 +363,104 @@ class NotificationController extends Controller
         return compact('title', 'description', 'image');
     }
 
+    // public function store(Request $request)
+    // {
+    //     // Always cast CTA checkbox
+    //     if (! $request->has('cta_enabled')) {
+    //         $request->merge(['cta_enabled' => 0]);
+    //     }
+
+    //     // 1) Validate
+    //     $data = $request->validate([
+    //         'target_url'        => 'required|url',
+    //         'title'             => 'required|string|max:100',
+    //         'description'       => 'required|string|max:200',
+    //         'banner_image'      => 'nullable|url',
+    //         'banner_icon'       => 'nullable|url',
+    //         'schedule_type'     => 'required|in:Instant,Schedule',
+    //         'one_time_datetime' => 'required_if:schedule_type,Schedule|nullable|date',
+    //         'segment_type'      => 'required|in:all,particular',
+    //         'domain_name'       => 'required_if:segment_type,all|array|min:1',
+    //         'domain_name.*'     => 'required_if:segment_type,all|string|exists:domains,name',
+    //         'cta_enabled'       => 'required|in:0,1',
+    //         'btn_1_title'       => 'nullable|required_if:cta_enabled,1|string|max:255',
+    //         'btn_1_url'         => 'nullable|required_if:cta_enabled,1|url',
+    //         'btn_title_2'       => 'nullable|string|max:255',
+    //         'btn_url_2'         => 'nullable|required_with:btn_title_2|url',
+    //         'segment_id'        => 'nullable|required_if:segment_type,particular|exists:segments,id',
+    //     ], [], [
+    //         'one_time_datetime' => 'one-time date & time',
+    //         'btn_1_title'       => 'Button 1 title',
+    //         'btn_1_url'         => 'Button 1 URL',
+    //         'btn_title_2'       => 'Button 2 title',
+    //         'btn_url_2'         => 'Button 2 URL',
+    //     ]);
+
+    //     $defaults = [
+    //         'banner_image' => asset('images/default.png'),
+    //         'banner_icon'  => asset('images/push/icons/alarm-1.png'),
+    //     ];
+
+    //     if($data['banner_image'] === $defaults['banner_image']) {
+    //         $data['banner_image'] = null;
+    //     }
+
+    //     try {
+    //         $notification = Notification::create([
+    //             'target_url'        => $data['target_url'],
+    //             'campaign_name'     => 'CAMP#'.random_int(1000,9999),
+    //             'title'             => $data['title'],
+    //             'description'       => $data['description'],
+    //             'banner_image'      => $data['banner_image'] ?? null,
+    //             'banner_icon'       => $data['banner_icon']  ?? null,
+    //             'schedule_type'     => strtolower($data['schedule_type']),
+    //             'one_time_datetime' => $data['schedule_type'] === 'Schedule' ? $data['one_time_datetime'] : null,
+    //             'message_id'        => Str::uuid(),
+    //             'btn_1_title'       => $data['btn_1_title'] ?? null,
+    //             'btn_1_url'         => $data['btn_1_url'] ?? null,
+    //             'btn_title_2'       => $data['btn_title_2'] ?? null,
+    //             'btn_url_2'         => $data['btn_url_2'] ?? null,
+    //             'segment_type'      => $data['segment_type'],
+    //             'segment_id'        => $data['segment_id'] ?? null,
+    //         ]);
+
+    //         if ($data['segment_type'] === 'all') {
+    //             $ids = Domain::whereIn('name', $data['domain_name'])->where('status', 1)->pluck('id')->all();
+    //             $notification->domains()->sync($ids);
+    //         }else{
+    //             // particular segment → attach its single domain
+    //             $segment = Segment::find($data['segment_id']);
+    //             if ($segment && $segment->domain) {
+    //                 $domain = Domain::where('name', $segment->domain)->first();
+    //                 if ($domain) {
+    //                     $notification->domains()->sync([$domain->id]);
+    //                 }
+    //             }
+    //         }
+
+    //         // Instant: fire off immediately
+    //         if ($notification->schedule_type === 'instant') {
+    //             if ($data['segment_type'] === 'all') {
+    //                 // SendNotificationJob::dispatch($notification->id);
+    //                 dispatch(new SendNotificationJob($notification->id)); 
+    //             } else {
+    //                 // SendSegmentNotificationJob::dispatch(
+    //                 //     $notification->id,
+    //                 //     $notification->segment_id
+    //                 // );
+    //                 dispatch(new SendSegmentNotificationJob($notification->id, $notification->segment_id));
+    //             }
+    //         }
+
+    //         return redirect()->route('notification.view')->with('success', "Notification {$notification->campaign_name} queued.");
+    //     } catch (\Throwable $e) {
+    //         Log::error("Failed to create notification: {$e->getMessage()}", [
+    //             'data' => $data,
+    //         ]);
+    //         return back()->withErrors(['general'=>'Something went wrong.'])->withInput();
+    //     }
+    // }
+
     public function store(Request $request)
     {
         // Always cast CTA checkbox
@@ -408,68 +494,30 @@ class NotificationController extends Controller
             'btn_url_2'         => 'Button 2 URL',
         ]);
 
-        $defaults = [
-            'banner_image' => asset('images/default.png'),
-            'banner_icon'  => asset('images/push/icons/alarm-1.png'),
-        ];
-
-        if($data['banner_image'] === $defaults['banner_image']) {
-            $data['banner_image'] = null;
+        // Fetch domain IDs
+        if ($data['segment_type'] === 'all') {
+            $ids = Domain::whereIn('name', $data['domain_name'])->where('status', 1)->pluck('id')->all();
+        } else {
+            // Handle particular segment
+            $segment = Segment::find($data['segment_id']);
+            if ($segment && $segment->domain) {
+                $ids = [Domain::where('name', $segment->domain)->where('status', 1)->pluck('id')->first()];
+            }
         }
+        
+        // Log the ids to check if they are valid
+        Log::debug('IDs fetched:', $ids);
 
         try {
-            $notification = Notification::create([
-                'target_url'        => $data['target_url'],
-                'campaign_name'     => 'CAMP#'.random_int(1000,9999),
-                'title'             => $data['title'],
-                'description'       => $data['description'],
-                'banner_image'      => $data['banner_image'] ?? null,
-                'banner_icon'       => $data['banner_icon']  ?? null,
-                'schedule_type'     => strtolower($data['schedule_type']),
-                'one_time_datetime' => $data['schedule_type'] === 'Schedule' ? $data['one_time_datetime'] : null,
-                'message_id'        => Str::uuid(),
-                'btn_1_title'       => $data['btn_1_title'] ?? null,
-                'btn_1_url'         => $data['btn_1_url'] ?? null,
-                'btn_title_2'       => $data['btn_title_2'] ?? null,
-                'btn_url_2'         => $data['btn_url_2'] ?? null,
-                'segment_type'      => $data['segment_type'],
-                'segment_id'        => $data['segment_id'] ?? null,
-            ]);
+            // Dispatch the job for notification creation and job dispatching
+            dispatch(new CreateAndDispatchNotifications($data, $ids, $data['segment_type']));
 
-            if ($data['segment_type'] === 'all') {
-                $ids = Domain::whereIn('name', $data['domain_name'])->where('status', 1)->pluck('id')->all();
-                $notification->domains()->sync($ids);
-            }else{
-                // particular segment → attach its single domain
-                $segment = Segment::find($data['segment_id']);
-                if ($segment && $segment->domain) {
-                    $domain = Domain::where('name', $segment->domain)->first();
-                    if ($domain) {
-                        $notification->domains()->sync([$domain->id]);
-                    }
-                }
-            }
-
-            // Instant: fire off immediately
-            if ($notification->schedule_type === 'instant') {
-                if ($data['segment_type'] === 'all') {
-                    // SendNotificationJob::dispatch($notification->id);
-                    dispatch(new SendNotificationJob($notification->id)); 
-                } else {
-                    // SendSegmentNotificationJob::dispatch(
-                    //     $notification->id,
-                    //     $notification->segment_id
-                    // );
-                    dispatch(new SendSegmentNotificationJob($notification->id, $notification->segment_id));
-                }
-            }
-
-            return redirect()->route('notification.view')->with('success', "Notification {$notification->campaign_name} queued.");
+            return redirect()->route('notification.view')->with('success', "Notification campaign queued.");
         } catch (\Throwable $e) {
             Log::error("Failed to create notification: {$e->getMessage()}", [
                 'data' => $data,
             ]);
-            return back()->withErrors(['general'=>'Something went wrong.'])->withInput();
+            return back()->withErrors(['general' => 'Something went wrong.'])->withInput();
         }
     }
 

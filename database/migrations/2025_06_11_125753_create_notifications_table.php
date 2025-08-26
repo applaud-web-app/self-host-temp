@@ -13,6 +13,7 @@ return new class extends Migration
     {
         Schema::create('notifications', function (Blueprint $table) {
             $table->bigIncrements('id');
+            $table->unsignedBigInteger('domain_id');
             $table->string('target_url');
             $table->string('campaign_name');
             $table->string('title');
@@ -29,7 +30,10 @@ return new class extends Migration
             $table->unsignedBigInteger('active_count')->default(0);
             $table->unsignedBigInteger('success_count')->default(0);
             $table->unsignedBigInteger('failed_count')->default(0);
+            $table->enum('status', ['pending', 'queued', 'sent', 'failed','cancelled'])->default('pending')->index();
+            $table->timestamp('sent_at')->nullable();
             $table->timestamps();
+            $table->foreign('domain_id')->references('id')->on('domains')->onDelete('cascade');
         });
     }
 
