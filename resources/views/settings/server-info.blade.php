@@ -2,17 +2,17 @@
 @section('content')
 <section class="content-body" id="server_info_page">
   <div class="container-fluid">
+
     {{-- Page Header --}}
     <div class="text-head mb-3">
       <h2>Server Info</h2>
     </div>
 
-    {{-- Static App & Server Info + Disk & Memory Snapshot --}}
+    {{-- App & Server Info + Disk/Memory Snapshot --}}
     <div class="row">
-      {{-- App & Server --}}
       <div class="col-md-6 mb-3">
         <div class="card h-100">
-          <div class="card-header"><h5>App & Server</h5></div>
+          <div class="card-header "><h5 class="mb-0 card-title">App & Server</h5></div>
           <div class="card-body">
             <ul class="list-group list-group-flush small">
               @foreach($info as $label => $value)
@@ -26,14 +26,12 @@
         </div>
       </div>
 
-      {{-- Disk & Memory --}}
       <div class="col-md-6 mb-3">
         <div class="card h-100">
-          <div class="card-header"><h5>Resources Snapshot</h5></div>
+          <div class="card-header "><h5 class="mb-0 card-title">Resources Snapshot</h5></div>
           <div class="card-body">
-            {{-- Disk --}}
             <p class="mb-1 small">Disk Usage</p>
-            <div class="progress mb-1" style="height: 8px;">
+            <div class="progress mb-1" style="height: 10px;">
               <div class="progress-bar bg-primary" style="width: {{ $diskPercent }}%;"></div>
             </div>
             <p class="text-muted small">
@@ -42,9 +40,8 @@
               ({{ $diskPercent }}%)
             </p>
 
-            {{-- Memory --}}
             <p class="mb-1 small mt-3">Memory Usage</p>
-            <div class="progress" style="height: 8px;">
+            <div class="progress" style="height: 10px;">
               <div class="progress-bar bg-success" style="width: {{ $memoryPercent }}%;"></div>
             </div>
             <p class="text-muted small">
@@ -57,32 +54,42 @@
       </div>
     </div>
 
-    {{-- Real-time CPU & Memory Charts --}}
+    {{-- Real-time Charts --}}
     <div class="row">
       <div class="col-md-6 mb-3">
-        <div class="card h-100">
-          <div class="card-header"><h5>CPU Usage (%)</h5></div>
+        <div class="card h-auto ">
+          <div class="card-header "><h5 class="mb-0 card-title">CPU Usage (%)</h5></div>
           <div class="card-body">
-            <canvas id="cpuChart" height="180"></canvas>
+            <canvas id="cpuChart" height="350"></canvas>
           </div>
         </div>
       </div>
+
       <div class="col-md-6 mb-3">
-        <div class="card h-100">
-          <div class="card-header"><h5>Memory Usage (%)</h5></div>
+        <div class="card h-auto ">
+          <div class="card-header "><h5 class="mb-0 card-title">Memory Usage (%)</h5></div>
           <div class="card-body">
-            <canvas id="memoryChart" height="180"></canvas>
+            <canvas id="memoryChart" height="350"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-md-12 mb-3">
+        <div class="card h-auto ">
+          <div class="card-header "><h5 class="mb-0 card-title">Load Average (1m)</h5></div>
+          <div class="card-body">
+            <canvas id="loadChart" height="350"></canvas>
           </div>
         </div>
       </div>
     </div>
 
-    {{-- Enabled PHP Extensions --}}
+    {{-- PHP Extensions --}}
     <div class="row">
       <div class="col-12 mb-3">
-        <div class="card h-100">
-          <div class="card-header">
-            <h5>Enabled PHP Extensions ({{ count($extensions) }})</h5>
+        <div class="card h-auto ">
+          <div class="card-header ">
+            <h5 class="mb-0 card-title">Enabled PHP Extensions ({{ count($extensions) }})</h5>
           </div>
           <div class="card-body" style="max-height:240px; overflow:auto;">
             <div class="d-flex flex-wrap gap-1">
@@ -101,66 +108,100 @@
 
 @push('scripts')
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation"></script>
 <script>
 document.addEventListener('DOMContentLoaded', () => {
-  function makeLine(ctx, baseColor) {
+  const metricsUrl = '{{ route('settings.server-info.metrics') }}';
+  const cpuCores = navigator.hardwareConcurrency || 2;
+
+  function makeLine(ctx, color, label, refValue, refLabel) {
     return new Chart(ctx, {
       type: 'line',
       data: {
-        labels: Array(20).fill(''),
+        labels: Array(30).fill(''),
         datasets: [{
-          data: Array(20).fill(0),
-          borderColor: baseColor,
-          backgroundColor: baseColor.replace(/,\s*1\)/, ', 0.1)'),
+          label: label,
+          data: Array(30).fill(0),
+          borderColor: color,
+          backgroundColor: color.replace(/,\s*1\)/, ', 0.1)'),
           fill: true,
-          tension: 0.3,
-          pointRadius: 0
+          tension: 0.4,
+          pointRadius: 0,
+          borderWidth: 2
         }]
       },
       options: {
+        responsive: true,
+        maintainAspectRatio: false,
         animation: false,
         scales: {
-          y: {
-            min: 0,
-            max: 100,
-            ticks: { callback: v => v + '%' }
-          }
+          y: { beginAtZero: true },
+          x: { display: false }
         },
-        plugins: { legend: { display: false } }
+        plugins: {
+          legend: { display: true },
+          annotation: {
+            annotations: {
+              refLine: {
+                type: 'line',
+                yMin: refValue,
+                yMax: refValue,
+                borderColor: 'rgba(0,0,0,0.5)',
+                borderWidth: 2,
+                borderDash: [6,6],
+                label: {
+                  content: refLabel,
+                  enabled: true,
+                  position: 'end'
+                }
+              }
+            }
+          }
+        }
       }
     });
   }
 
-  const cpuCtx = document.getElementById('cpuChart').getContext('2d');
-  const memCtx = document.getElementById('memoryChart').getContext('2d');
-  const cpuChart = makeLine(cpuCtx, 'rgba(13,110,253,1)');
-  const memChart = makeLine(memCtx, 'rgba(25,135,84,1)');
+  const cpuChart = makeLine(
+    document.getElementById('cpuChart').getContext('2d'),
+    'rgba(13,110,253,1)', 'CPU %',
+    100, '100% Max'
+  );
 
-  const metricsUrl = '{{ route('settings.server-info.metrics') }}';
+  const memChart = makeLine(
+    document.getElementById('memoryChart').getContext('2d'),
+    'rgba(25,135,84,1)', 'Memory %',
+    100, '100% Max'
+  );
+
+  const loadChart = makeLine(
+    document.getElementById('loadChart').getContext('2d'),
+    'rgba(220,53,69,1)', 'Load Avg (1m)',
+    cpuCores, `CPU Cores (${cpuCores})`
+  );
 
   function updateMetrics() {
     fetch(metricsUrl)
-      .then(r => { if (!r.ok) throw new Error('Network'); return r.json(); })
-      .then(({ cpu, memory }) => {
+      .then(r => r.json())
+      .then(({ cpu, memory, load_1 }) => {
         const now = new Date().toLocaleTimeString();
 
-        // CPU %
         cpuChart.data.labels.push(now); cpuChart.data.labels.shift();
-        cpuChart.data.datasets[0].data.push(Number(cpu));  
-        cpuChart.data.datasets[0].data.shift();
+        cpuChart.data.datasets[0].data.push(cpu); cpuChart.data.datasets[0].data.shift();
         cpuChart.update();
 
-        // Memory %
         memChart.data.labels.push(now); memChart.data.labels.shift();
-        memChart.data.datasets[0].data.push(Number(memory));
-        memChart.data.datasets[0].data.shift();
+        memChart.data.datasets[0].data.push(memory); memChart.data.datasets[0].data.shift();
         memChart.update();
-      })
-      .catch(console.error);
+
+        loadChart.data.labels.push(now); loadChart.data.labels.shift();
+        loadChart.data.datasets[0].data.push(load_1); loadChart.data.datasets[0].data.shift();
+        loadChart.update();
+      });
   }
 
   updateMetrics();
-  setInterval(updateMetrics, 2000);
+  setInterval(updateMetrics, 3000);
 });
 </script>
 @endpush

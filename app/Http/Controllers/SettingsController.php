@@ -137,6 +137,7 @@ class SettingsController extends Controller
         }
     }
 
+
     /* ---------------------------------------------------------------------
      * Server Info & Metrics
      * --------------------------------------------------------------------- */
@@ -179,16 +180,23 @@ class SettingsController extends Controller
 
         $memory = $this->getSystemMemoryUsage();
 
+        // Load averages (1m, 5m, 15m)
+        $load = [0,0,0];
+        if (function_exists('sys_getloadavg')) {
+            $load = sys_getloadavg();
+        }
+
         return response()->json([
-            'cpu'    => round($cpuUsage, 2),   // real %
-            'memory' => round($memory[2], 2),  // %
+            'cpu'    => round($cpuUsage, 2),   // CPU %
+            'memory' => round($memory[2], 2),  // Memory %
+            'load_1' => round($load[0], 2),    // Only 1-minute load avg
         ]);
     }
 
     private function getCpuUsage(): float
     {
         $stat1 = file('/proc/stat');
-        usleep(500000); // 0.5 second sample for smoother graph
+        usleep(500000); // sample over 0.5s
         $stat2 = file('/proc/stat');
 
         $cpu1 = explode(" ", preg_replace("!cpu +!", "", $stat1[0]));
