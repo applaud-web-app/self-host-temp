@@ -21,13 +21,9 @@ class DispatchScheduledSegmentNotifications extends Command
             ->whereNotNull('one_time_datetime')
             ->where('segment_type','particular')
             ->where('one_time_datetime','<=',$now)
-            ->whereHas('domains', fn($q) =>
-                $q->where('domain_notification.status','pending')
-            )
+            ->where('status','pending')
             ->each(function(Notification $n) {
                 try {
-                    SendSegmentNotificationJob::dispatch($n->id, $n->segment_id);
-                    $this->info("Dispatched segment notification #{$n->id}");
                 } catch (\Throwable $e) {
                     Log::error("Failed to dispatch segment #{$n->id}: {$e->getMessage()}");
                 }

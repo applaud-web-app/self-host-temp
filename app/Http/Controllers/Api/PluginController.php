@@ -16,6 +16,7 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
 use App\Models\Notification;
 use App\Jobs\SendNotificationJob;
+use App\Jobs\CreateAndDispatchNotifications;
 
 class PluginController extends Controller
 {
@@ -279,35 +280,14 @@ class PluginController extends Controller
                 ], 401);
             }
 
-            // 4) build notification
+            // 5) build notification
             $iconUrl = asset('images/push/icons/alarm-1.png');
-            $notification = Notification::create([
-                'target_url'        => $data['target_url'],
-                'campaign_name'     => 'CAMP#'.random_int(1000,9999),
-                'title'             => $data['title'],
-                'description'       => $data['description'],
-                'banner_image'      => $data['banner_image'] ?? null,
-                'banner_icon'       => $iconUrl,
-                'schedule_type'     => 'instant',
-                'message_id'        => Str::uuid(),
-                'segment_type'      => 'api',
-            ]);
+            $data['schedule_type'] = 'instant';
+            $data['segment_type'] = 'api';
+            $data['banner_icon'] = $iconUrl;
 
-            // 5) attach domains by name → id
-            $domainIds = Domain::whereIn('name', $data['domains'])->where('status', 1)->pluck('id')->toArray();
-
-            if (empty($domainIds)) {
-                // no valid target domains
-                return response()->json([
-                    'status'  => false,
-                    'message' => 'No valid target domains found.'
-                ], 422);
-            }
-
-            $notification->domains()->sync($domainIds);
-            
-            // 6) dispatch your job
-            SendNotificationJob::dispatch($notification->id);
+            $ids = Domain::whereIn('name', $data['domains'])->where('status', 1)->pluck('id')->all();
+            dispatch(new CreateAndDispatchNotifications($data, $ids, $data['segment_type']));
 
             return response()->json([
                 'status' => true,

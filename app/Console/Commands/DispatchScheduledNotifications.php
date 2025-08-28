@@ -6,6 +6,8 @@ use App\Jobs\SendNotificationJob;
 use App\Models\Notification;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Log;
+use App\Jobs\SendSegmentNotificationJob;
 
 class DispatchScheduledNotifications extends Command
 {
@@ -18,13 +20,21 @@ class DispatchScheduledNotifications extends Command
 
         Notification::where('schedule_type','schedule')
         ->whereNotNull('one_time_datetime')
-        ->where('segment_type','all')
+        // ->where('segment_type','all')
         ->where('one_time_datetime','<=',$now)
         ->where('status','pending')
         ->each(function($n) {
-            // SendNotificationJob::dispatch($n->id);
-            dispatch(new SendNotificationJob($n->id));
-            $this->info("Dispatched Notification #{$n->id}");
+            try {
+                if ($n->segment_type === "all") {
+                    dispatch(new SendNotificationJob($n->id));
+                    $this->info("Dispatched Notification #{$n->id}");
+                }else{
+                    dispatch(new SendSegmentNotificationJob($n->id));
+                    $this->info("Dispatched segment notification #{$n->id}");
+                }
+            } catch (\Throwable $e) {
+                Log::error("Failed to dispatch Notification #{$n->id}: {$e->getMessage()}");
+            }
         });
     }
 
