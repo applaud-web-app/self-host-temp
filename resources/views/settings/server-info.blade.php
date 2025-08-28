@@ -6,6 +6,7 @@
     <div class="text-head mb-3">
       <h2>Server Info</h2>
     </div>
+
     {{-- Static App & Server Info + Disk & Memory Snapshot --}}
     <div class="row">
       {{-- App & Server --}}
@@ -24,6 +25,7 @@
           </div>
         </div>
       </div>
+
       {{-- Disk & Memory --}}
       <div class="col-md-6 mb-3">
         <div class="card h-100">
@@ -35,21 +37,26 @@
               <div class="progress-bar bg-primary" style="width: {{ $diskPercent }}%;"></div>
             </div>
             <p class="text-muted small">
-              {{ number_format($usedDisk / 1024 / 1024 / 1024, 2) }} GB / {{ number_format($totalDisk / 1024 / 1024 / 1024, 2) }} GB
+              {{ number_format($usedDisk / 1024 / 1024 / 1024, 2) }} GB /
+              {{ number_format($totalDisk / 1024 / 1024 / 1024, 2) }} GB
               ({{ $diskPercent }}%)
             </p>
+
             {{-- Memory --}}
             <p class="mb-1 small mt-3">Memory Usage</p>
             <div class="progress" style="height: 8px;">
               <div class="progress-bar bg-success" style="width: {{ $memoryPercent }}%;"></div>
             </div>
             <p class="text-muted small">
-              {{ number_format($usedMemory / 1024 / 1024 / 1024, 2) }} GB / {{ number_format($totalMemory / 1024 / 1024 / 1024, 2) }} GB ({{ number_format($memoryPercent, 2) }}%)
+              {{ number_format($usedMemory / 1024 / 1024 / 1024, 2) }} GB /
+              {{ number_format($totalMemory / 1024 / 1024 / 1024, 2) }} GB
+              ({{ number_format($memoryPercent, 2) }}%)
             </p>
           </div>
         </div>
       </div>
     </div>
+
     {{-- Real-time CPU & Memory Charts --}}
     <div class="row">
       <div class="col-md-6 mb-3">
@@ -69,6 +76,7 @@
         </div>
       </div>
     </div>
+
     {{-- Enabled PHP Extensions --}}
     <div class="row">
       <div class="col-12 mb-3">
@@ -86,9 +94,11 @@
         </div>
       </div>
     </div>
+
   </div>
 </section>
 @endsection
+
 @push('scripts')
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
@@ -97,9 +107,9 @@ document.addEventListener('DOMContentLoaded', () => {
     return new Chart(ctx, {
       type: 'line',
       data: {
-        labels: Array(12).fill(''),
+        labels: Array(20).fill(''),
         datasets: [{
-          data: Array(12).fill(0),
+          data: Array(20).fill(0),
           borderColor: baseColor,
           backgroundColor: baseColor.replace(/,\s*1\)/, ', 0.1)'),
           fill: true,
@@ -109,30 +119,46 @@ document.addEventListener('DOMContentLoaded', () => {
       },
       options: {
         animation: false,
-        scales: { y: { min: 0, max: 100, ticks: { callback: v => v + '%' } } },
+        scales: {
+          y: {
+            min: 0,
+            max: 100,
+            ticks: { callback: v => v + '%' }
+          }
+        },
         plugins: { legend: { display: false } }
       }
     });
   }
+
   const cpuCtx = document.getElementById('cpuChart').getContext('2d');
   const memCtx = document.getElementById('memoryChart').getContext('2d');
   const cpuChart = makeLine(cpuCtx, 'rgba(13,110,253,1)');
   const memChart = makeLine(memCtx, 'rgba(25,135,84,1)');
+
   const metricsUrl = '{{ route('settings.server-info.metrics') }}';
+
   function updateMetrics() {
     fetch(metricsUrl)
       .then(r => { if (!r.ok) throw new Error('Network'); return r.json(); })
       .then(({ cpu, memory }) => {
         const now = new Date().toLocaleTimeString();
+
+        // CPU %
         cpuChart.data.labels.push(now); cpuChart.data.labels.shift();
-        cpuChart.data.datasets[0].data.push(Number(cpu));  cpuChart.data.datasets[0].data.shift();
+        cpuChart.data.datasets[0].data.push(Number(cpu));  
+        cpuChart.data.datasets[0].data.shift();
         cpuChart.update();
+
+        // Memory %
         memChart.data.labels.push(now); memChart.data.labels.shift();
-        memChart.data.datasets[0].data.push(Number(memory)); memChart.data.datasets[0].data.shift();
+        memChart.data.datasets[0].data.push(Number(memory));
+        memChart.data.datasets[0].data.shift();
         memChart.update();
       })
       .catch(console.error);
   }
+
   updateMetrics();
   setInterval(updateMetrics, 2000);
 });

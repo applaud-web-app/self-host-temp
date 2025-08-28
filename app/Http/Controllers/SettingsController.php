@@ -5,20 +5,21 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\File;
-use Illuminate\Support\Str;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
 use App\Models\GeneralSetting;
 use App\Models\EmailSetting;
 use App\Models\Backupsub;
 use App\Models\PushConfig;
 use App\Models\PushSubscriptionPayload;
-use Rap2hpoutre\FastExcel\FastExcel;
-use Illuminate\Support\Facades\DB;
 use App\Models\Setting;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Validation\ValidationException;
+use Rap2hpoutre\FastExcel\FastExcel;
 
 class SettingsController extends Controller
 {
+    /* ---------------------------------------------------------------------
+     * Settings
+     * --------------------------------------------------------------------- */
     public function viewSettings()
     {
         $setting = Setting::firstOrCreate(['id' => 1], [
@@ -26,12 +27,11 @@ class SettingsController extends Controller
             'daily_cleanup' => false,
         ]);
 
-        // Convert numeric batch_size to text representation
-        $setting->sending_speed = match((int)$setting->batch_size) {
+        $setting->sending_speed = match ((int) $setting->batch_size) {
             100 => 'slow',
             250 => 'medium',
             500 => 'fast',
-            default => 'slow' // fallback to slow if value doesn't match
+            default => 'slow'
         };
 
         return view('settings.setting', compact('setting'));
@@ -41,26 +41,24 @@ class SettingsController extends Controller
     {
         try {
             $data = $request->validate([
-                'sending_speed' => ['required', 'in:slow,medium,fast'], 
+                'sending_speed' => ['required', 'in:slow,medium,fast'],
                 'daily_cleanup' => ['nullable','boolean'],
             ]);
 
-            // Map speed options to numeric values
-            $batchSize = match($data['sending_speed']) {
+            $batchSize = match ($data['sending_speed']) {
                 'slow' => 100,
                 'medium' => 250,
                 'fast' => 500,
-                default => 100 // fallback
+                default => 100
             };
-            
-            // settings_batch_size, daily_cleanup_setting -- clear this cache each time when this setting updates
+
             cache()->forget('daily_cleanup_setting');
             cache()->forget('settings_batch_size');
 
             $setting = Setting::firstOrCreate(['id' => 1]);
             $setting->fill([
                 'batch_size' => $batchSize,
-                'daily_cleanup' => (bool)($data['daily_cleanup'] ?? false),
+                'daily_cleanup' => (bool) ($data['daily_cleanup'] ?? false),
             ])->save();
 
             return back()->with('success', 'Settings saved.');
@@ -69,15 +67,15 @@ class SettingsController extends Controller
         }
     }
 
-    /** Logout from THIS device (works with redis session driver) */
+    /* ---------------------------------------------------------------------
+     * Authentication
+     * --------------------------------------------------------------------- */
     public function logoutAllDevices(Request $request)
     {
-        // Remove every session row for this user, including the current one
         DB::table(config('session.table', 'sessions'))
             ->where('user_id', $request->user()->getAuthIdentifier())
             ->delete();
 
-        // Finally, log out THIS session cleanly
         Auth::logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();
@@ -85,19 +83,15 @@ class SettingsController extends Controller
         return redirect()->route('login')->with('status', 'Logged out from all devices.');
     }
 
-    /**
-     * Display the Email Settings form.
-     */
+    /* ---------------------------------------------------------------------
+     * Email Settings
+     * --------------------------------------------------------------------- */
     public function emailSettings()
     {
         $email = EmailSetting::first();
         return view('settings.email', compact('email'));
     }
 
-    /**
-     * Handle submission of Email Settings.
-     * Writes values into .env, refreshes config cache, and updates the DB.
-     */
     public function updateEmailSettings(Request $request)
     {
         try {
@@ -123,28 +117,30 @@ class SettingsController extends Controller
                 'MAIL_FROM_NAME'    => $data['mail_from_name'],
             ];
 
-            // 1) Update the .env file
             $this->updateEnvFile($envUpdates);
 
-            // Refresh config
             Artisan::call('config:clear');
             if (app()->environment('production')) {
                 Artisan::call('config:cache');
             }
 
-            // 3) Persist to database
-            EmailSetting::first()->update($data);
+            $email = EmailSetting::first();
+            if ($email) {
+                $email->update($data);
+            } else {
+                EmailSetting::create($data);
+            }
 
             return back()->with('success', 'Email settings updated!');
         } catch (\Throwable $th) {
             return back()->with('error', 'Something went wrong!');
         }
     }
-    
-    /* --------------------------------------------------------------------- */
-    /*  Server Info & Metrics                                                */
-    /* --------------------------------------------------------------------- */
- public function serverInfo()
+
+    /* ---------------------------------------------------------------------
+     * Server Info & Metrics
+     * --------------------------------------------------------------------- */
+    public function serverInfo()
     {
         $info = [
             'php_version'        => phpversion(),
@@ -155,101 +151,91 @@ class SettingsController extends Controller
             'server_software'    => $_SERVER['SERVER_SOFTWARE'] ?? 'N/A',
             'os'                 => php_uname('s').' '.php_uname('r'),
         ];
-        // Disk Information
+
         $totalDisk   = (float) disk_total_space(base_path());
         $freeDisk    = (float) disk_free_space(base_path());
         $usedDisk    = $totalDisk - $freeDisk;
         $diskPercent = $totalDisk > 0 ? round($usedDisk / $totalDisk * 100, 1) : 0;
-        // Memory Information
+
         list($totalMemory, $usedMemory, $memoryPercent) = $this->getSystemMemoryUsage();
+
         $extensions = get_loaded_extensions();
         sort($extensions, SORT_STRING);
+
         return view('settings.server-info', compact(
-            'info', 'totalDisk', 'freeDisk', 'usedDisk', 'diskPercent', 'extensions', 'totalMemory', 'usedMemory', 'memoryPercent'
+            'info',
+            'totalDisk', 'freeDisk', 'usedDisk', 'diskPercent',
+            'extensions',
+            'totalMemory', 'usedMemory', 'memoryPercent'
         ));
     }
+
     public function serverMetrics()
     {
-        // CPU Calculation
-        $load = 0;
-        if (PHP_OS_FAMILY !== 'Windows' && function_exists('sys_getloadavg')) {
-            $load = sys_getloadavg()[0] ?? 0;
+        $cpuUsage = 0;
+        if (is_readable('/proc/stat')) {
+            $cpuUsage = $this->getCpuUsage();
         }
-        $cores = 1;
-        if (PHP_OS_FAMILY === 'Linux') {
-            if (is_readable('/proc/cpuinfo')) {
-                preg_match_all('/^processor\s*:/m', file_get_contents('/proc/cpuinfo'), $m);
-                $cores = max(1, count($m[0]));
-            }
-        } elseif (PHP_OS_FAMILY === 'Darwin' && function_exists('shell_exec')) {
-            $cores = (int) trim(shell_exec('sysctl -n hw.ncpu') ?: 1);
-        } elseif (PHP_OS_FAMILY === 'Windows') {
-            $cores = (int) (getenv('NUMBER_OF_PROCESSORS') ?: 1);
-        }
-        $cpu = min(100, ($cores ? $load / $cores : $load) * 100);
-        // Memory Calculation
+
         $memory = $this->getSystemMemoryUsage();
+
         return response()->json([
-            'cpu'    => round($cpu, 2),
-            'memory' => round($memory[2], 2),
+            'cpu'    => round($cpuUsage, 2),   // real %
+            'memory' => round($memory[2], 2),  // %
         ]);
     }
-    // Function to get system memory usage
+
+    private function getCpuUsage(): float
+    {
+        $stat1 = file('/proc/stat');
+        usleep(500000); // 0.5 second sample for smoother graph
+        $stat2 = file('/proc/stat');
+
+        $cpu1 = explode(" ", preg_replace("!cpu +!", "", $stat1[0]));
+        $cpu2 = explode(" ", preg_replace("!cpu +!", "", $stat2[0]));
+
+        $info1 = array_sum($cpu1);
+        $info2 = array_sum($cpu2);
+
+        $difTotal = $info2 - $info1;
+        $difIdle  = $cpu2[3] - $cpu1[3];
+
+        return $difTotal > 0 ? ($difTotal - $difIdle) / $difTotal * 100 : 0;
+    }
+
     private function getSystemMemoryUsage()
     {
         $memory = 0;
         $totalMemory = 0;
         $usedMemory = 0;
-        if (is_readable('/proc/meminfo')) {  // For Linux systems
+
+        if (is_readable('/proc/meminfo')) {
             $mem = file_get_contents('/proc/meminfo');
             preg_match('/MemTotal:\s+(\d+)/', $mem, $tot);
             preg_match('/MemAvailable:\s+(\d+)/', $mem, $avail);
             $totalMemory = (int) ($tot[1] ?? 0) * 1024;
             $freeMemory  = (int) ($avail[1] ?? 0) * 1024;
             $usedMemory  = $totalMemory - $freeMemory;
-            $memory = $totalMemory ? (($usedMemory) / $totalMemory) * 100 : 0;
-        } elseif (PHP_OS_FAMILY === 'Darwin' && function_exists('shell_exec')) {  // For macOS systems
-            $totalMemory = (int) trim(shell_exec('sysctl -n hw.memsize') ?: 0);
-            $vm    = shell_exec('vm_stat');
-            preg_match('/Pages free:\s+(\d+)/', $vm, $f);
-            $freeMemory  = ((int) ($f[1] ?? 0)) * 4096;
-            $usedMemory  = $totalMemory - $freeMemory;
-            $memory = $totalMemory ? (($usedMemory) / $totalMemory) * 100 : 0;
-        } elseif (PHP_OS_FAMILY === 'Windows' && function_exists('shell_exec')) {  // For Windows systems
-            $out = shell_exec('wmic OS get FreePhysicalMemory,TotalVisibleMemorySize /Value');
-            preg_match('/TotalVisibleMemorySize=(\d+)/', $out, $tot);
-            preg_match('/FreePhysicalMemory=(\d+)/', $out, $free);
-            $totalMemory = (float) ($tot[1] ?? 0);
-            $freeMemory = (float) ($free[1] ?? 0);
-            $usedMemory = $totalMemory - $freeMemory;
-            $memory = $totalMemory ? (($usedMemory) / $totalMemory) * 100 : 0;
+            $memory = $totalMemory ? ($usedMemory / $totalMemory) * 100 : 0;
         }
-        return [$totalMemory, $usedMemory, round($memory, 2)];  // Returns total memory, used memory, and memory usage percentage
+
+        return [$totalMemory, $usedMemory, round($memory, 2)];
     }
 
-
-    /**
-     * Display the Utilities page.
-     */
+    /* ---------------------------------------------------------------------
+     * Utilities
+     * --------------------------------------------------------------------- */
     public function utilities()
     {
         return view('settings.utilities');
     }
 
-    /**
-     * Purge application cache.
-     */
-  public function purgeCache()
+    public function purgeCache()
     {
-        // Run the 'optimize:clear' command to clear all cache and optimization
         Artisan::call('optimize:clear');
-
         return back()->with('status', 'Application cache optimized and cleared.');
     }
 
-    /**
-     * Clear the laravel.log file.
-     */
     public function clearLog()
     {
         $log = storage_path('logs/laravel.log');
@@ -259,9 +245,6 @@ class SettingsController extends Controller
         return back()->with('status', 'Log file cleared.');
     }
 
-    /**
-     * Generate config & route cache.
-    */
     public function makeCache()
     {
         Artisan::call('config:cache');
@@ -272,84 +255,69 @@ class SettingsController extends Controller
     public function queueManage()
     {
         Artisan::call('queue:clear');
-       
         Artisan::call('queue:restart');
-
         return back()->with('status', 'Queue cleared, and workers restarted.');
     }
 
-    /**
-     * Display the Upgrade page.
-     */
     public function upgrade()
     {
         return view('settings.upgrade');
     }
 
-    /**
-     * Show only the latest subscriber backup.
-    */
+    /* ---------------------------------------------------------------------
+     * Backups
+     * --------------------------------------------------------------------- */
     public function backupSubscribers()
     {
-        $latestBackup = Backupsub::latest()->first(); 
+        $latestBackup = Backupsub::latest()->first();
         return view('settings.backup-subscribers', compact('latestBackup'));
     }
 
- public function downloadBackupSubscribers()
-{
-    $config = PushConfig::first();
-    $subs   = PushSubscriptionPayload::all();
+    public function downloadBackupSubscribers()
+    {
+        $config = PushConfig::first();
+        $subs   = PushSubscriptionPayload::all();
 
-    $publicKey = $config->vapid_public_key ?? '';
-    $privateKey = decrypt($config->vapid_private_key) ?? '';
+        $publicKey  = $config->vapid_public_key ?? '';
+        $privateKey = $config->vapid_private_key ? decrypt($config->vapid_private_key) : '';
 
-    $rows = $subs->map(fn($s) => [
-        'public_key'  => $publicKey,
-        'private_key' => $privateKey,
-        'endpoint'    => $s->endpoint,
-        'auth'        => $s->auth,
-        'p256dh'      => $s->p256dh,
-    ]);
+        $rows = $subs->map(fn($s) => [
+            'public_key'  => $publicKey,
+            'private_key' => $privateKey,
+            'endpoint'    => $s->endpoint,
+            'auth'        => $s->auth,
+            'p256dh'      => $s->p256dh,
+        ]);
 
-    $timestamp = now()->format('Ymd_His');
-    $filename  = "subscribers_backup_{$timestamp}.xlsx";
-    $relativePath = "backups/{$filename}";
-    $fullPath = storage_path("app/public/{$relativePath}");
+        $timestamp = now()->format('Ymd_His');
+        $filename  = "subscribers_backup_{$timestamp}.xlsx";
+        $relativePath = "backups/{$filename}";
+        $fullPath = storage_path("app/public/{$relativePath}");
 
-    // 1. Ensure the backups folder exists (creates if missing, no harm if already exists)
-    File::ensureDirectoryExists(dirname($fullPath));
+        File::ensureDirectoryExists(dirname($fullPath));
+        File::cleanDirectory(dirname($fullPath));
 
-    // 2. Remove previous backup files to keep only the latest backup
-    File::cleanDirectory(dirname($fullPath));
+        (new FastExcel($rows))->export($fullPath);
 
-    // 3. Save the new backup file
-    (new FastExcel($rows))->export($fullPath);
+        Backupsub::truncate();
+        Backupsub::create([
+            'filename' => $filename,
+            'count'    => $rows->count(),
+            'path'     => $relativePath,
+        ]);
 
-    // 4. Remove all old backup records from the database to store only the latest one
-    Backupsub::truncate();
+        return response()->download($fullPath, $filename, [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        ]);
+    }
 
-    // 5. Store only the latest backup record in the database
-    Backupsub::create([
-        'filename' => $filename,
-        'count'    => $rows->count(),
-        'path'     => $relativePath,
-    ]);
-
-    // 6. Return the download response
-    return response()->download($fullPath, $filename, [
-        'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-    ]);
-}
-
-    /**
-     * Safely write key=>value pairs into the .env file.
-     * Creates a timestamped backup and preserves existing lines.
-     */
+    /* ---------------------------------------------------------------------
+     * Helpers
+     * --------------------------------------------------------------------- */
     protected function updateEnvFile(array $values)
     {
         $envPath = base_path('.env');
 
-        // Ensure .env exists
         if (!file_exists($envPath)) {
             if (file_exists(base_path('.env.example'))) {
                 copy(base_path('.env.example'), $envPath);
@@ -361,67 +329,49 @@ class SettingsController extends Controller
         $envContent = file_get_contents($envPath);
 
         foreach ($values as $key => $value) {
-            // Normalize null to empty string
-            $raw = $value === null ? '' : (string)$value;
+            $raw = $value === null ? '' : (string) $value;
 
-            // Force quoting for MAIL_PASSWORD, else use normal escaping
             if ($key === 'MAIL_PASSWORD') {
-                // escape backslashes and double-quotes, then wrap
                 $escapedValue = '"' . str_replace(['\\', '"'], ['\\\\', '\\"'], $raw) . '"';
             } else {
                 $escapedValue = $this->escapeEnvValue($raw);
             }
 
-            // Safely escape key for regex
             $quotedKey = preg_quote($key, '/');
-            $pattern    = "/^{$quotedKey}=.*/m";
+            $pattern = "/^{$quotedKey}=.*/m";
             $replacement = "{$key}={$escapedValue}";
 
             if (preg_match($pattern, $envContent)) {
                 $envContent = preg_replace($pattern, $replacement, $envContent);
             } else {
-                // Append with proper newline
                 $envContent .= PHP_EOL . $replacement;
             }
         }
 
-        // Write atomically
         file_put_contents($envPath, $envContent, LOCK_EX);
     }
 
     protected function escapeEnvValue(string $value): string
     {
-        // Empty becomes ""
         if ($value === '') {
             return '""';
         }
-
-        // If it has whitespace or special chars, wrap and escape
         if (preg_match('/[\s"\'\\\\$`]/', $value)) {
             $escaped = str_replace(['\\', '"'], ['\\\\', '\\"'], $value);
             return "\"{$escaped}\"";
         }
-
         return $value;
     }
 
-    
-        public function viewLog()
-        {
-            // Define the log file path (adjust if necessary)
-            $logFile = storage_path('logs/laravel.log');
-            
-            // Check if the log file exists
-            if (File::exists($logFile)) {
-                // Get the contents of the log file (or use tail for large logs)
-                $logContent = File::get($logFile);
-                
-                // Optionally, you can paginate or limit the output
-                $logContent = implode("\n", array_slice(explode("\n", $logContent), -1000)); // Get the last 100 lines
-                
-                return view('settings.view-log', compact('logContent'));
-            } else {
-                return response()->json(['error' => 'Log file not found'], 404);
-            }
+    public function viewLog()
+    {
+        $logFile = storage_path('logs/laravel.log');
+        if (File::exists($logFile)) {
+            $logContent = File::get($logFile);
+            $logContent = implode("\n", array_slice(explode("\n", $logContent), -1000));
+            return view('settings.view-log', compact('logContent'));
+        } else {
+            return response()->json(['error' => 'Log file not found'], 404);
         }
+    }
 }
