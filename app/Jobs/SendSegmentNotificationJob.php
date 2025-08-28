@@ -4,6 +4,8 @@
 
 namespace App\Jobs;
 
+use App\Models\PushSubscriptionHead;
+use App\Jobs\SendNotificationByNode;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -19,63 +21,80 @@ class SendSegmentNotificationJob implements ShouldQueue
     public int $tries   = 1;
     public int $timeout = 3600;
 
-    public function __construct(
-        protected int $notificationId,
-        protected int $segmentId
-    ) {}
+    protected int $notificationId;
+    protected int $segmentId;
+
+    public function __construct(int $notificationId, int $segmentId)
+    {
+        $this->notificationId = $notificationId;
+        $this->segmentId = $segmentId;
+    }
 
     public function handle(): void
     {
         try {
-            $row = DB::table('notifications')
-                ->where('id', $this->notificationId)
+            // Load the notification data and related domain name
+            $pendingNotification = DB::table('notifications as n')
+                ->join('domains as d', 'n.domain_id', '=', 'd.id')
+                ->where('n.id', $this->notificationId)
+                ->where('n.status', 'pending')
                 ->first([
-                    'title','description','banner_icon','banner_image',
-                    'target_url','message_id',
-                    'btn_1_title','btn_1_url',
-                    'btn_title_2','btn_url_2',
+                    'n.domain_id', 'n.title', 'n.description', 'n.banner_icon', 'n.banner_image',
+                    'n.target_url', 'n.message_id', 'n.btn_1_title', 'n.btn_1_url', 
+                    'n.btn_title_2', 'n.btn_url_2', 'n.status', 'd.name as domain_name'
                 ]);
 
-            if (! $row) {
-                Log::error("Notification {$this->notificationId} not found");
+            if (!$pendingNotification) {
+                Log::warning("Notification {$this->notificationId} not found or already processed");
                 return;
             }
 
-            $webPush = $this->buildWebPush($row);
+            // Build the web push notification payload
+            $webPushPayload = $this->buildWebPush($pendingNotification);
 
-            $pending = DB::transaction(function() {
-                $list = DB::table('domain_notification as dn')
-                    ->join('domains as d', 'dn.domain_id', '=', 'd.id')
-                    ->where('dn.notification_id', $this->notificationId)
-                    ->where('dn.status', 'pending')
-                    ->select('dn.domain_id', 'd.name as domain_name')
-                    ->lockForUpdate()
-                    ->get();
+            // Fetch only active tokens for the domain
+            $tokens = PushSubscriptionHead::where('status', 1)
+                ->where('parent_origin', $pendingNotification->domain_name)
+                ->pluck('token')
+                ->filter() // Remove any empty tokens
+                ->unique() // Remove duplicates
+                ->values()
+                ->toArray();
 
-                if ($list->isNotEmpty()) {
-                    DB::table('domain_notification')
-                      ->where('notification_id', $this->notificationId)
-                      ->whereIn('domain_id', $list->pluck('domain_id')->all())
-                      ->update(['status'=>'queued','sent_at'=>null]);
-                }
-
-                return $list;
-            });
-
-            if ($pending->isEmpty()) {
+             if (empty($tokens)) {
+                // Mark as sent even with no tokens to avoid reprocessing
+                DB::table('notifications')
+                    ->where('id', $this->notificationId)
+                    ->update([
+                        'status' => 'sent',
+                        'sent_at' => now(),
+                        'active_count' => 0,
+                        'success_count' => 0,
+                        'failed_count' => 0
+                    ]);
+                
+                Log::warning("No active tokens found for domain {$pendingNotification->domain_name} for notification {$this->notificationId}");
                 return;
             }
 
-            foreach ($pending as $domain) {
-                SendSegmentNotificationDomainJob::dispatch(
-                    $this->notificationId,
-                    $this->segmentId,
-                    $domain->domain_id,
-                    $domain->domain_name,
-                    $webPush
-                );
-            }
+            // Update notification status to 'queued' immediately to prevent duplicate processing
+            DB::table('notifications')
+                ->where('id', $this->notificationId)
+                ->update([
+                    'status' => 'queued',
+                    'active_count' => count($tokens)
+                ]);
+
+            // Dispatch the job to send notifications via Node.js
+            SendNotificationByNode::dispatch($tokens, $webPushPayload, $pendingNotification->domain_name, $this->notificationId);
+
+            Log::info("Notification {$this->notificationId} queued for delivery to " . count($tokens) . " tokens for domain {$pendingNotification->domain_name}");
         } catch (Throwable $e) {
+            // Update notification status to failed
+            DB::table('notifications')
+                ->where('id', $this->notificationId)
+                ->update(['status' => 'failed']);
+
             Log::error("SendSegmentNotificationJob failed [{$this->notificationId}]: {$e->getMessage()}");
             throw $e;
         }
@@ -83,29 +102,39 @@ class SendSegmentNotificationJob implements ShouldQueue
 
     protected function buildWebPush(object $row): array
     {
+        // Define the base data for the push notification
         $base = [
-            'title'        => $row->title,
-            'body'         => $row->description,
-            'icon'         => $row->banner_icon  ?? '',
-            'image'        => $row->banner_image ?? '',
-            'click_action' => $row->target_url,
-            'message_id'   => (string)$row->message_id,
+            'title' => $row->title ?? '',
+            'body' => $row->description ?? '',
+            'icon' => $row->banner_icon ?? '',
+            'image' => $row->banner_image ?? '',
+            'click_action' => $row->target_url ?? '',
+            'message_id' => (string)$row->message_id,
         ];
 
+        // Define actions for buttons
         $actions = [];
-        if ($row->btn_1_title && $row->btn_1_url) {
-            $actions[] = ['action'=>'btn1','title'=>$row->btn_1_title,'url'=>$row->btn_1_url];
+        if (!empty($row->btn_1_title) && !empty($row->btn_1_url)) {
+            $actions[] = [
+                'action' => 'btn1', 
+                'title' => $row->btn_1_title, 
+                'url' => $row->btn_1_url
+            ];
         }
-        if ($row->btn_title_2 && $row->btn_url_2) {
-            $actions[] = ['action'=>'btn2','title'=>$row->btn_title_2,'url'=>$row->btn_url_2];
+        if (!empty($row->btn_title_2) && !empty($row->btn_url_2)) {
+            $actions[] = [
+                'action' => 'btn2', 
+                'title' => $row->btn_title_2, 
+                'url' => $row->btn_url_2
+            ];
         }
-        if (count($actions)<2) {
-            $actions[] = ['action'=>'close','title'=>'Close'];
+        if (count($actions) < 2) {
+            $actions[] = ['action' => 'close', 'title' => 'Close'];
         }
 
         return [
-            'data'    => array_merge(array_map('strval',$base), ['actions'=>json_encode($actions)]),
-            'headers' => ['Urgency'=>'high'],
+            'data' => array_merge($base, ['actions' => json_encode($actions)]),
+            'headers' => ['Urgency' => 'high'],
         ];
     }
 }

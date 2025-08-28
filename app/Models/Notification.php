@@ -8,6 +8,7 @@ class Notification extends Model
 {
     protected $fillable = [
         'target_url',
+        'domain_id',
         'campaign_name',
         'title',
         'description',
@@ -24,7 +25,9 @@ class Notification extends Model
         'btn_title_2',
         'btn_url_2',
         'segment_type',
-        'segment_id'
+        'segment_id',
+        'status',
+        'sent_at'
     ];
 
     protected $casts = [

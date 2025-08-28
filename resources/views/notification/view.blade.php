@@ -305,99 +305,97 @@
             }
         });
 
-            
+        /* ------------------------------------------------- DataTable */
+        const table = $('#datatable').DataTable({
+            searching: false,
+            paging: true,
+            select: false,
+            language: {
+                paginate: {
+                    previous: '<i class="fas fa-angle-double-left"></i>',
+                    next: '<i class="fas fa-angle-double-right"></i>'
+                }
+            },
+            lengthChange: false,
+            processing: true,
+            serverSide: true,
+            ajax: {
+                url: '{{ route("notification.view") }}',
+                data: d => {
+                    d.search_term = $('#filter_campaign_name').val();
+                    d.status = $('#filter_status').val();
+                    d.site_web = $('#filter_domain').val();
+                    d.last_send = $('#daterange').val();
+                    d.campaign_type = $('input[name="campaign_type"]:checked').val();
+                }
+            },
+            columns: [{
+                    data: 'DT_RowIndex',
+                    name: 'DT_RowIndex',
+                    orderable: false,
+                    searchable: false
+                },
+                {
+                    data: 'campaign_name',
+                    name: 'campaign_name'
+                },
+                {
+                    data: 'domain',
+                    name: 'domain',
+                    orderable: false,
+                    searchable: false
+                },
+                {
+                    data: 'status',
+                    name: 'status'
+                },
+                {
+                    data: 'sent_time',
+                    name: 'sent_time'
+                },
+                {
+                    data: 'clicks',
+                    name: 'clicks'
+                },
+                {
+                    data: 'action',
+                    name: 'action',
+                    orderable: false,
+                    searchable: false
+                },
+            ],
+            order: [
+                [1, 'desc']
+            ],
+            lengthMenu: [10, 25, 50]
+        });
 
-            /* ------------------------------------------------- DataTable */
-            const table = $('#datatable').DataTable({
-                searching: false,
-                paging: true,
-                select: false,
-                language: {
-                    paginate: {
-                        previous: '<i class="fas fa-angle-double-left"></i>',
-                        next: '<i class="fas fa-angle-double-right"></i>'
-                    }
+        // redraw when any filter changes
+        $('#filterForm').on('change', 'input, select', () => table.draw())
+            .on('keyup', 'input[name="campaign_name"]', () => table.draw());
+
+        $('input[name="campaign_type"]').on('change', () => table.draw());
+
+        /* ------------------------------------------------- Date-range picker */
+        $('#daterange').daterangepicker({
+                autoUpdateInput: false, // show "all dates" until user picks
+                locale: {
+                    format: 'MM/DD/YYYY',
+                    cancelLabel: 'Clear'
                 },
-                lengthChange: false,
-                processing: true,
-                serverSide: true,
-                ajax: {
-                    url: '{{ route('notification.view') }}',
-                    data: d => {
-                        d.search_term = $('#filter_campaign_name').val();
-                        d.status = $('#filter_status').val();
-                        d.site_web = $('#filter_domain').val();
-                        d.last_send = $('#daterange').val();
-                        d.campaign_type = $('input[name="campaign_type"]:checked').val();
-                    }
-                },
-                columns: [{
-                        data: 'DT_RowIndex',
-                        name: 'DT_RowIndex',
-                        orderable: false,
-                        searchable: false
-                    },
-                    {
-                        data: 'campaign_name',
-                        name: 'campaign_name'
-                    },
-                    {
-                        data: 'domain',
-                        name: 'domain',
-                        orderable: false,
-                        searchable: false
-                    },
-                    {
-                        data: 'status',
-                        name: 'status'
-                    },
-                    {
-                        data: 'sent_time',
-                        name: 'sent_time'
-                    },
-                    {
-                        data: 'clicks',
-                        name: 'clicks'
-                    },
-                    {
-                        data: 'action',
-                        name: 'action',
-                        orderable: false,
-                        searchable: false
-                    },
-                ],
-                order: [
-                    [1, 'desc']
-                ],
-                lengthMenu: [10, 25, 50]
+                maxDate: new Date(),
+                opens: 'left'
+            })
+            .on('apply.daterangepicker', function(ev, picker) {
+                $(this).val(picker.startDate.format('MM/DD/YYYY') +
+                    ' - ' +
+                    picker.endDate.format('MM/DD/YYYY'));
+                table.draw();
+            })
+            .on('cancel.daterangepicker', function() {
+                $(this).val('');
+                table.draw();
             });
-
-            // redraw when any filter changes
-            $('#filterForm').on('change', 'input, select', () => table.draw())
-                .on('keyup', 'input[name="campaign_name"]', () => table.draw());
-
-            $('input[name="campaign_type"]').on('change', () => table.draw());
-
-            /* ------------------------------------------------- Date-range picker */
-            $('#daterange').daterangepicker({
-                    autoUpdateInput: false, // show "all dates" until user picks
-                    locale: {
-                        format: 'MM/DD/YYYY',
-                        cancelLabel: 'Clear'
-                    },
-                    maxDate: new Date(),
-                    opens: 'left'
-                })
-                .on('apply.daterangepicker', function(ev, picker) {
-                    $(this).val(picker.startDate.format('MM/DD/YYYY') +
-                        ' - ' +
-                        picker.endDate.format('MM/DD/YYYY'));
-                    table.draw();
-                })
-                .on('cancel.daterangepicker', function() {
-                    $(this).val('');
-                    table.draw();
-                });
         });
     </script>
     <script>
@@ -414,14 +412,14 @@
 
                 const analyticsSection = $('#analyticsSection');
                 
-                if (sent === 0) {
-                    analyticsSection.hide();
-                    $('#modalContent .col-lg-6').removeClass('col-lg-6').addClass('col-12');
-                    return;
-                } else {
-                    analyticsSection.show();
-                    $('#modalContent .col-12').removeClass('col-12').addClass('col-lg-6');
-                }
+                // if (sent === 0) {
+                //     analyticsSection.hide();
+                //     $('#modalContent .col-lg-6').removeClass('col-lg-6').addClass('col-12');
+                //     return;
+                // } else {
+                //     analyticsSection.show();
+                //     $('#modalContent .col-12').removeClass('col-12').addClass('col-lg-6');
+                // }
 
                 // Calculate percentages
                 const receivedPercentage = (received / sent) * 100;

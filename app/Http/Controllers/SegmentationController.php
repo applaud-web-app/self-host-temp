@@ -356,11 +356,11 @@ class SegmentationController extends Controller
         if ($request->segment_type === 'device') {
             $request->merge([
                 'devicetype' => collect($request->input('devicetype', []))
-                                ->filter()
-                                ->map('strtolower')
-                                ->unique()
-                                ->values()
-                                ->toArray(),
+                ->filter()
+                ->map('strtolower')
+                ->unique()
+                ->values()
+                ->toArray(),
             ]);
             $request->request->remove('geo_type');
             $request->request->remove('country');
