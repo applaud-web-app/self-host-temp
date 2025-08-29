@@ -76,7 +76,7 @@
 
       <div class="col-md-12 mb-3">
         <div class="card h-auto ">
-          <div class="card-header "><h5 class="mb-0 card-title">Load Average (1m)</h5></div>
+          <div class="card-header "><h5 class="mb-0 card-title">Load Average</h5></div>
           <div class="card-body">
             <canvas id="loadChart" height="350"></canvas>
           </div>
@@ -176,7 +176,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const loadChart = makeLine(
     document.getElementById('loadChart').getContext('2d'),
-    'rgba(220,53,69,1)', 'Load Avg (1m)',
+    'rgba(220,53,69,1)', 'Load Average',
     cpuCores, `CPU Cores (${cpuCores})`
   );
 

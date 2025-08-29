@@ -16,7 +16,7 @@ class ProcessFastExcelImport implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-      public int $timeout = 1800;
+    public int $timeout = 1800;
     public int $tries   = 3;
 
     public function __construct(
@@ -24,14 +24,13 @@ class ProcessFastExcelImport implements ShouldQueue
         public string $domain
     ) {}
 
-      public function handle(SubscribersImporter $importer): void
+    public function handle(SubscribersImporter $importer): void
     {
         $fullPath = Storage::path($this->path);
         $count = 0;
 
         (new FastExcel)->import($fullPath, function (array $row) use ($importer, &$count) {
             $count++;
-
             $norm = [];
             foreach ($row as $k => $v) {
                 $norm[strtolower(trim((string)$k))] = $v;
@@ -48,14 +47,10 @@ class ProcessFastExcelImport implements ShouldQueue
             }
         });
 
-        // cleanup
         try {
             Storage::delete($this->path);
         } catch (\Throwable $e) {
-            Log::warning('Could not delete import file after processing', [
-                'path'  => $this->path,
-                'error' => $e->getMessage(),
-            ]);
+            Log::warning('Could not delete import file', ['error' => $e->getMessage()]);
         }
 
         Log::info('Import completed', ['domain' => $this->domain, 'rows' => $count]);

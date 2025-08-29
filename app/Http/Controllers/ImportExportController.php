@@ -18,29 +18,24 @@ use App\Services\SubscribersImporter;
 
 class ImportExportController extends Controller
 {
-    public function importView(Request $request)
+   public function importView(Request $request)
     {
-        try {
-            $request->validate(['eq' => 'required|string']);
+        $request->validate(['eq' => 'required|string']);
 
-            $response = decryptUrl($request->eq);
-            $domain   = $response['domain'];
+        $response = decryptUrl($request->eq);
+        $domain   = $response['domain'];
 
-            $importUrl = route('migration.import-data');
-            $encryptImportUrl = encryptUrl($importUrl, ['domain' => $domain]);
+        $importUrl = route('migration.import-data');
+        $encryptImportUrl = encryptUrl($importUrl, ['domain' => $domain]);
 
-            return view('import-export.import', compact('encryptImportUrl', 'domain'));
-        } catch (\Throwable $th) {
-            return redirect()->back()->with('error', 'Invalid Request');
-        }
+        return view('import-export.import', compact('encryptImportUrl', 'domain'));
     }
 
     public function importData(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            // explicit Office mimetypes + size cap (20MB)
-            'file' => 'required|file|mimetypes:application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet|max:20480',
-            'eq'   => 'sometimes|string', // can arrive via querystring or body
+            'file' => 'required|file|mimes:xlsx,xls|max:102400',
+            'eq'   => 'sometimes|string',
         ]);
 
         if ($validator->fails()) {
@@ -49,46 +44,26 @@ class ImportExportController extends Controller
 
         try {
             $eq = $request->input('eq', $request->query('eq'));
-            if (!$eq) {
-                return response()->json(['error' => 'Missing encrypted parameter.'], 400);
-            }
-
-            try {
-                $response = decryptUrl($eq);
-            } catch (\Throwable $e) {
-                return response()->json(['error' => 'Invalid encrypted parameter.'], 400);
-            }
-
+            $response = decryptUrl($eq);
             $domain = $response['domain'] ?? null;
-            if (!$domain) {
-                return response()->json(['error' => 'Domain not found in the encrypted parameter.'], 400);
-            }
 
             $domainRecord = Domain::where('name', $domain)->first();
             if (!$domainRecord) {
                 return response()->json(['error' => 'Domain not found.'], 404);
             }
 
-            // store upload
-            $path = $request->file('file')->store('imports'); // storage/app/imports/xxxx.xlsx
-            if (!$path) {
-                return response()->json(['error' => 'Failed to store the uploaded file.'], 500);
-            }
-
-            // stream/process in background
-           ProcessFastExcelImport::dispatch($path, $domain)->onQueue('imports');
-
+            $path = $request->file('file')->store('imports');
+            ProcessFastExcelImport::dispatch($path, $domain)->onQueue('imports');
 
             return response()->json([
                 'queued'  => true,
                 'message' => 'Import has been queued and will be processed shortly.',
             ], 202);
         } catch (\Throwable $e) {
-            Log::error('Import failed', ['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
+            Log::error('Import failed', ['error' => $e->getMessage()]);
             return response()->json(['error' => 'Error during import. Please try again.'], 500);
         }
     }
-
     public function showExportForm(Request $request)
     {
         try {
