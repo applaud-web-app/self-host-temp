@@ -12,13 +12,18 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('push_event_counts', function (Blueprint $table) {
-            $table->id();
-            $table->string('message_id');
-            $table->string('domain');
-            $table->string('event');
+            // $table->id();
+            // $table->string('message_id');
+            // $table->string('domain');
+            // $table->string('event');
+            // $table->unsignedBigInteger('count')->default(0);
+            // $table->unique(['message_id', 'event', 'domain']);
+            // $table->index(['domain', 'message_id']);
+
+            $table->string('message_id', 255);
+            $table->string('event', 255);
             $table->unsignedBigInteger('count')->default(0);
-            $table->unique(['message_id', 'event', 'domain']);
-            $table->index(['domain', 'message_id']);
+            $table->primary(['message_id','event']);
         });
     }
 

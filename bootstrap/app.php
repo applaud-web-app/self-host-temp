@@ -13,6 +13,7 @@ use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
 use App\Http\Middleware\CheckInstallation;
 use App\Http\Middleware\EnsurePushConfig;
 use App\Http\Middleware\FrameHeadersMiddleware;
+use App\Http\Middleware\CorsMiddleware;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -26,6 +27,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'ensure_push_config' => EnsurePushConfig::class,
             'global' => FrameHeadersMiddleware::class,
+            'cors' => CorsMiddleware::class,
         ]);
         $middleware->group('install', [
             StartSession::class,

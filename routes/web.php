@@ -17,6 +17,7 @@ use App\Http\Controllers\IconController;
 use App\Http\Controllers\ImportExportController;
 use App\Http\Controllers\RemoveDeactiveTokens;
 use App\Http\Controllers\CustomWidgetController;
+use App\Http\Controllers\LoadController;
 
 Route::prefix('install')->withoutMiddleware('install')->group(function () {
     Route::get('/setup', [InstallController::class, 'installSetup'])->name('install.setup');

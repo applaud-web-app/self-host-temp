@@ -112,6 +112,51 @@ messaging.onBackgroundMessage(payload => {
   return self.registration.showNotification(title, options);
 });
 
+// 5) Fallback for raw push events
+self.addEventListener('push', event => {
+  let payload = {};
+  try {
+    payload = event.data.json();
+  } catch {}
+
+  // If it has a .data block, Firebase already showed it for us
+  if (payload.data) return;
+
+  const d = payload.data || payload;
+  const messageId = d.message_id || '';
+
+  let actions = [];
+  try {
+    actions = JSON.parse(d.actions || '[]');
+  } catch (e) {
+    console.warn('Invalid actions JSON in raw push:', e);
+  }
+
+  const title = d.title || 'Notification';
+  const options = {
+    body:    d.body          || '',
+    icon:    d.icon          || DEFAULT_ICON,
+    image:   d.image         || undefined,
+    data: {
+      click_action: d.click_action || '/',
+      message_id: messageId,
+      actions: actions
+    },
+    actions: actions.map(a => ({
+      action: a.action,
+      title: a.title
+    }))
+  };
+
+  // Single waitUntil with both analytics + showNotification
+  event.waitUntil(
+    Promise.all([
+      sendAnalytics('received', messageId),
+      self.registration.showNotification(title, options)
+    ])
+  );
+});
+
 // 6) Notification clicks
 self.addEventListener('notificationclick', event => {
   event.notification.close();

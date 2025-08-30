@@ -200,7 +200,7 @@ class NotificationController extends Controller
 
             $notification = Notification::where('id', $id)->firstOrFail();
             $counts = PushEventCount::where('message_id', $notification->message_id)
-                        ->where('domain', $domain)
+                        // ->where('domain', $domain)
                         ->whereIn('event', ['received', 'click'])
                         ->pluck('count', 'event');
 

@@ -6,12 +6,22 @@ use Illuminate\Support\Facades\Schedule;
 use Illuminate\Support\Facades\Log;
 
 Schedule::command('analytics:flush')
-->everyMinute();
+->everyMinute()
+->withoutOverlapping()   // <- key line (uses your cache driver)
+->onOneServer()          // if you have >1 host
+->runInBackground();
+
 Schedule::command('subscriptions:flush')
-->everyMinute();
+->everyMinute()
+->withoutOverlapping()   // <- key line (uses your cache driver)
+->onOneServer()          // if you have >1 host
+->runInBackground();
 
 Schedule::command('notifications:dispatch-scheduled')
 ->everyMinute()
+->withoutOverlapping()   // <- key line (uses your cache driver)
+->onOneServer()          // if you have >1 host
+->runInBackground()
 ->sendOutputTo('dispatch-scheduled.log');
 
 // Schedule::command('notifications:dispatch-scheduled-segment')

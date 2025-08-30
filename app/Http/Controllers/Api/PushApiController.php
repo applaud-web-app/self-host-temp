@@ -118,45 +118,71 @@ class PushApiController extends Controller
       }
   }
 
+  // public function analytics(Request $request): JsonResponse
+  // {
+  //   $payload = $request->validate([
+  //     'message_id' => 'required|string',
+  //     'event'      => 'required|in:click,close,received',
+  //     'domain'    => 'required|string',
+  //   ]);
+
+  //   // Add timestamp if needed for future trace/debug
+  //   $event = [
+  //     'message_id' => $payload['message_id'],
+  //     'event'      => $payload['event'],
+  //     'domain'     => $payload['domain'],   
+  //     'timestamp'  => now()->timestamp,
+  //   ];
+
+  //   // Push to Redis buffer
+  //   try {
+  //     Redis::rpush('buffer:push_events', json_encode($event));
+  //   } catch (\Throwable $e) {
+  //     Log::warning('Redis unavailable, falling back to queue', [
+  //       'error' => $e->getMessage()
+  //     ]);
+
+  //     // ✅ Fallback to queue
+  //     ProcessClickAnalytics::dispatch($event['message_id'], $event['event'], $event['domain']);
+
+  //     // ✅ Record this event hash so flush won't double-count later
+  //     $hash = "{$event['event']}|{$event['message_id']}|{$event['domain']}";
+  //     try {
+  //       Redis::sadd('processed:push_analytics', $hash);
+  //       Redis::expire('processed:push_analytics', 3600);
+  //     } catch (\Throwable $inner) {
+  //       Log::warning('Failed to record processed analytics in Redis', ['error' => $inner->getMessage(),]);
+  //     }
+  //   }
+
+  //   return response()->json(['status' => 'success']);
+
+  // }
+
+  // Controller - Just store in Redis
   public function analytics(Request $request): JsonResponse
   {
-    $payload = $request->validate([
-      'message_id' => 'required|string',
-      'event'      => 'required|in:click,close,received',
-      'domain'    => 'required|string',
-    ]);
-
-    // Add timestamp if needed for future trace/debug
-    $event = [
-      'message_id' => $payload['message_id'],
-      'event'      => $payload['event'],
-      'domain'     => $payload['domain'],   
-      'timestamp'  => now()->timestamp,
-    ];
-
-    // Push to Redis buffer
-    try {
-      Redis::rpush('buffer:push_events', json_encode($event));
-    } catch (\Throwable $e) {
-      Log::warning('Redis unavailable, falling back to queue', [
-        'error' => $e->getMessage()
+      $payload = $request->validate([
+          'analytics' => 'required|array',
+          'analytics.*.message_id' => 'required|string',
+          'analytics.*.event' => 'required|in:click,close,received',
       ]);
 
-      // ✅ Fallback to queue
-      ProcessClickAnalytics::dispatch($event['message_id'], $event['event'], $event['domain']);
+      foreach ($payload['analytics'] as $eventData) {
+          $event = [
+              'message_id' => $eventData['message_id'],
+              'event'      => $eventData['event'],
+              'timestamp'  => now()->timestamp,
+          ];
 
-      // ✅ Record this event hash so flush won't double-count later
-      $hash = "{$event['event']}|{$event['message_id']}|{$event['domain']}";
-      try {
-        Redis::sadd('processed:push_analytics', $hash);
-        Redis::expire('processed:push_analytics', 3600);
-      } catch (\Throwable $inner) {
-        Log::warning('Failed to record processed analytics in Redis', ['error' => $inner->getMessage(),]);
+          try {
+              Redis::rpush('buffer:push_events', json_encode($event));
+          } catch (\Throwable $e) {
+              Log::warning('Redis push failed', ['error' => $e->getMessage()]);
+          }
       }
-    }
 
-    return response()->json(['status' => 'success']);
-
+      return response()->json(['status' => 'success']);
   }
-  
+
 }

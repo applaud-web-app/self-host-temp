@@ -8,6 +8,8 @@ use Illuminate\Support\Facades\Request;
 use Illuminate\Support\Facades\Auth;
 use Nwidart\Modules\Facades\Module;
 use Illuminate\Support\Facades\File;
+use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Support\Facades\RateLimiter;
 
 class AppServiceProvider extends ServiceProvider
 {
