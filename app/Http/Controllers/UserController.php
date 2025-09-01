@@ -8,7 +8,6 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Http;
 use Carbon\Carbon; 
 use Illuminate\Support\Facades\Log;
-use App\Models\Installation;
 use App\Services\StatusService;
 use App\Traits\SubscriptionValidator;
 

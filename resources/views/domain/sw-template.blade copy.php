@@ -128,6 +128,15 @@ self.addEventListener('notificationclick', (event) => {
   ]));
 });
 
+self.addEventListener('notificationclose', (event) => {
+  const data = event.notification.data || {};
+  const messageId = data.message_id || '';
+  event.waitUntil(Promise.all([
+    sendAnalytics('close', messageId),
+    flushAnalyticsQueue({ reason: 'notificationclose' })
+  ]));
+});
+
 /* ---------------- Subscription change ---------------- */
 self.addEventListener('pushsubscriptionchange', (event) => {
   event.waitUntil(

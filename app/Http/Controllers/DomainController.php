@@ -319,20 +319,18 @@ class DomainController extends Controller
         if ($request->ajax()) {
 
             $cacheKey = "license_generation_cooldown:{$domain->id}";
-            if (! Cache::add($cacheKey, true, now()->addMinutes(1))) {
+            if (! Cache::add($cacheKey, true, now()->addMinutes(5))) {
                 return response()->json([
                     'success' => false,
                     'message' => 'You’ve just generated a key—please wait 5 minutes before generating another.',
                 ], 429);
             }
             
-            // 4a) build raw key + salt + (optional) pepper
+            // 4a) build raw key + salt + pepper
             $rawKey = Str::random(64);
             $salt   = Str::random(16);
             $pepper = config('license.LICENSE_CODE');
             if (empty($pepper)) {
-                // purgeMissingPepper();
-                
                 Cache::forget($cacheKey);
                 return response()->json([
                     'success' => false,
@@ -341,15 +339,18 @@ class DomainController extends Controller
             }
 
             // 4b) hash it: salt + rawKey + pepper
-            $toHash = $salt . $rawKey . $pepper;
-            $hash   = Hash::make($toHash);
+            $hash   = Hash::make($salt . $rawKey . $pepper);
 
-            // 4c) store one-way
-            DomainLicense::create([
-                'domain_id'  => $domain->id,
-                'salt'       => $salt,
-                'key_hash'   => $hash,
-            ]);
+            try {
+                DB::beginTransaction();
+                DomainLicense::updateOrCreate(
+                    ['domain_id' => $domain->id],
+                    ['salt' => $salt, 'key_hash' => $hash, 'is_used' => 0, 'used_at' => null, 'updated_at' => now()]
+                );
+                DB::commit();
+            } catch (\Throwable $th) {
+                DB::rollBack();
+            }
 
             // 4d) return the raw key exactly once
             return response()->json([

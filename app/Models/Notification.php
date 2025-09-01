@@ -34,26 +34,10 @@ class Notification extends Model
         'one_time_datetime'    => 'datetime',
     ];
 
-    /**
-     * The domains this notification is sent to.
-     */
-    public function domains()
-    {
-        return $this->belongsToMany(Domain::class, 'domain_notification')->withPivot('status','sent_at');;
-    }
-
     public function eventCounts()
     {
         // link message_id (not id) to push_event_counts.message_id
         return $this->hasMany(PushEventCount::class, 'message_id', 'message_id');
-    }
-
-    /**
-     * Send records of this notification.
-     */
-    public function sends()
-    {
-        return $this->hasMany(NotificationSend::class);
     }
 
     public function segment()

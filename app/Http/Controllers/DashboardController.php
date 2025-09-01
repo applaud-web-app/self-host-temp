@@ -6,7 +6,7 @@ use Illuminate\Http\Request;
 use App\Models\Domain;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Cache;
-use App\Models\DomainNotification;
+use App\Models\Notification;
 use Carbon\Carbon;
 
 class DashboardController extends Controller
@@ -83,15 +83,13 @@ class DashboardController extends Controller
             ]);
         }
 
-        // 2) Join DomainNotification → Notification to get segment_type
-        $stats = DomainNotification::query()
-            ->join('notifications as n', 'domain_notification.notification_id', '=', 'n.id')
-            ->where('domain_notification.domain_id', $domain->id)
+        $stats = Notification::query()
+            ->where('domain_id', $domain->id)
             ->selectRaw('
                 count(*) as total,
-                sum(case when n.segment_type = "all" then 1 else 0 end) as broadcast,
-                sum(case when n.segment_type = "particular" then 1 else 0 end) as segment,
-                sum(case when n.segment_type = "api" then 1 else 0 end) as plugin
+                sum(case when segment_type = "all" then 1 else 0 end) as broadcast,
+                sum(case when segment_type = "particular" then 1 else 0 end) as segment,
+                sum(case when segment_type = "api" then 1 else 0 end) as plugin
             ')
             ->first();
 
@@ -168,13 +166,13 @@ class DashboardController extends Controller
 
         // fetch notification counts
         $notData = Cache::remember($notKey, now()->addMinutes(5), function () use ($domain, $startOfLast7Days) {
-            return DomainNotification::query()
-                ->where('domain_id', $domain->id)
-                ->where('sent_at', '>=', $startOfLast7Days)
-                ->selectRaw('DATE(sent_at) AS day, COUNT(*) AS cnt')
-                ->groupBy('day')
-                ->pluck('cnt', 'day')
-                ->toArray();
+            return Notification::query()
+            ->where('domain_id', $domain->id)
+            ->where('sent_at', '>=', $startOfLast7Days)
+            ->selectRaw('DATE(sent_at) AS day, COUNT(*) AS cnt')
+            ->groupBy('day')
+            ->pluck('cnt', 'day')
+            ->toArray();
         });
 
         // build series aligned to $days

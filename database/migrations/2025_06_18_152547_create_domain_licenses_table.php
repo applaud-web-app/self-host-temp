@@ -13,14 +13,12 @@ return new class extends Migration
     {
         Schema::create('domain_licenses', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('domain_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('domain_id')->constrained()->cascadeOnDelete()->unique();
             $table->string('salt', 16);
-            $table->string('key_hash');
+            $table->string('key_hash')->unique();
             $table->boolean('is_used')->default(false);
             $table->timestamp('used_at')->nullable();
             $table->timestamps();
-
-            $table->unique(['domain_id','key_hash']);
         });
     }
 

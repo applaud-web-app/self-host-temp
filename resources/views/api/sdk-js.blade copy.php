@@ -226,14 +226,21 @@
       console.warn('[Push] Invalid actions JSON in foreground:', e);
     }
 
+    // 👉 Send "received" analytics
+    console.log('[Push] Sending received analytics:', {
+      message_id: messageId,
+      event: 'received',
+      domain: location.hostname
+    });
+
     try {
       const res = await fetch('{{route('api.analytics')}}', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          analytics: [
-            { message_id: messageId, event: 'received', timestamp: Date.now() }
-          ]
+          message_id: messageId,
+          event: 'received',
+          domain: location.hostname
         })
       });
 
@@ -256,14 +263,21 @@
       notif.onclick = async function () {
         console.log('[Push] Foreground notification clicked:', clickAction);
 
+        // 👉 Send "click" analytics
+        console.log('[Push] Sending click analytics:', {
+          message_id: messageId,
+          event: 'click',
+          domain: location.hostname
+        });
+
         try {
           const res = await fetch('{{route('api.analytics')}}', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-              analytics: [
-                { message_id: messageId, event: 'click', timestamp: Date.now() }
-              ]
+              message_id: messageId,
+              event: 'click',
+              domain: location.hostname
             })
           });
 

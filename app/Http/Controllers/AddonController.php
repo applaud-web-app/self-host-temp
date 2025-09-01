@@ -7,7 +7,6 @@ use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Log;
-use App\Models\Installation;
 use App\Models\Addon;
 use ZipArchive;
 use Illuminate\Support\Facades\DB;

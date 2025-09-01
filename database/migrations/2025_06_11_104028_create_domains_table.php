@@ -14,8 +14,10 @@ return new class extends Migration
         Schema::create('domains', function (Blueprint $table) {
             $table->id();
             $table->string('name')->unique();
-            $table->tinyInteger('status')->default(1);
+            $table->tinyInteger('status')->default(1)->index();
             $table->timestamps();
+
+            $table->index(['status', 'name'], 'domains_status_name_idx');
         });
     }
 

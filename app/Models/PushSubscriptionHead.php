@@ -32,12 +32,4 @@ class PushSubscriptionHead extends Model
     {
         return $this->hasOne(PushSubscriptionMeta::class, 'head_id');
     }
-
-    /**
-     * Send attempts.
-     */
-    public function sends()
-    {
-        return $this->hasMany(NotificationSend::class, 'subscription_head_id');
-    }
 }

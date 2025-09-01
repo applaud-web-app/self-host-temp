@@ -34,11 +34,32 @@ function isCorrectServiceWorkerActive() {
 }
 
 // 3) Analytics helper
-function sendAnalytics(eventType, messageId) {
+async function sendAnalytics(eventType, messageId) {
   
-  if (!isCorrectServiceWorkerActive()) {
+  const correct = await isCorrectServiceWorkerActive();
+  if (!correct) {
     console.log('Not the correct Service Worker. Skipping analytics.');
     return;
+  }
+
+  // Default domain
+  let domain = self.location.hostname;
+
+  // Try to read parentOrigin from IDB and use its hostname
+  try {
+    const parentOrigin = await getParentOriginFromDB();
+    if (parentOrigin && typeof parentOrigin === 'string') {
+      try {
+        // If it's a full origin like "https://example.com", grab hostname
+        domain = new URL(parentOrigin).hostname || parentOrigin;
+      } catch {
+        // If it's already just a hostname, use as-is
+        domain = parentOrigin;
+      }
+    }
+  } catch (e) {
+    // Keep fallback
+    console.warn('parentOrigin not available; using self.location.hostname');
   }
   
   return fetch(ANALYTICS_ENDPOINT, {
@@ -48,7 +69,7 @@ function sendAnalytics(eventType, messageId) {
     body: JSON.stringify({
       message_id: messageId,
       event: eventType,
-      domain: self.location.hostname
+      domain
     })
   }).catch(err => {
     console.error('Analytics error:', err);
@@ -89,51 +110,6 @@ messaging.onBackgroundMessage(payload => {
   };
 
   return self.registration.showNotification(title, options);
-});
-
-// 5) Fallback for raw push events
-self.addEventListener('push', event => {
-  let payload = {};
-  try {
-    payload = event.data.json();
-  } catch {}
-
-  // If it has a .data block, Firebase already showed it for us
-  if (payload.data) return;
-
-  const d = payload.data || payload;
-  const messageId = d.message_id || '';
-
-  let actions = [];
-  try {
-    actions = JSON.parse(d.actions || '[]');
-  } catch (e) {
-    console.warn('Invalid actions JSON in raw push:', e);
-  }
-
-  const title = d.title || 'Notification';
-  const options = {
-    body:    d.body          || '',
-    icon:    d.icon          || DEFAULT_ICON,
-    image:   d.image         || undefined,
-    data: {
-      click_action: d.click_action || '/',
-      message_id: messageId,
-      actions: actions
-    },
-    actions: actions.map(a => ({
-      action: a.action,
-      title: a.title
-    }))
-  };
-
-  // Single waitUntil with both analytics + showNotification
-  event.waitUntil(
-    Promise.all([
-      sendAnalytics('received', messageId),
-      self.registration.showNotification(title, opts)
-    ])
-  );
 });
 
 // 6) Notification clicks
@@ -187,7 +163,9 @@ function openDB() {
     const request = indexedDB.open('serviceWorkerDB', 1);
     request.onupgradeneeded = () => {
       const db = request.result;
-      db.createObjectStore('swData', { keyPath: 'key' });
+      if (!db.objectStoreNames.contains('swData')) {
+        db.createObjectStore('swData', { keyPath: 'key' });
+      }
     };
     request.onsuccess = () => resolve(request.result);
     request.onerror = () => reject('Failed to open IndexedDB');
@@ -211,6 +189,22 @@ function getSWIdentifierFromDB() {
       const request = store.get('activeSW');
       request.onsuccess = () => resolve(request.result ? request.result.value : null);
       request.onerror = () => reject('Failed to retrieve SW identifier');
+    });
+  });
+}
+
+// Add alongside your other IndexedDB helpers:
+function getParentOriginFromDB() {
+  return openDB().then(db => {
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction('swData', 'readonly');
+      const store = tx.objectStore('swData');
+      const req = store.get('parentOrigin');
+      req.onsuccess = () => {
+        const val = req.result ? req.result.value : null;
+        resolve(val);
+      };
+      req.onerror = () => reject('Failed to retrieve parentOrigin');
     });
   });
 }

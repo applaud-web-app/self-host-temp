@@ -363,104 +363,6 @@ class NotificationController extends Controller
         return compact('title', 'description', 'image');
     }
 
-    // public function store(Request $request)
-    // {
-    //     // Always cast CTA checkbox
-    //     if (! $request->has('cta_enabled')) {
-    //         $request->merge(['cta_enabled' => 0]);
-    //     }
-
-    //     // 1) Validate
-    //     $data = $request->validate([
-    //         'target_url'        => 'required|url',
-    //         'title'             => 'required|string|max:100',
-    //         'description'       => 'required|string|max:200',
-    //         'banner_image'      => 'nullable|url',
-    //         'banner_icon'       => 'nullable|url',
-    //         'schedule_type'     => 'required|in:Instant,Schedule',
-    //         'one_time_datetime' => 'required_if:schedule_type,Schedule|nullable|date',
-    //         'segment_type'      => 'required|in:all,particular',
-    //         'domain_name'       => 'required_if:segment_type,all|array|min:1',
-    //         'domain_name.*'     => 'required_if:segment_type,all|string|exists:domains,name',
-    //         'cta_enabled'       => 'required|in:0,1',
-    //         'btn_1_title'       => 'nullable|required_if:cta_enabled,1|string|max:255',
-    //         'btn_1_url'         => 'nullable|required_if:cta_enabled,1|url',
-    //         'btn_title_2'       => 'nullable|string|max:255',
-    //         'btn_url_2'         => 'nullable|required_with:btn_title_2|url',
-    //         'segment_id'        => 'nullable|required_if:segment_type,particular|exists:segments,id',
-    //     ], [], [
-    //         'one_time_datetime' => 'one-time date & time',
-    //         'btn_1_title'       => 'Button 1 title',
-    //         'btn_1_url'         => 'Button 1 URL',
-    //         'btn_title_2'       => 'Button 2 title',
-    //         'btn_url_2'         => 'Button 2 URL',
-    //     ]);
-
-    //     $defaults = [
-    //         'banner_image' => asset('images/default.png'),
-    //         'banner_icon'  => asset('images/push/icons/alarm-1.png'),
-    //     ];
-
-    //     if($data['banner_image'] === $defaults['banner_image']) {
-    //         $data['banner_image'] = null;
-    //     }
-
-    //     try {
-    //         $notification = Notification::create([
-    //             'target_url'        => $data['target_url'],
-    //             'campaign_name'     => 'CAMP#'.random_int(1000,9999),
-    //             'title'             => $data['title'],
-    //             'description'       => $data['description'],
-    //             'banner_image'      => $data['banner_image'] ?? null,
-    //             'banner_icon'       => $data['banner_icon']  ?? null,
-    //             'schedule_type'     => strtolower($data['schedule_type']),
-    //             'one_time_datetime' => $data['schedule_type'] === 'Schedule' ? $data['one_time_datetime'] : null,
-    //             'message_id'        => Str::uuid(),
-    //             'btn_1_title'       => $data['btn_1_title'] ?? null,
-    //             'btn_1_url'         => $data['btn_1_url'] ?? null,
-    //             'btn_title_2'       => $data['btn_title_2'] ?? null,
-    //             'btn_url_2'         => $data['btn_url_2'] ?? null,
-    //             'segment_type'      => $data['segment_type'],
-    //             'segment_id'        => $data['segment_id'] ?? null,
-    //         ]);
-
-    //         if ($data['segment_type'] === 'all') {
-    //             $ids = Domain::whereIn('name', $data['domain_name'])->where('status', 1)->pluck('id')->all();
-    //             $notification->domains()->sync($ids);
-    //         }else{
-    //             // particular segment → attach its single domain
-    //             $segment = Segment::find($data['segment_id']);
-    //             if ($segment && $segment->domain) {
-    //                 $domain = Domain::where('name', $segment->domain)->first();
-    //                 if ($domain) {
-    //                     $notification->domains()->sync([$domain->id]);
-    //                 }
-    //             }
-    //         }
-
-    //         // Instant: fire off immediately
-    //         if ($notification->schedule_type === 'instant') {
-    //             if ($data['segment_type'] === 'all') {
-    //                 // SendNotificationJob::dispatch($notification->id);
-    //                 dispatch(new SendNotificationJob($notification->id)); 
-    //             } else {
-    //                 // SendSegmentNotificationJob::dispatch(
-    //                 //     $notification->id,
-    //                 //     $notification->segment_id
-    //                 // );
-    //                 dispatch(new SendSegmentNotificationJob($notification->id, $notification->segment_id));
-    //             }
-    //         }
-
-    //         return redirect()->route('notification.view')->with('success', "Notification {$notification->campaign_name} queued.");
-    //     } catch (\Throwable $e) {
-    //         Log::error("Failed to create notification: {$e->getMessage()}", [
-    //             'data' => $data,
-    //         ]);
-    //         return back()->withErrors(['general'=>'Something went wrong.'])->withInput();
-    //     }
-    // }
-
     public function store(Request $request)
     {
         // Always cast CTA checkbox
@@ -504,13 +406,10 @@ class NotificationController extends Controller
                 $ids = [Domain::where('name', $segment->domain)->where('status', 1)->pluck('id')->first()];
             }
         }
-        
-        // Log the ids to check if they are valid
-        Log::debug('IDs fetched:', $ids);
 
         try {
             // Dispatch the job for notification creation and job dispatching
-            dispatch(new CreateAndDispatchNotifications($data, $ids, $data['segment_type']));
+            dispatch(new CreateAndDispatchNotifications($data, $ids, $data['segment_type']))->onQueue('create-notifications');
 
             return redirect()->route('notification.view')->with('success', "Notification campaign queued.");
         } catch (\Throwable $e) {
@@ -519,21 +418,5 @@ class NotificationController extends Controller
             ]);
             return back()->withErrors(['general' => 'Something went wrong.'])->withInput();
         }
-    }
-
-    public function show(Notification $notification)
-    {
-        $notification->load('domains');
-        return view('notifications.show', compact('notification'));
-    }
-
-    /**
-     * POST /notifications/{notification}/send
-     * Re‐dispatch an existing notification.
-     */
-    public function send(Notification $notification)
-    {
-        SendNotificationJob::dispatch($notification);
-        return back()->with('success', 'Notification re-queued for sending.');
     }
 }

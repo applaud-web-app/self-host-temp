@@ -26,10 +26,10 @@ class DispatchScheduledNotifications extends Command
         ->each(function($n) {
             try {
                 if ($n->segment_type === "all") {
-                    dispatch(new SendNotificationJob($n->id));
+                    dispatch(new SendNotificationJob($n->id))->onQueue('notifications');
                     $this->info("Dispatched Notification #{$n->id}");
                 }else{
-                    dispatch(new SendSegmentNotificationJob($n->id));
+                    dispatch(new SendSegmentNotificationJob($n->id))->onQueue('notifications');
                     $this->info("Dispatched segment notification #{$n->id}");
                 }
             } catch (\Throwable $e) {

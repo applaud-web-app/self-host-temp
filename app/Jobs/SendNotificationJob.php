@@ -1,4 +1,5 @@
 <?php
+// IS ACTIVE JOB
 
 namespace App\Jobs;
 
@@ -82,7 +83,7 @@ class SendNotificationJob implements ShouldQueue
                 ]);
 
             // Dispatch the job to send notifications via Node.js
-            SendNotificationByNode::dispatch($tokens, $webPushPayload, $pendingNotification->domain_name, $this->notificationId);
+            SendNotificationByNode::dispatch($tokens, $webPushPayload, $pendingNotification->domain_name, $this->notificationId)->onQueue('notifications');
 
             Log::info("Notification {$this->notificationId} queued for delivery to " . count($tokens) . " tokens for domain {$pendingNotification->domain_name}");
 

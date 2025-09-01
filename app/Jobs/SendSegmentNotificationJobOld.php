@@ -1,6 +1,5 @@
 <?php
-
-// App/Jobs/SendSegmentNotificationJob.php
+// NOT IN USE 
 
 namespace App\Jobs;
 

@@ -15,7 +15,6 @@ use Carbon\Carbon;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
 use App\Models\Notification;
-use App\Jobs\SendNotificationJob;
 use App\Jobs\CreateAndDispatchNotifications;
 
 class PluginController extends Controller
@@ -93,7 +92,7 @@ class PluginController extends Controller
             }
 
             // 4) license check
-            $license = DomainLicense::where('domain_id', $domain->id)->latest('created_at')->first();
+            $license = DomainLicense::where('domain_id', $domain->id)->first();
 
             if (! $license || ! $this->verifyDomainKey($data['key'], $license)) {
                 RateLimiter::hit($limiterKey, $lockSeconds);
@@ -287,7 +286,7 @@ class PluginController extends Controller
             $data['banner_icon'] = $iconUrl;
 
             $ids = Domain::whereIn('name', $data['domains'])->where('status', 1)->pluck('id')->all();
-            dispatch(new CreateAndDispatchNotifications($data, $ids, $data['segment_type']));
+            dispatch(new CreateAndDispatchNotifications($data, $ids, $data['segment_type']))->onQueue('create-notifications');
 
             return response()->json([
                 'status' => true,

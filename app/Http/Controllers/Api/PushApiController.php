@@ -13,8 +13,9 @@ use App\Jobs\SubscribePushSubscriptionJob;
 use Illuminate\Support\Facades\Cache;
 use App\Models\PushAnalytic;
 use Illuminate\Support\Facades\DB;
-use App\Jobs\ProcessClickAnalytics;
 use Illuminate\Support\Facades\Redis;
+use Illuminate\Support\Str;
+use App\Jobs\ProcessAnalyticsBatch;
 
 class PushApiController extends Controller
 {
@@ -118,71 +119,50 @@ class PushApiController extends Controller
       }
   }
 
-  // public function analytics(Request $request): JsonResponse
-  // {
-  //   $payload = $request->validate([
-  //     'message_id' => 'required|string',
-  //     'event'      => 'required|in:click,close,received',
-  //     'domain'    => 'required|string',
-  //   ]);
-
-  //   // Add timestamp if needed for future trace/debug
-  //   $event = [
-  //     'message_id' => $payload['message_id'],
-  //     'event'      => $payload['event'],
-  //     'domain'     => $payload['domain'],   
-  //     'timestamp'  => now()->timestamp,
-  //   ];
-
-  //   // Push to Redis buffer
-  //   try {
-  //     Redis::rpush('buffer:push_events', json_encode($event));
-  //   } catch (\Throwable $e) {
-  //     Log::warning('Redis unavailable, falling back to queue', [
-  //       'error' => $e->getMessage()
-  //     ]);
-
-  //     // ✅ Fallback to queue
-  //     ProcessClickAnalytics::dispatch($event['message_id'], $event['event'], $event['domain']);
-
-  //     // ✅ Record this event hash so flush won't double-count later
-  //     $hash = "{$event['event']}|{$event['message_id']}|{$event['domain']}";
-  //     try {
-  //       Redis::sadd('processed:push_analytics', $hash);
-  //       Redis::expire('processed:push_analytics', 3600);
-  //     } catch (\Throwable $inner) {
-  //       Log::warning('Failed to record processed analytics in Redis', ['error' => $inner->getMessage(),]);
-  //     }
-  //   }
-
-  //   return response()->json(['status' => 'success']);
-
-  // }
-
-  // Controller - Just store in Redis
   public function analytics(Request $request): JsonResponse
   {
       $payload = $request->validate([
-          'analytics' => 'required|array',
-          'analytics.*.message_id' => 'required|string',
+          'analytics' => 'required|array|max:50',
+          'analytics.*.message_id' => 'required|string|max:255',
           'analytics.*.event' => 'required|in:click,close,received',
+          'analytics.*.timestamp' => 'sometimes|integer'
       ]);
 
-      foreach ($payload['analytics'] as $eventData) {
-          $event = [
-              'message_id' => $eventData['message_id'],
-              'event'      => $eventData['event'],
-              'timestamp'  => now()->timestamp,
-          ];
+      try {
+          $batchId   = (string) Str::uuid();
+          $batchSize = count($payload['analytics']);
 
-          try {
-              Redis::rpush('buffer:push_events', json_encode($event));
-          } catch (\Throwable $e) {
-              Log::warning('Redis push failed', ['error' => $e->getMessage()]);
-          }
+          Log::info('Analytics batch received', [
+              'batch_id' => $batchId,
+              'size'     => $batchSize,
+              'ip'       => $request->ip(),
+          ]);
+
+          // Store canonical batch in Redis (1h TTL) and process async
+          $redisKey = "analytics_batch:{$batchId}";
+          Redis::setex($redisKey, 3600, json_encode($payload['analytics']));
+
+          ProcessAnalyticsBatch::dispatch($batchId)
+              ->onQueue('analytics')
+              ->delay(now()->addSeconds(1));
+
+          return response()->json([
+              'success'         => true,
+              'batch_id'        => $batchId,
+              'processed_count' => $batchSize,
+              'message'         => 'Analytics batch queued for processing',
+          ]);
+      } catch (\Throwable $e) {
+          Log::error('Analytics enqueue error', [
+              'error'        => $e->getMessage(),
+              'payload_size' => count($payload['analytics'] ?? []),
+          ]);
+
+          return response()->json([
+              'success' => false,
+              'message' => 'Failed to process analytics',
+          ], 500);
       }
-
-      return response()->json(['status' => 'success']);
   }
 
 }
