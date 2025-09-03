@@ -4,6 +4,7 @@ use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Schedule;
 use Illuminate\Support\Facades\Log;
+use App\Models\Setting;
 
 Schedule::command('analytics:flush')
 ->everyMinute()
@@ -25,8 +26,12 @@ Schedule::command('notifications:dispatch-scheduled')
 
 Schedule::command('stats:domain-subscriptions')
 ->dailyAt('10:55')
+->timezone('Asia/Kolkata')
 ->withoutOverlapping();
 
 Schedule::command('app:deactive-token')
-->dailyAt('01:00')
-->withoutOverlapping();
+->dailyAt('02:00')
+->timezone('Asia/Kolkata')
+->when(fn () => Setting::dailyCleanupEnabled())
+->onOneServer()
+->withoutOverlapping();          

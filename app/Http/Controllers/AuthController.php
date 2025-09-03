@@ -7,17 +7,9 @@ use App\Models\User;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
-use App\Services\AuthService;
 
 class AuthController extends Controller
 {
-    protected $authService;
-
-    public function __construct(AuthService $authService)
-    {
-        $this->authService = $authService;
-    }
-
     // Auth & Dashboard Pages
     public function login()
     {
@@ -36,7 +28,7 @@ class AuthController extends Controller
         $password = $request->input('password');
         $remember = $request->boolean('remember_me') ?? 0;
 
-        if ($this->authService->attemptLogin($email, $password, $remember)) {
+        if (Auth::attempt(['email' => $email, 'password' => $password], $remember)) {
             $user = Auth::user();
             return redirect()->route('dashboard.view')->with('success', 'Welcome back, ' . $user->name . '!');
         }

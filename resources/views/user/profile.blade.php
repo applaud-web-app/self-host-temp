@@ -89,7 +89,7 @@
                   id="email"
                   class="form-control @error('email') is-invalid @enderror"
                   value="{{ old('email', Auth::user()->email) }}"
-                  required readonly
+                  required
                 >
                 @error('email')
                   <div class="invalid-feedback">{{ $message }}</div>

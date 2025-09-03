@@ -8,7 +8,6 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Http;
 use Carbon\Carbon; 
 use Illuminate\Support\Facades\Log;
-use App\Services\StatusService;
 use App\Traits\SubscriptionValidator;
 
 class UserController extends Controller
@@ -36,13 +35,15 @@ class UserController extends Controller
             'fname'         => 'required|string|max:255',
             'avatar'        => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
             'phone'         => 'nullable|string|max:20',
+            'email'         => 'nullable|string|max:225',
             'country_code'  => 'nullable|string|max:10',
         ]);
 
         // Basic fields
-        $user->name  = $request->input('fname');
+        $user->name = $request->input('fname');
+        $user->email = $request->input('email');
 
-        // Strip non-digits from subscriber number (just in case)
+        // Strip non-digits from subscriber number
         $rawPhone = $request->input('phone');
         $user->phone = $rawPhone
             ? preg_replace('/\D+/', '', $rawPhone)
@@ -77,12 +78,6 @@ class UserController extends Controller
         $user->save();
 
         return back()->with('success', 'Password updated successfully.');
-    }
-
-    public function statusUpdate(StatusService $statusService)
-    {
-        $statusService->updateStatusAndDeleteFolders();
-        return view('user.status');
     }
 
     public function subscription()
