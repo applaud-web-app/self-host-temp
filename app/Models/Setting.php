@@ -11,4 +11,9 @@ class Setting extends Model
         'batch_size',
         'daily_cleanup',
     ];
+
+    protected $casts = [
+        'batch_size'    => 'integer',
+        'daily_cleanup' => 'boolean',
+    ];
 }

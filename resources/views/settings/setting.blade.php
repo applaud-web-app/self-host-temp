@@ -119,7 +119,7 @@
   <!-- Modal: Select Icons -->
   <div class="modal fade" id="logOutDevice" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1"
       aria-labelledby="logOutDeviceLabel" aria-hidden="true">
-      <div class="modal-dialog modal-dialog-scrollable">
+      <div class="modal-dialog modal-dialog-centered">
           <div class="modal-content">
               <div class="modal-header">
                   <h5 class="modal-title fs-20" id="logOutDeviceLabel">Logout from All Devices</h5>
@@ -128,9 +128,9 @@
               <div class="modal-body">
                 <form action="{{ route('settings.logout.device') }}" method="POST">
                 @csrf
-                  <label for="password">Confirm Password</label>
-                  <input type="text" name="password" class="form-control" id="password">
-                  <button class="btn btn-danger">Logout</button>
+                  <label for="password">Confirm Password <span class="text-danger">*</span></label>
+                  <input type="password" name="password" class="form-control" id="password" required>
+                  <button class="btn btn-primary mt-3 w-100">Submit</button>
                 </form>
               </div>
           </div>

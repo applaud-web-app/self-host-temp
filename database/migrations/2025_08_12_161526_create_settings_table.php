@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('settings', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('batch_size')->default(100);
-            $table->tinyInteger('daily_cleanup')->default(0);
+            $table->boolean('daily_cleanup')->default(0);
             $table->timestamps();
         });
     }
