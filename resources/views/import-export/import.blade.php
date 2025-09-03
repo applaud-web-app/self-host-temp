@@ -21,7 +21,7 @@
 
         <form id="import-dropzone"
               class="dropzone border-0 p-0"
-              action="{{ $encryptImportUrl }}"  {{-- already has ?eq=... --}}
+              action="{{ $encryptImportUrl }}"
               method="POST"
               enctype="multipart/form-data">
           @csrf
@@ -30,9 +30,7 @@
             <p class="mb-2">Drag and drop your XLSX/XLS file here, or click to select.</p>
             <small class="text-muted d-block">Max 2,000 rows · Max 20MB · Accepted: .xlsx, .xls</small>
           </div>
-
           <div id="dz-previews" class="mt-3"></div>
-
           <button type="button" id="submit-btn" class="btn btn-primary w-100 mt-3">
             <i class="fas fa-upload me-1"></i> Import Data
           </button>
