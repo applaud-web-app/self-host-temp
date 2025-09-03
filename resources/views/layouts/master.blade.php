@@ -59,7 +59,7 @@
     </div>
     <div id="main-wrapper">
         <div class="nav-header">
-            <a href="#" class="brand-logo main-logo">
+            <a href="{{ route('dashboard.view') }}" class="brand-logo main-logo">
                 <img src="{{ asset('images/logo-main.png') }}" alt="main-logo" class="img-fluid header-desklogo" />
                 <img src="{{ asset('images/logo.png') }}" alt="main-logo" class="img-fluid header-moblogo" />
             </a>
