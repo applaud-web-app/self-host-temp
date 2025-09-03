@@ -241,12 +241,16 @@
         </a>
     </li>
 
-    <!-- Icons -->
+    <!-- Gallery -->
     <li>
-        <a class="ai-icon" href="{{ route('icons.index') }}" aria-expanded="false">
-            <i class="fal fa-credit-card"></i>
-            <span class="nav-text">Icons</span>
+        <a class="has-arrow ai-icon" href="javascript:void(0)" aria-expanded="false">
+            <i class="fal fa-cog"></i>
+            <span class="nav-text">Gallery</span>
         </a>
+        <ul aria-expanded="false">
+            <li><a href="{{ route('gallery.icons.index') }}">Icons</a></li>
+            <li><a href="{{ route('gallery.banners.index') }}">Banners</a></li>
+        </ul>
     </li>
 
     <!-- Support -->

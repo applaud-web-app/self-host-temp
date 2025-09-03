@@ -5,7 +5,6 @@ namespace App\Traits;
 use App\Models\Installation;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Carbon;
 
@@ -58,7 +57,6 @@ trait SubscriptionValidator
         }
 
         // 5. Validate domain
-        // $currentDomain = $_SERVER['HTTP_HOST'];
         $currentDomain = request()->host();
         $hostName = host();
 
@@ -67,6 +65,7 @@ trait SubscriptionValidator
         }
         $storedDomain = $parsed['domain'] ?? null;
         $expectedIp = decrypt(config("license.SERVER_IP"));
+
 
         if (!in_array($currentDomain, ['localhost', $expectedIp, $storedDomain, $envDomain])) {
             return fail("Domain mismatch: expected $storedDomain, got $currentDomain.");

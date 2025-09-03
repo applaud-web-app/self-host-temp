@@ -13,7 +13,7 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\SegmentationController;
 use App\Http\Controllers\AddonController; 
 use App\Http\Controllers\UpdateController;
-use App\Http\Controllers\IconController;
+use App\Http\Controllers\GalleryController;
 use App\Http\Controllers\ImportExportController;
 use App\Http\Controllers\RemoveDeactiveTokens;
 use App\Http\Controllers\CustomWidgetController;
@@ -62,11 +62,16 @@ Route::middleware(['auth','ensure_push_config'])->group(function() {
     });
 
     // icon routes
-    Route::controller(IconController::class)->prefix('icons')->name('icons.')->group(function () {
-        Route::get('/', 'index')->name('index');
-        Route::post('/upload', 'upload')->name('upload');
-        Route::delete('/{filename}', 'delete')->name('delete');
-        Route::get('/list', 'list')->name('list');
+    Route::controller(GalleryController::class)->prefix('gallery')->name('gallery.')->group(function () {
+        Route::get('/icons', 'iconIndex')->name('icons.index');
+        Route::post('/upload-icon', 'iconUpload')->name('icons.upload');
+        Route::delete('/icon/{filename}', 'iconDelete')->name('icons.delete');
+        Route::get('/icons-list', 'iconList')->name('icons.list');
+
+        Route::get('/banners', 'bannerIndex')->name('banners.index');
+        Route::post('/upload-banner', 'bannerUpload')->name('banners.upload');
+        Route::delete('/banner/{filename}', 'bannerDelete')->name('banners.delete');
+        Route::get('/banners-list', 'bannerList')->name('banners.list');
     });
 
     // Domain routes

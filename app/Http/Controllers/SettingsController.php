@@ -68,20 +68,27 @@ class SettingsController extends Controller
     }
 
     /* ---------------------------------------------------------------------
-     * Authentication
-     * --------------------------------------------------------------------- */
+    * Authentication
+    * --------------------------------------------------------------------- */
     public function logoutAllDevices(Request $request)
     {
-        DB::table(config('session.table', 'sessions'))
-            ->where('user_id', $request->user()->getAuthIdentifier())
-            ->delete();
+        // Make sure you validate the user's current password:
+        $request->validate([
+            'password' => ['required', 'current_password'],
+        ]);
 
+        // This invalidates sessions on all OTHER devices
+        Auth::logoutOtherDevices($request->password);
+
+        // Now also log out THIS device
         Auth::logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
-        return redirect()->route('login')->with('status', 'Logged out from all devices.');
+        return redirect()->route('login')
+            ->with('status', 'Logged out from all devices.');
     }
+
 
     /* ---------------------------------------------------------------------
      * Email Settings
@@ -277,7 +284,7 @@ class SettingsController extends Controller
      * --------------------------------------------------------------------- */
     public function backupSubscribers()
     {
-        $latestBackup = Backupsub::latest()->first();
+        $latestBackup = Backupsub::latest('id')->first();
         return view('settings.backup-subscribers', compact('latestBackup'));
     }
 

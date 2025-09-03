@@ -14,10 +14,13 @@ return new class extends Migration
         Schema::create('segments', function (Blueprint $table) {
             $table->id();
             $table->string('name');
-            $table->string('domain');
+            $table->string('domain')->index();
             $table->enum('type', ['device', 'geo']);
             $table->tinyInteger('status')->default(1);
             $table->timestamps();
+
+            $table->index(['status', 'type', 'created_at'], 'idx_segments_status_type_created');
+            $table->index(['status', 'name'], 'idx_segments_status_name');
         });
     }
 

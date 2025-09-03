@@ -34,7 +34,7 @@ class SubscribePushSubscriptionJob implements ShouldQueue
         $this->data = $data;
     }
 
-   public function handle(): void
+    public function handle(): void
     {
         $newToken = $this->data['token'];
         $domain   = $this->data['domain'];

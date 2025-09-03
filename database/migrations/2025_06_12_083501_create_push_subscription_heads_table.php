@@ -15,12 +15,12 @@ return new class extends Migration
             $table->bigIncrements('id');
             $table->string('token')->unique();
             $table->string('domain');
-            $table->string('parent_origin');
-            $table->tinyInteger('status')->default(1);
+            $table->string('parent_origin')->index();
+            $table->tinyInteger('status')->default(1)->index();
             $table->timestamps();
 
-            $table->index('domain');
-            $table->index('status');
+            $table->index(['parent_origin', 'status', 'id'], 'idx_psh_origin_status_id');
+            $table->index(['created_at', 'parent_origin'], 'idx_psh_created_origin');
         });
     }
 

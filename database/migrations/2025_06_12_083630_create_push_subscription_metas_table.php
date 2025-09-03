@@ -18,21 +18,14 @@ return new class extends Migration
             $table->string('country')->nullable();
             $table->string('state')->nullable();
             $table->string('city')->nullable();
-            $table->string('device')->nullable();
+            $table->string('device')->nullable()->index();
             $table->string('browser')->nullable();
             $table->string('platform')->nullable();
 
             $table->primary('head_id');
+            $table->foreign('head_id')->references('id')->on('push_subscriptions_head')->onDelete('cascade');
 
-            $table->foreign('head_id')
-                  ->references('id')
-                  ->on('push_subscriptions_head')
-                  ->onDelete('cascade');
-
-            // indexes for segmentation
-            $table->index('country');
-            $table->index('state');
-            $table->index('city');
+            $table->index(['country','state'], 'idx_psm_country_state');
         });
     }
 

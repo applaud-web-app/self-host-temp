@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('segment_device_rules', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('segment_id')->constrained('segments')->cascadeOnDelete();
+            $table->foreignId('segment_id')->constrained('segments')->cascadeOnDelete()->index();
             $table->enum('device_type', ['desktop', 'tablet', 'mobile', 'other']);
         });
     }

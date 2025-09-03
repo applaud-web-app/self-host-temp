@@ -5,15 +5,8 @@
   <div class="container-fluid">
     <div class="d-flex flex-wrap align-items-center text-head mb-3">
       <h2 class="me-auto">App Settings</h2>
-
         {{-- Logout from this device --}}
-        <form id="logoutDeviceForm" action="{{ route('settings.logout.device') }}" method="POST" class="ms-auto">
-        @csrf
-            <button type="submit" class="btn btn-outline-danger">
-                Logout from All Devices
-            </button>
-        </form>
-
+        <button type="button" class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#logOutDevice">Logout from All Devices</button>
     </div>
 
     @if (session('status'))
@@ -101,8 +94,7 @@
               <div class="text-end">
                 <button type="submit" class="btn btn-primary" id="saveBtn">
                   <span>Save Settings</span>
-                  <span id="saveSpinner" class="spinner-border spinner-border-sm ms-2 d-none"
-                        role="status" aria-hidden="true"></span>
+                  <span id="saveSpinner" class="spinner-border spinner-border-sm ms-2 d-none" role="status" aria-hidden="true"></span>
                 </button>
               </div>
             </form>
@@ -122,12 +114,33 @@
     </div>
   </div>
 </section>
+
+
+  <!-- Modal: Select Icons -->
+  <div class="modal fade" id="logOutDevice" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1"
+      aria-labelledby="logOutDeviceLabel" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-scrollable">
+          <div class="modal-content">
+              <div class="modal-header">
+                  <h5 class="modal-title fs-20" id="logOutDeviceLabel">Logout from All Devices</h5>
+                  <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+              </div>
+              <div class="modal-body">
+                <form action="{{ route('settings.logout.device') }}" method="POST">
+                @csrf
+                  <label for="password">Confirm Password</label>
+                  <input type="text" name="password" class="form-control" id="password">
+                  <button class="btn btn-danger">Logout</button>
+                </form>
+              </div>
+          </div>
+      </div>
+  </div>
 @endsection
 
 @push('scripts')
   {{-- SweetAlert2 (use your existing include if already bundled) --}}
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-
   <script>
     // SweetAlert confirm for logout
     document.getElementById('logoutDeviceBtn').addEventListener('click', function () {

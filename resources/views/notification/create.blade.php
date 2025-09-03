@@ -30,6 +30,12 @@
         .is-invalid+.invalid-feedback {
             display: block;
         }
+
+        .banner-model-img{
+            height: 140px;
+            object-fit: contain;
+            width: 140px !important;
+        }
     </style>
 @endpush
 
@@ -102,15 +108,45 @@
                                 <!-- Banner Image -->
                                 <div class="row">
                                     <div class="col-12 mb-3">
-                                        <h5>Banner Image</h5>
-                                        <div class="userprofile">
+                                        <h5 class="d-flex align-items-center justify-content-between mb-3">
+                                            <span>Banner Image</span>
+                                            <span class="custom-radio ms-auto d-inline-flex align-items-center gap-1">
+                                                <label class="mb-0">
+                                                    <input type="radio" name="banner_src_type" id="banner_src_url" value="url" checked>
+                                                    <span class="py-2 px-3" style="font-size:12px;">URL</span>
+                                                </label>
+                                                <label class="mb-0">
+                                                    <input type="radio" name="banner_src_type" id="banner_src_upload" value="upload">
+                                                    <span class="py-2 px-3" style="font-size:12px;">Upload</span>
+                                                </label>
+                                            </span>
+                                        </h5>
+                                        <div class="userprofile align-items-start">
                                             <img src="{{ asset('images/default.png') }}" id="banner_image" alt="Banner"
                                                 class="img-fluid upimage">
                                             <div class="input-group">
-                                                <input type="url" class="form-control" name="banner_image"
-                                                    id="image_input" placeholder="e.g.: https://example.com/image.jpg"
-                                                    aria-label="Banner Image URL" value="{{ asset('images/default.png') }}"
-                                                    onchange="changeBanner(this.value)" />
+                                                <div id="banner_url_group" class="w-100">
+                                                    <div class="input-group">
+                                                        <input type="url" class="form-control" name="banner_image" id="image_input"
+                                                            placeholder="e.g.: https://example.com/image.jpg"
+                                                            aria-label="Banner Image URL"
+                                                            onchange="changeBanner(this.value)" />
+                                                        <button class="input-group-text" type="button" style="margin:inherit"
+                                                            data-bs-toggle="modal" data-bs-target="#bannerImg"
+                                                            id="choose-banner">
+                                                            <i class="fas fa-upload"></i> Choose
+                                                        </button>
+                                                    </div>
+                                                    <small class="text-muted d-block mt-1">Paste a direct image URL (https://…)</small>
+                                                </div>
+
+                                                <!-- Upload mode -->
+                                                <div id="banner_upload_group" class="w-100" style="display:none">
+                                                    <div class="input-group">
+                                                        <input type="file" class="form-control" name="banner_image_file" id="banner_image_file" accept="image/*" disabled>
+                                                    </div>
+                                                    <small class="text-muted d-block mt-1">Max 1MB. JPG, JPEG, PNG, GIF, WEBP.</small>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
@@ -129,7 +165,7 @@
                                                 <button class="input-group-text" type="button" style="margin:inherit"
                                                     data-bs-toggle="modal" data-bs-target="#staticBackdrop"
                                                     id="button2-addon1">
-                                                    <i class="fas fa-upload"></i> Upload
+                                                    <i class="fas fa-upload"></i> Choose
                                                 </button>
                                                 <button class="input-group-text d-none" type="button"
                                                     style="margin:inherit" id="button2-reset" onclick="resetIcon()">
@@ -417,6 +453,28 @@
         </div>
     </section>
 
+    <!-- Modal: Select Banner Img -->
+    <div class="modal fade" id="bannerImg" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1"
+        aria-labelledby="bannerImgLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-scrollable modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title fs-20" id="bannerImgLabel">Select Banner Image</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body d-flex flex-wrap" id="banner-container">
+                    <!-- spinner until banners load -->
+                    <div id="banner-loader" class="spinner-border m-auto" role="status">
+                        <span class="visually-hidden">Loading…</span>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-sm btn-danger" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Modal: Select Icons -->
     <div class="modal fade" id="staticBackdrop" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1"
         aria-labelledby="staticBackdropLabel" aria-hidden="true">
@@ -442,7 +500,55 @@
 
 @push('scripts')
     <script src="{{ asset('vendor/select2/js/select2.full.min.js') }}"></script>
-    
+    <script>
+        function setBannerMode(mode) {
+            const $urlGroup = $('#banner_url_group');
+            const $uploadGroup = $('#banner_upload_group');
+            const $urlInput = $('#image_input');
+            const $fileInput = $('#banner_image_file');
+
+            if (mode === 'url') {
+            $urlGroup.show();
+            $uploadGroup.hide();
+            $urlInput.prop('disabled', false);
+            $fileInput.prop('disabled', true).val('');
+            // preview from URL (or reset if empty)
+            const v = ($urlInput.val() || '').trim();
+            if (v) changeBanner(v); else resetImage();
+            } else {
+            $urlGroup.hide();
+            $uploadGroup.show();
+            $urlInput.prop('disabled', true);
+            $fileInput.prop('disabled', false);
+            // if no file chosen yet, show default preview
+            if (!$fileInput[0].files.length) resetImage();
+            }
+        }
+
+        $(document).ready(function () {
+            // default to URL mode
+            setBannerMode('url');
+
+            // radio toggle
+            $('#banner_src_url, #banner_src_upload').on('change', function () {
+            setBannerMode(this.value);
+            });
+
+            // live preview for file uploads
+            $('#banner_image_file').on('change', function () {
+            const file = this.files && this.files[0];
+            if (!file) { resetImage(); return; }
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                $('#banner_image').attr('src', e.target.result);
+                $('.message_image').attr('src', e.target.result).show();
+            };
+            reader.readAsDataURL(file);
+            });
+        });
+    </script>
+
+
     <script>
         $(document).ready(function() {
             $('input[name="segment_type"]').on('change', function() {
@@ -523,10 +629,36 @@
         use Illuminate\Support\Facades\File;
         $files = File::files(public_path('images/push/icons'));
         $iconUrls = collect($files)->map(fn($f) => asset('images/push/icons/' . $f->getFilename()))->toJson();
+        $bannerFiles = File::files(public_path('uploads/banner'));
+        $bannerUrls = collect($bannerFiles)->map(fn($f) => asset('uploads/banner/' . $f->getFilename()))->toJson();
     @endphp
 
     <script>
         const ICON_URLS = {!! $iconUrls !!};
+        const BANNER_URLS = {!! $bannerUrls !!};
+    </script>
+
+     <script>
+        (function() {
+            let injected = false;
+            $('#bannerImg').on('show.bs.modal', function() {
+                if (injected) return;
+                const $ct = $('#banner-container').empty();
+                BANNER_URLS.forEach(url => {
+                    $('<div class="m-1">')
+                        .append($('<img>').attr({
+                                src: url,
+                                class: 'img-thumbnail banner-model-img p-2',
+                                alt: 'icon'
+                            })
+                            .css('cursor', 'pointer')
+                            .click(() => setBannerUrl(url))
+                        )
+                        .appendTo($ct);
+                });
+                injected = true;
+            });
+        })();
     </script>
     
     <script>
@@ -606,6 +738,14 @@
             }
         }
 
+        function setBannerUrl(url){
+            document.getElementById('image_input').value = url;
+            changeBanner(url);
+            var modal = document.getElementById('bannerImg');
+            var modalInstance = bootstrap.Modal.getInstance(modal);
+            modalInstance.hide();
+        }
+
         function setImageUrl(url) {
             document.getElementById('target').value = url;
             prv_icons(url);
@@ -627,6 +767,7 @@
             $('.message_image').attr('src', '');
             $(".message_image").hide();
             $('#image_input').val('');
+            $('#banner_image_file').val(''); // NEW
             $('#button-addon2').attr('class', 'input-group-text d-flex');
         }
 

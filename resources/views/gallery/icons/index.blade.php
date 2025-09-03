@@ -68,7 +68,7 @@
                     <h2>Upload Icons</h2>
                 </div>
                 <div class="card-body">
-                    <form id="upload-form" action="{{ route('icons.upload') }}" method="POST" enctype="multipart/form-data">
+                    <form id="upload-form" action="{{ route('gallery.icons.upload') }}" method="POST" enctype="multipart/form-data">
                         @csrf
                         <div class="form-group">
                             <label for="icons">Select Icons (PNG, JPG, JPEG, max 50KB each)</label>
@@ -231,7 +231,7 @@ $(document).ready(function() {
         const searchTerm = "";
         
         $.ajax({
-            url: '{{ route("icons.list") }}',
+            url: '{{ route("gallery.icons.list") }}',
             type: 'GET',
             data: { search: searchTerm },
             success: function(response) {

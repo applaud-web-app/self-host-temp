@@ -16,6 +16,7 @@ use App\Models\PushEventCount;
 use App\Models\Segment;
 use Illuminate\Http\JsonResponse;
 use App\Jobs\CreateAndDispatchNotifications;
+use Illuminate\Support\Facades\File;
 
 class NotificationController extends Controller
 {
@@ -375,7 +376,9 @@ class NotificationController extends Controller
             'target_url'        => 'required|url',
             'title'             => 'required|string|max:100',
             'description'       => 'required|string|max:200',
-            'banner_image'      => 'nullable|url',
+            'banner_src_type'   => 'required|in:url,upload',
+            'banner_image'      => 'nullable|exclude_if:banner_src_type,upload|url',
+            'banner_image_file' => 'nullable|exclude_if:banner_src_type,url|file|image|mimes:jpg,jpeg,png,gif,webp|max:1024',
             'banner_icon'       => 'nullable|url',
             'schedule_type'     => 'required|in:Instant,Schedule',
             'one_time_datetime' => 'required_if:schedule_type,Schedule|nullable|date',
@@ -395,6 +398,22 @@ class NotificationController extends Controller
             'btn_title_2'       => 'Button 2 title',
             'btn_url_2'         => 'Button 2 URL',
         ]);
+
+        if ($data['banner_src_type'] === 'upload' && $request->hasFile('banner_image_file')) {
+            $dir = public_path('uploads/banner');
+            if (! File::exists($dir)) {
+                File::makeDirectory($dir, 0755, true);
+            }
+            $ext = $request->file('banner_image_file')->getClientOriginalExtension();
+            $filename = (string) Str::uuid() . '.' . $ext;
+            $request->file('banner_image_file')->move($dir, $filename);
+
+            // override banner_image with the full public URL to the uploaded file
+            $data['banner_image'] = url('uploads/banner/' . $filename);
+        } else {
+            $data['banner_image'] = $data['banner_image'] ?? null;
+        }
+        unset($data['banner_image_file'], $data['banner_src_type']);
 
         // Fetch domain IDs
         if ($data['segment_type'] === 'all') {

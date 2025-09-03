@@ -19,7 +19,6 @@ return new class extends Migration
 
             // set head_id as primary key
             $table->primary('head_id');
-
             $table->foreign('head_id')->references('id')->on('push_subscriptions_head')->onDelete('cascade');
         });
     }

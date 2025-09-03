@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('notifications', function (Blueprint $table) {
             $table->bigIncrements('id');
-            $table->unsignedBigInteger('domain_id');
+            $table->unsignedBigInteger('domain_id')->index();
             $table->string('target_url');
             $table->string('campaign_name');
             $table->string('title');
@@ -21,12 +21,12 @@ return new class extends Migration
             $table->string('banner_image')->nullable();
             $table->string('banner_icon')->nullable();
             $table->enum('schedule_type', ['instant', 'schedule'])->default('instant');
-            $table->dateTime('one_time_datetime')->nullable();
+            $table->dateTime('one_time_datetime')->nullable()->index();
             $table->string('btn_1_title')->nullable();
             $table->string('btn_1_url')->nullable();
             $table->string('btn_title_2')->nullable();
             $table->string('btn_url_2')->nullable();
-            $table->string('message_id');
+            $table->string('message_id')->index();
             $table->unsignedBigInteger('active_count')->default(0);
             $table->unsignedBigInteger('success_count')->default(0);
             $table->unsignedBigInteger('failed_count')->default(0);
@@ -34,6 +34,12 @@ return new class extends Migration
             $table->timestamp('sent_at')->nullable();
             $table->timestamps();
             $table->foreign('domain_id')->references('id')->on('domains')->onDelete('cascade');
+
+            // INDEX
+            $table->index(['status', 'schedule_type', 'one_time_datetime'], 'idx_notif_due');
+            $table->index(['domain_id', 'status', 'created_at'], 'idx_notif_domain_status_created');
+            $table->index(['domain_id', 'sent_at'], 'idx_notif_domain_sent');
+            $table->index(['domain_id', 'segment_type'], 'idx_notif_domain_segment');
         });
     }
 

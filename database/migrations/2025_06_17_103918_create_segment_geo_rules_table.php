@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('segment_geo_rules', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('segment_id')->constrained('segments')->cascadeOnDelete();
+            $table->foreignId('segment_id')->constrained('segments')->cascadeOnDelete()->index();
             $table->enum('operator', ['equals', 'not_equals']);
             $table->string('country');
             $table->string('state')->nullable();
