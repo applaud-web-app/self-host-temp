@@ -110,7 +110,7 @@
                 <div class="col-xl-6 mb-4">
                     <div class="card">
                         <div class="card-header d-flex justify-content-between">
-                            <h4 class="mb-0">7 Days Subscribers</h4>
+                            <h4 class="mb-0">Last 7 Days Subscribers</h4>
                             <i class="fas fa-sync-alt chart-refresh text-primary" data-metric="subscribers"
                                 style="cursor:pointer"></i>
                         </div>
@@ -122,7 +122,7 @@
                 <div class="col-xl-6 mb-4">
                     <div class="card">
                         <div class="card-header d-flex justify-content-between">
-                            <h4 class="mb-0">7 Days Notifications</h4>
+                            <h4 class="mb-0">Last 7 Days Notifications</h4>
                             <i class="fas fa-sync-alt chart-refresh text-primary" data-metric="notifications"
                                 style="cursor:pointer"></i>
                         </div>
