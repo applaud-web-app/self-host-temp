@@ -23,13 +23,15 @@ return new class extends Migration
             $table->enum('schedule_type', ['instant', 'schedule'])->default('instant');
             $table->dateTime('one_time_datetime')->nullable()->index();
             $table->string('btn_1_title')->nullable();
-            $table->string('btn_1_url')->nullable();
+            $table->string('btn_1_url')->nullable();    
             $table->string('btn_title_2')->nullable();
             $table->string('btn_url_2')->nullable();
             $table->string('message_id')->index();
             $table->unsignedBigInteger('active_count')->default(0);
             $table->unsignedBigInteger('success_count')->default(0);
             $table->unsignedBigInteger('failed_count')->default(0);
+            $table->enum('segment_type', ['all', 'particular', 'api', 'rss'])->default('all');
+            $table->foreignId('segment_id')->nullable()->constrained('segments')->nullOnDelete()->after('id');
             $table->enum('status', ['pending', 'queued', 'sent', 'failed','cancelled'])->default('pending')->index();
             $table->timestamp('sent_at')->nullable();
             $table->timestamps();
