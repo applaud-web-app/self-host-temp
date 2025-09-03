@@ -25,7 +25,7 @@ Schedule::command('notifications:dispatch-scheduled')
 ->runInBackground();
 
 Schedule::command('stats:domain-subscriptions')
-->dailyAt('10:55')
+->dailyAt('01:00')
 ->timezone('Asia/Kolkata')
 ->withoutOverlapping();
 
