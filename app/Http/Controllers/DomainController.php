@@ -396,11 +396,130 @@ class DomainController extends Controller
         }
     }
 
+    // public function downloadPlugin()
+    // {
+    //     try {
+    //         $firebaseConfig = PushConfig::first()->web_app_config;
+    //         // Step 1: Define paths
+    //         $pluginDirPath = storage_path('app/self-host-plugin'); // Directory of the self-host-plugin
+    //         $newZipFilePath = storage_path('app/self-host-plugin-modified.zip'); // New modified ZIP file
+            
+    //         // Step 2: Verify if the plugin directory exists
+    //         if (!File::exists($pluginDirPath)) {
+    //             throw new \Exception("Plugin directory not found at: {$pluginDirPath}");
+    //         }
+
+    //         // Step 3: Find the main plugin file
+    //         $mainPluginFile = $pluginDirPath . '/self-host-aplu-tabs.php'; 
+
+    //         // Check if the plugin file exists
+    //         if (!File::exists($mainPluginFile)) {
+    //             throw new \Exception("Main plugin file not found at: {$mainPluginFile}");
+    //         }
+
+    //         // Step 4: Get the current site URL
+    //         $currentSiteUrl = url('/');  // Use the current site's URL
+    //         $apiBaseUrl = $currentSiteUrl . '/api';  // Construct the API base URL
+
+    //         // Step 5: Modify the API_BASE constant in the plugin file
+    //         $patterns = [
+    //             "/const\s+API_BASE\s*=\s*'[^']*'/",
+    //             "/define\('API_BASE',\s*'[^']*'\);/",
+    //             "/define\(\s*'API_BASE'\s*,\s*'[^']*'\s*\);/"
+    //         ];
+
+    //         $contents = File::get($mainPluginFile);
+    //         $modified = false;
+
+    //         // Search for the patterns and replace the API_BASE with the current site URL
+    //         foreach ($patterns as $pattern) {
+    //             if (preg_match($pattern, $contents)) {
+    //                 $contents = preg_replace(
+    //                     $pattern,
+    //                     "const API_BASE = '{$apiBaseUrl}'",  // Replace with the dynamic API URL
+    //                     $contents
+    //                 );
+    //                 $modified = true;
+    //                 break;
+    //             }
+    //         }
+
+    //         // NEED TO UPDATE FIREBASE_CONFIG_ENTRIES AS WELL
+    //         // const API_BASE = 'https://demo.awmtab.in/api';
+    //         // const FIREBASE_CONFIG_ENTRIES = [
+    //         //     ['apiKey', ''],
+    //         //     ['authDomain', ''],
+    //         //     ['projectId', ''],
+    //         //     ['storageBucket', ''],
+    //         //     ['messagingSenderId', ''],
+    //         //     ['appId', ''],
+    //         //     ['measurementId', '']
+    //         // ];
+
+    //         if (!$modified) {
+    //             throw new \Exception("API_BASE constant not found in plugin file");
+    //         }
+
+    //         // Save the modified plugin file
+    //         if (!File::put($mainPluginFile, $contents)) {
+    //             throw new \Exception("Failed to save modified plugin file");
+    //         }
+
+    //         // Step 6: Create a new ZIP file with the modified contents
+    //         $zip = new \ZipArchive;
+    //         if ($zip->open($newZipFilePath, \ZipArchive::CREATE | \ZipArchive::OVERWRITE) !== true) {
+    //             throw new \Exception("Failed to create new ZIP file");
+    //         }
+
+    //         // Add all files from the plugin directory into the new ZIP
+    //         $files = new \RecursiveIteratorIterator(
+    //             new \RecursiveDirectoryIterator($pluginDirPath),
+    //             \RecursiveIteratorIterator::LEAVES_ONLY
+    //         );
+
+    //         foreach ($files as $file) {
+    //             if (!$file->isDir()) {
+    //                 $filePath = $file->getRealPath();
+    //                 $relativePath = substr($filePath, strlen($pluginDirPath) + 1);
+                    
+    //                 if (!$zip->addFile($filePath, $relativePath)) {
+    //                     $zip->close();
+    //                     throw new \Exception("Failed to add file to ZIP: {$relativePath}");
+    //                 }
+    //             }
+    //         }
+
+    //         // Finalize the new ZIP file
+    //         if (!$zip->close()) {
+    //             throw new \Exception("Failed to finalize ZIP file");
+    //         }
+
+    //         // Step 7: Send the modified ZIP file for download
+    //        return response()->download($newZipFilePath, 'self-host-plugin-modified.zip')->deleteFileAfterSend(true);
+
+    //     } catch (\Exception $e) {
+    //         // Clean up on error
+    //         if (isset($newZipFilePath) && File::exists($newZipFilePath)) {
+    //             File::delete($newZipFilePath);
+    //         }
+
+    //         Log::error('Plugin download failed: ' . $e->getMessage());
+            
+    //         return response()->json([
+    //             'error' => 'Failed to prepare plugin download',
+    //             'message' => $e->getMessage()
+    //         ], 500);
+    //     }
+    // }
+
     public function downloadPlugin()
     {
         try {
+            // 0) Load Firebase Web config (decrypted via accessor)
+            $firebaseConfig = optional(\App\Models\PushConfig::first())->web_app_config ?? [];
+
             // Step 1: Define paths
-            $pluginDirPath = storage_path('app/self-host-plugin'); // Directory of the self-host-plugin
+            $pluginDirPath  = storage_path('app/self-host-plugin'); // Directory of the self-host-plugin
             $newZipFilePath = storage_path('app/self-host-plugin-modified.zip'); // New modified ZIP file
             
             // Step 2: Verify if the plugin directory exists
@@ -418,33 +537,71 @@ class DomainController extends Controller
 
             // Step 4: Get the current site URL
             $currentSiteUrl = url('/');  // Use the current site's URL
-            $apiBaseUrl = $currentSiteUrl . '/api';  // Construct the API base URL
+            $apiBaseUrl     = $currentSiteUrl . '/api';  // Construct the API base URL
 
-            // Step 5: Modify the API_BASE constant in the plugin file
-            $patterns = [
+            // Step 5: Read file contents
+            $contents = File::get($mainPluginFile);
+
+            // --- Replace API_BASE in the plugin file (keep your patterns) ---
+            $apiPatterns = [
                 "/const\s+API_BASE\s*=\s*'[^']*'/",
                 "/define\('API_BASE',\s*'[^']*'\);/",
                 "/define\(\s*'API_BASE'\s*,\s*'[^']*'\s*\);/"
             ];
 
-            $contents = File::get($mainPluginFile);
-            $modified = false;
-
-            // Search for the patterns and replace the API_BASE with the current site URL
-            foreach ($patterns as $pattern) {
+            $modifiedApiBase = false;
+            foreach ($apiPatterns as $pattern) {
                 if (preg_match($pattern, $contents)) {
                     $contents = preg_replace(
                         $pattern,
-                        "const API_BASE = '{$apiBaseUrl}'",  // Replace with the dynamic API URL
+                        "const API_BASE = '{$apiBaseUrl}'",
                         $contents
                     );
-                    $modified = true;
+                    $modifiedApiBase = true;
                     break;
                 }
             }
-
-            if (!$modified) {
+            if (!$modifiedApiBase) {
                 throw new \Exception("API_BASE constant not found in plugin file");
+            }
+
+            // --- Build and replace FIREBASE_CONFIG_ENTRIES (array of tuples) ---
+            // Safe getter + string cast
+            $get = function($key) use ($firebaseConfig) {
+                $v = $firebaseConfig[$key] ?? '';
+                return is_scalar($v) ? (string)$v : json_encode($v);
+            };
+            // Escape single quotes for PHP source
+            $esc = fn($s) => str_replace("'", "\\'", $s);
+
+            $orderedKeys = [
+                'apiKey',
+                'authDomain',
+                'projectId',
+                'storageBucket',
+                'messagingSenderId',
+                'appId',
+                'measurementId',
+            ];
+
+            $lines = [];
+            foreach ($orderedKeys as $k) {
+                $lines[] = "        ['{$k}', '" . $esc($get($k)) . "']";
+            }
+
+            $entriesReplacement =
+                "const FIREBASE_CONFIG_ENTRIES = [\n" .
+                implode(",\n", $lines) .
+                "\n    ];";
+
+            // Regex to match the whole constant array block (tolerant to whitespace/newlines)
+            $patternFirebase = "/const\s+FIREBASE_CONFIG_ENTRIES\s*=\s*\[[\s\S]*?\];/s";
+
+            $replacedCount = 0;
+            $contents = preg_replace($patternFirebase, $entriesReplacement, $contents, 1, $replacedCount);
+
+            if ($replacedCount === 0) {
+                throw new \Exception("FIREBASE_CONFIG_ENTRIES constant not found in plugin file");
             }
 
             // Save the modified plugin file
@@ -466,7 +623,7 @@ class DomainController extends Controller
 
             foreach ($files as $file) {
                 if (!$file->isDir()) {
-                    $filePath = $file->getRealPath();
+                    $filePath     = $file->getRealPath();
                     $relativePath = substr($filePath, strlen($pluginDirPath) + 1);
                     
                     if (!$zip->addFile($filePath, $relativePath)) {
@@ -482,7 +639,7 @@ class DomainController extends Controller
             }
 
             // Step 7: Send the modified ZIP file for download
-           return response()->download($newZipFilePath, 'self-host-plugin-modified.zip')->deleteFileAfterSend(true);
+            return response()->download($newZipFilePath, 'self-host-plugin-modified.zip')->deleteFileAfterSend(true);
 
         } catch (\Exception $e) {
             // Clean up on error
@@ -490,10 +647,10 @@ class DomainController extends Controller
                 File::delete($newZipFilePath);
             }
 
-            Log::error('Plugin download failed: ' . $e->getMessage());
+            \Log::error('Plugin download failed: ' . $e->getMessage());
             
             return response()->json([
-                'error' => 'Failed to prepare plugin download',
+                'error'   => 'Failed to prepare plugin download',
                 'message' => $e->getMessage()
             ], 500);
         }

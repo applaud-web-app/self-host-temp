@@ -12,10 +12,8 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Support\Facades\DB;
 use App\Models\PushSubscriptionHead;
 use Illuminate\Foundation\Bus\Dispatchable;
-use App\Models\Setting;
-use Illuminate\Support\Facades\Cache;
 
-class SendNotificationByNode implements ShouldQueue
+class SendNotificationByNodeActualBackup implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable;
 
@@ -29,9 +27,9 @@ class SendNotificationByNode implements ShouldQueue
     protected array $tokens;
     protected array $message;
     protected string $domainName;
-    protected ?int $notificationId;
+    protected int $notificationId;
 
-    public function __construct(array $tokens, array $message, string $domainName, ?int $notificationId = null)
+    public function __construct(array $tokens, array $message, string $domainName, int $notificationId = null)
     {
         $this->tokens = $tokens;
         $this->message = $message;
@@ -48,31 +46,13 @@ class SendNotificationByNode implements ShouldQueue
                 return;
             }
 
-            // Get settings from cache or database
-            $settings = Cache::remember('settings_batch_size', 3600, function () {
-                return Setting::firstOrCreate(['id' => 1], [
-                    'gap_size' => self::MAX_FCM_BATCH,
-                    'time_gap' => 1000,
-                    'daily_cleanup' => false,
-                    'sending_speed' => 'fast',
-                ]);
-            });
-
-            $batchSize = max(1, (int)($settings->gap_size ?? self::MAX_FCM_BATCH));
-            $timeGapMs = max(0, (int)($settings->time_gap ?? 1000));
-
             // Process tokens in batches
-            $batches = array_chunk($this->tokens, $batchSize);
-
+            $batches = array_chunk($this->tokens, self::MAX_FCM_BATCH);
             $totalSuccess = 0;
             $totalFailure = 0;
             $allFailedTokens = [];
 
-            Log::info("Processing ".count($this->tokens)." tokens in ".count($batches)." batches for domain: {$this->domainName}", [
-                'batch_size' => $batchSize,
-                'time_gap_ms' => $timeGapMs,
-                'sending_speed' => $settings->sending_speed,
-            ]);
+            Log::info("Processing " . count($this->tokens) . " tokens in " . count($batches) . " batches for domain: {$this->domainName}");
 
             $hasConnectionError = false;
 
@@ -99,10 +79,6 @@ class SendNotificationByNode implements ShouldQueue
                     $hasConnectionError = true;
                     $totalFailure += count($batch);
                     Log::error("Batch " . ($batchIndex + 1) . " failed due to connection/API error - tokens will not be marked inactive");
-                }
-
-                if ($timeGapMs > 0) {
-                    usleep($timeGapMs * 1000);
                 }
             }
 

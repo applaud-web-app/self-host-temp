@@ -9,12 +9,15 @@ class Setting extends Model
 {
     protected $table = 'settings';
     protected $fillable = [
-        'batch_size',
+        'sending_speed',
+        'gap_size',
+        'time_gap',
         'daily_cleanup',
     ];
 
     protected $casts = [
-        'batch_size'    => 'integer',
+        'gap_size'    => 'integer',
+        'time_gap'    => 'integer',
         'daily_cleanup' => 'boolean',
     ];
 

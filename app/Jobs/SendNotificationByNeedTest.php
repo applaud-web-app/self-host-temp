@@ -5,6 +5,7 @@ namespace App\Jobs;
 
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Cache;
 use Throwable;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -12,10 +13,10 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Support\Facades\DB;
 use App\Models\PushSubscriptionHead;
 use Illuminate\Foundation\Bus\Dispatchable;
+use App\Models\PushConfig;
 use App\Models\Setting;
-use Illuminate\Support\Facades\Cache;
 
-class SendNotificationByNode implements ShouldQueue
+class SendNotificationByNeedTest implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable;
 
@@ -46,6 +47,12 @@ class SendNotificationByNode implements ShouldQueue
                 Log::warning("No tokens provided for domain: {$this->domainName}");
                 $this->updateNotificationStatus(0, 0, 0);
                 return;
+            }
+
+            // Get Firebase credentials for this domain
+            $firebaseCredentials = $this->getFirebaseCredentials();
+            if (!$firebaseCredentials) {
+                throw new \Exception("Firebase credentials not found for domain: {$this->domainName}");
             }
 
             // Get settings from cache or database
@@ -79,7 +86,7 @@ class SendNotificationByNode implements ShouldQueue
             foreach ($batches as $batchIndex => $batch) {
                 Log::info("Processing batch " . ($batchIndex + 1) . " of " . count($batches) . " with " . count($batch) . " tokens");
 
-                $response = $this->sendBatchToNodeService($batch);
+                $response = $this->sendBatchToNodeService($batch, $firebaseCredentials);
 
                 if ($response !== null) {
                     // Successful API call - process the response
@@ -139,6 +146,25 @@ class SendNotificationByNode implements ShouldQueue
             $this->updateNotificationStatus(0, count($this->tokens), count($this->tokens), 'failed');
             
             throw $e; // Re-throw to trigger retry mechanism
+        }
+    }
+
+    private function getFirebaseCredentials(): ?array
+    {
+        try {
+            $cacheKey = "firebase_credentials_{$this->domainName}";
+            
+            return Cache::remember($cacheKey, 1800, function () {
+                $config = PushConfig::first();
+                if (!$config || !$config->service_account_json) {
+                    return null;
+                }
+                return $config->credentials; 
+            });
+            
+        } catch (Throwable $e) {
+            Log::error("Failed to get Firebase credentials for domain {$this->domainName}: {$e->getMessage()}");
+            return null;
         }
     }
 

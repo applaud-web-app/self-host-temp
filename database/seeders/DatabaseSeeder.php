@@ -17,7 +17,9 @@ class DatabaseSeeder extends Seeder
         Setting::updateOrCreate(
             ['id' => 1],
             [
-                'batch_size'    => 500,
+                'sending_speed' => 'fast',
+                'gap_size'      => 500,
+                'time_gap'      => 1000,
                 'daily_cleanup' => 0
             ]
         );

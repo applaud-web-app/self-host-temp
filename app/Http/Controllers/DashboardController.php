@@ -133,15 +133,16 @@ class DashboardController extends Controller
                 ->where('parent_origin', $domain->name)
                 ->where('created_at', '>=', $deltaStart)
                 ->selectRaw('COUNT(*) AS total_inc')
-                ->selectRaw('SUM(CASE WHEN status = 1 THEN 1 ELSE 0 END) AS active_inc')
                 ->selectRaw('SUM(CASE WHEN created_at >= ? THEN 1 ELSE 0 END) AS monthly_inc', [$monthlyIncStart])
                 ->selectRaw('SUM(CASE WHEN created_at >= ? THEN 1 ELSE 0 END) AS today',       [$todayStart])
                 ->first();
 
+            $active = DB::table('push_subscriptions_head')->where('parent_origin', $domain->name)->where('status', 1)->count();
+
             // 4) Combine snapshot + increments
             return (object) [
                 'total'   => $baseTotal  + (int) ($delta->total_inc   ?? 0),
-                'active'  => $baseActive + (int) ($delta->active_inc  ?? 0),
+                'active'  => $active,
                 'monthly' => $baseMonthly+ (int) ($delta->monthly_inc ?? 0),
                 'today'   => (int) ($delta->today ?? 0),
             ];

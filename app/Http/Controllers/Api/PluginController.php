@@ -36,12 +36,11 @@ class PluginController extends Controller
      * @param  string          $providedKey
      * @param  DomainLicense   $license
      * @return bool
-     */
+    */
     private function verifyDomainKey(string $providedKey, DomainLicense $license): bool
     {
         $pepper  = config('license.LICENSE_CODE');
         if (empty($pepper)) {
-            // purgeMissingPepper();
             return false;
         }
         $toCheck = $license->salt . $providedKey . $pepper;
@@ -174,7 +173,7 @@ class PluginController extends Controller
             }
 
             // 4) license check
-            $license = DomainLicense::where('domain_id', $domain->id)->latest('created_at')->first();
+            $license = DomainLicense::where('domain_id', $domain->id)->latest('id')->first();
 
             if (! $license || ! $this->verifyDomainKey($data['key'], $license)) {
                 RateLimiter::hit($limiterKey, $lockSeconds);
@@ -201,7 +200,6 @@ class PluginController extends Controller
                             'total_subscribers'   => $sum ? (int)$sum->total_subscribers + $todaySub : 0 + $todaySub,
                             'monthly_subscribers' => $sum ? (int)$sum->monthly_subscribers + $todaySub : 0 + $todaySub,
                             'today_subscribers'   => (int)$todaySub,
-
                         ];
                     });
             });

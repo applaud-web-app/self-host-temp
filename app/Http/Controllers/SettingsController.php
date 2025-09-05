@@ -14,25 +14,21 @@ use App\Models\PushConfig;
 use App\Models\PushSubscriptionPayload;
 use App\Models\Setting;
 use Rap2hpoutre\FastExcel\FastExcel;
+use Illuminate\Support\Facades\Log;
 
 class SettingsController extends Controller
 {
     /* ---------------------------------------------------------------------
      * Settings
-     * --------------------------------------------------------------------- */
+    * --------------------------------------------------------------------- */
     public function viewSettings()
     {
         $setting = Setting::firstOrCreate(['id' => 1], [
-            'batch_size' => 100,
+            'gap_size' => 100,
+            'time_gap' => 1000,
             'daily_cleanup' => false,
+            'sending_speed' => 'high',
         ]);
-
-        $setting->sending_speed = match ((int) $setting->batch_size) {
-            100 => 'slow',
-            250 => 'medium',
-            500 => 'fast',
-            default => 'slow'
-        };
 
         return view('settings.setting', compact('setting'));
     }
@@ -40,29 +36,42 @@ class SettingsController extends Controller
     public function postSettings(Request $request)
     {
         try {
+            // Validate the incoming data
             $data = $request->validate([
-                'sending_speed' => ['required', 'in:slow,medium,fast'],
-                'daily_cleanup' => ['nullable','boolean'],
+                'sending_speed' => ['required', 'in:slow,medium,fast'], 
+                'daily_cleanup' => ['nullable', 'boolean'], 
             ]);
 
-            $batchSize = match ($data['sending_speed']) {
-                'slow' => 100,
-                'medium' => 250,
-                'fast' => 500,
-                default => 100
+            $settings = match ($data['sending_speed']) {
+                'slow' => ['gap_size' => 300, 'time_gap' => 1500],
+                'medium' => ['gap_size' => 400, 'time_gap' => 1200],
+                'fast' => ['gap_size' => 500, 'time_gap' => 1000],
+                default => ['gap_size' => 500, 'time_gap' => 1000],
             };
 
+            // Forget cache for the settings
             cache()->forget('daily_cleanup_setting');
             cache()->forget('settings_batch_size');
 
+            // Update or create the setting entry
             $setting = Setting::firstOrCreate(['id' => 1]);
             $setting->fill([
-                'batch_size' => $batchSize,
+                'gap_size' => $settings['gap_size'],
+                'time_gap' => $settings['time_gap'],
                 'daily_cleanup' => (bool) ($data['daily_cleanup'] ?? false),
+            'sending_speed' => $data['sending_speed'],
             ])->save();
 
+            try {
+                Artisan::call('queue:restart');
+            } catch (\Exception $e) {
+                Log::warning('Could not restart Horizon automatically: ' . $e->getMessage());
+            }
+
+            // Return success message
             return back()->with('success', 'Settings saved.');
         } catch (\Throwable $th) {
+            // If there is an error, show the message
             return back()->with('error', 'Failed to save settings. ' . $th->getMessage());
         }
     }

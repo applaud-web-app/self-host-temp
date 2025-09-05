@@ -320,26 +320,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     $('#configFormCard').fadeIn(300);
                 });
             });
-
-            // Initialize ClipboardJS
-            const clipboard = new ClipboardJS('#copyButton');
-
-            clipboard.on('success', function (e) {
-                iziToast.success({
-                    title: 'Copied',
-                    message: 'Embed code copied to clipboard!',
-                    position: 'topRight'
-                });
-                e.clearSelection();
-            });
-
-            clipboard.on('error', function (e) {
-                iziToast.error({
-                    title: 'Error',
-                    message: 'Failed to copy to clipboard.',
-                    position: 'topRight'
-                });
-            });
         });
     </script>
 
