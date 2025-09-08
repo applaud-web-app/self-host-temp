@@ -1,5 +1,46 @@
 @extends('layouts.master')
 
+@push('styles')
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/dropzone@5/dist/min/dropzone.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/izitoast@1.4.0/dist/css/iziToast.min.css"/>
+<style>
+  #dropzone {
+    border: 2px dashed #007bff;
+    border-radius: 8px;
+    padding: 40px;
+    text-align: center;
+    color: #007bff;
+    background-color: #f7f7f7;
+    position: relative;
+    cursor: pointer;
+  }
+  #dropzone p { font-size: 18px; font-weight: bold; }
+  #dropzone:hover {
+    background-color: #e8f0fe;
+    box-shadow: 0 4px 10px rgba(0, 123, 255, .2);
+    transition: background-color .3s ease, box-shadow .3s ease;
+  }
+  .wave {
+    position: absolute; top: 50%; left: 50%;
+    width: 80px; height: 80px; border-radius: 50%;
+    background: rgba(0, 123, 255, .3);
+    transform: translate(-50%, -50%);
+    animation: wave-animation 1.5s ease-out infinite;
+    pointer-events: none;
+  }
+  @keyframes wave-animation {
+    0% { width: 50px; height: 50px; opacity: 1; }
+    50% { width: 90px; height: 90px; opacity: .5; }
+    100% { width: 50px; height: 50px; opacity: 0; }
+  }
+  #dz-previews .dz-preview {
+    border: 1px dashed #ced4da;
+    border-radius: 8px;
+    padding: 10px;
+    background: #fff;
+  }
+</style>
+@endpush
 @section('content')
 <section class="content-body" id="import_page">
   <div class="container-fluid">
@@ -50,47 +91,6 @@
 </section>
 @endsection
 
-@push('styles')
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/dropzone@5/dist/min/dropzone.min.css">
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/izitoast@1.4.0/dist/css/iziToast.min.css"/>
-<style>
-  #dropzone {
-    border: 2px dashed #007bff;
-    border-radius: 8px;
-    padding: 40px;
-    text-align: center;
-    color: #007bff;
-    background-color: #f7f7f7;
-    position: relative;
-    cursor: pointer;
-  }
-  #dropzone p { font-size: 18px; font-weight: bold; }
-  #dropzone:hover {
-    background-color: #e8f0fe;
-    box-shadow: 0 4px 10px rgba(0, 123, 255, .2);
-    transition: background-color .3s ease, box-shadow .3s ease;
-  }
-  .wave {
-    position: absolute; top: 50%; left: 50%;
-    width: 80px; height: 80px; border-radius: 50%;
-    background: rgba(0, 123, 255, .3);
-    transform: translate(-50%, -50%);
-    animation: wave-animation 1.5s ease-out infinite;
-    pointer-events: none;
-  }
-  @keyframes wave-animation {
-    0% { width: 50px; height: 50px; opacity: 1; }
-    50% { width: 90px; height: 90px; opacity: .5; }
-    100% { width: 50px; height: 50px; opacity: 0; }
-  }
-  #dz-previews .dz-preview {
-    border: 1px dashed #ced4da;
-    border-radius: 8px;
-    padding: 10px;
-    background: #fff;
-  }
-</style>
-@endpush
 
 @push('scripts')
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
