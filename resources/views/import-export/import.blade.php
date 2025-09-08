@@ -2,7 +2,6 @@
 
 @push('styles')
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/dropzone@5/dist/min/dropzone.min.css">
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/izitoast@1.4.0/dist/css/iziToast.min.css"/>
 <style>
   #dropzone {
     border: 2px dashed #007bff;
@@ -94,10 +93,10 @@
 
 @push('scripts')
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-<script src="https://cdn.jsdelivr.net/npm/izitoast@1.4.0/dist/js/iziToast.min.js"></script>
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/dropzone@5/dist/min/dropzone.min.js"></script>
-
+<script>
+  Dropzone.autoDiscover = false; // <-- move it here
+</script>
 <script>
 document.addEventListener('DOMContentLoaded', function () {
   const progressBarContainer = document.getElementById('progress-bar-container');
@@ -105,7 +104,6 @@ document.addEventListener('DOMContentLoaded', function () {
   const submitBtn = document.getElementById('submit-btn');
   const dzPreviews = document.getElementById('dz-previews');
 
-  Dropzone.autoDiscover = false;
   const csrf = document.querySelector('input[name="_token"]').value;
 
   const dz = new Dropzone("#import-dropzone", {
