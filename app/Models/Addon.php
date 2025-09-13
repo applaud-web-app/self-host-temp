@@ -12,7 +12,9 @@ class Addon extends Model
     // Mass‐assignable fields
     protected $fillable = [
         'name',
+        'preferred_name',
         'version',
+        'uuid',
         'file_path',
         'file_size',
         'addon_key',

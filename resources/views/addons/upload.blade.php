@@ -64,6 +64,8 @@
                                     <input id="name" name="name"
                                         value="@isset($data['name']){{ $data['name'] }}@endisset"
                                         type="text" class="form-control" readonly required>
+                                    <input id="key" name="key" value="@isset($data['key']){{ $data['key'] }}@endisset" type="hidden" class="form-control" readonly required>
+                                    <input id="preferred_name" name="preferred_name" value="@isset($data['preferred_name']){{ $data['preferred_name'] }}@endisset" type="hidden" class="form-control" readonly required>
                                     <div class="invalid-feedback">Please enter a name.</div>
                                 </div>
 

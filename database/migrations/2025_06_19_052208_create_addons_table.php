@@ -10,7 +10,9 @@ class CreateAddonsTable extends Migration
     {
         Schema::create('addons', function (Blueprint $table) {
             $table->bigIncrements('id');
+            $table->string('uuid')->unique();
             $table->string('name', 100);
+            $table->string('preferred_name', 200);
             $table->string('version', 20);
             $table->string('file_path');
             $table->unsignedInteger('file_size');

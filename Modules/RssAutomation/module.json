@@ -1,0 +1,12 @@
+{
+    "name": "RssAutomation",
+    "alias": "rssautomation",
+    "description": "",
+    "keywords": [],
+    "priority": 0,
+    "providers": [
+        "Modules\\RssAutomation\\Providers\\RssAutomationServiceProvider"
+    ],
+    "files": [],
+    "active": true
+}

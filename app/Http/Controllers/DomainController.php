@@ -21,75 +21,82 @@ use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Response;
 use Symfony\Component\HttpFoundation\StreamedResponse;
+use App\Models\Addon;
+use Illuminate\Support\Facades\Route;
 
 class DomainController extends Controller
 {
-   public function view(Request $request)
-{
-    if ($request->ajax()) {
-        $query = Domain::select(['id', 'name', 'status', 'created_at']);
+    public function view(Request $request)
+    {
+        if ($request->ajax()) {
+            $query = Domain::select(['id', 'name', 'status', 'created_at']);
 
-        // server-side “search by name”
-        if ($request->filled('search_name')) {
-            $query->where('name', 'like', '%'.$request->search_name.'%');
+            // server-side “search by name”
+            if ($request->filled('search_name')) {
+                $query->where('name', 'like', '%'.$request->search_name.'%');
+            }
+            // server-side “filter by status”
+            if ($request->filled('filter_status') && in_array($request->filter_status, [1, 0])) {
+                $query->where('status', $request->filter_status);
+            }
+
+            $hasCustomizePrompt = Addon::where('name', 'CustomPrompt')->where('status', 'installed')->exists();
+
+            return DataTables::of($query)
+                ->addIndexColumn()
+                ->addColumn('status', function ($row) {
+                    $checked = $row->status == 1 ? "checked" : "";
+                    return  '<div class="form-check form-switch">
+                                <input class="form-check-input status_input" data-name="' . $row->name . '" type="checkbox" role="switch" ' . $checked . '>
+                            </div>';
+                })
+                ->editColumn('created_at', fn($row) => $row->created_at->format('d-M, Y'))
+                ->addColumn('import_export', function ($row) {
+                    $importUrl = route('migration.import');
+                    $exportUrl = route('migration.export');
+                    $param = ['domain' => $row->name];
+                    $encryptImportUrl = encryptUrl($importUrl, $param);
+                    $encryptExportUrl = encryptUrl($exportUrl, $param);
+
+                    return '<a href="'.$encryptImportUrl.'" class="btn btn-sm btn-outline-primary">
+                                <i class="fas fa-download"></i> Import
+                            </a>
+                            <a href="'.$encryptExportUrl.'" class="btn btn-sm btn-outline-success ms-2">
+                                <i class="fas fa-upload"></i> Export
+                            </a>';
+                })
+                ->addColumn('actions', function ($row) use ($hasCustomizePrompt){
+                    $integrateUrl = route('domain.integrate');
+                    $param = ['domain' => $row->name];
+                    $integrateEncryptUrl = encryptUrl($integrateUrl, $param);
+
+                    $bloggerUrl = route('widget.blogger');
+
+                    $ampUrl = route('widget.amp');
+                    $integrateAmpUrl = encryptUrl($ampUrl, $param);
+
+                    if ($hasCustomizePrompt) {
+                        $integrateEncryptUrl = route('customprompt.create', ['domain' => $row->name]);
+                    }
+
+                    return '<div class="" role="group">
+                                <a href="'.$integrateEncryptUrl.'" class="btn btn-sm btn-info" title="Integrate">
+                                    <i class="fas fa-link me-1"></i> Integrate
+                                </a>
+                                <a href="'.$bloggerUrl.'" class="btn btn-sm btn-primary mx-2" title="Blogger">
+                                    <i class="fab fa-blogger-b me-1"></i> Blogger
+                                </a>
+                                <a href="'.$integrateAmpUrl.'" class="btn btn-sm btn-secondary" title="AMP">
+                                    <i class="fas fa-bolt me-1"></i> AMP
+                                </a>
+                            </div>';
+                })
+                ->rawColumns(['status', 'import_export', 'actions'])
+                ->make(true);
         }
-        // server-side “filter by status”
-        if ($request->filled('filter_status') && in_array($request->filter_status, [1, 0])) {
-            $query->where('status', $request->filter_status);
-        }
 
-        return DataTables::of($query)
-            ->addIndexColumn()
-            ->addColumn('status', function ($row) {
-                $checked = $row->status == 1 ? "checked" : "";
-                return  '<div class="form-check form-switch">
-                            <input class="form-check-input status_input" data-name="' . $row->name . '" type="checkbox" role="switch" ' . $checked . '>
-                        </div>';
-            })
-            ->editColumn('created_at', fn($row) => $row->created_at->format('d-M, Y'))
-            ->addColumn('import_export', function ($row) {
-                $importUrl = route('migration.import');
-                $exportUrl = route('migration.export');
-                $param = ['domain' => $row->name];
-                $encryptImportUrl = encryptUrl($importUrl, $param);
-                $encryptExportUrl = encryptUrl($exportUrl, $param);
-
-                return '<a href="'.$encryptImportUrl.'" class="btn btn-sm btn-outline-primary">
-                            <i class="fas fa-download"></i> Import
-                        </a>
-                        <a href="'.$encryptExportUrl.'" class="btn btn-sm btn-outline-success ms-2">
-                            <i class="fas fa-upload"></i> Export
-                        </a>';
-            })
-            ->addColumn('actions', function ($row) {
-                $integrateUrl = route('domain.integrate');
-                $param = ['domain' => $row->name];
-                $integrateEncryptUrl = encryptUrl($integrateUrl, $param);
-
-                $bloggerUrl = route('widget.blogger');
-
-                $ampUrl = route('widget.amp');
-                $integrateAmpUrl = encryptUrl($ampUrl, $param);
-
-                return '<div class="" role="group">
-                            <a href="'.$integrateEncryptUrl.'" class="btn btn-sm btn-info" title="Integrate">
-                                <i class="fas fa-link me-1"></i> Integrate
-                            </a>
-                            <a href="'.$bloggerUrl.'" class="btn btn-sm btn-primary mx-2" title="Blogger">
-                                <i class="fab fa-blogger-b me-1"></i> Blogger
-                            </a>
-                            <a href="'.$integrateAmpUrl.'" class="btn btn-sm btn-secondary" title="AMP">
-                                <i class="fas fa-bolt me-1"></i> AMP
-                            </a>
-                        </div>';
-            })
-            ->rawColumns(['status', 'import_export', 'actions'])
-            ->make(true);
+        return view('domain.index');
     }
-
-    return view('domain.index');
-}
-
 
     public function create(Request $request)
     {
@@ -536,8 +543,9 @@ class DomainController extends Controller
             }
 
             // Step 4: Get the current site URL
-            $currentSiteUrl = url('/');  // Use the current site's URL
-            $apiBaseUrl     = $currentSiteUrl . '/api';  // Construct the API base URL
+            $currentSiteUrl = url('/');
+            $apiBaseUrl     = $currentSiteUrl . '/api'; 
+            $scriptUrl = $currentSiteUrl . '/api/push-notify.js';
 
             // Step 5: Read file contents
             $contents = File::get($mainPluginFile);
@@ -565,8 +573,34 @@ class DomainController extends Controller
                 throw new \Exception("API_BASE constant not found in plugin file");
             }
 
-            // --- Build and replace FIREBASE_CONFIG_ENTRIES (array of tuples) ---
-            // Safe getter + string cast
+            /**
+             * --- Replace SCRIPT_URL in the plugin file ---
+            */
+            $scriptPatterns = [
+                "/const\s+SCRIPT_URL\s*=\s*'[^']*'/",
+                "/define\('SCRIPT_URL',\s*'[^']*'\);/",
+                "/define\(\s*'SCRIPT_URL'\s*,\s*'[^']*'\s*\);/"
+            ];
+
+            $modifiedScriptUrl = false;
+            foreach ($scriptPatterns as $pattern) {
+                if (preg_match($pattern, $contents)) {
+                    $contents = preg_replace(
+                        $pattern,
+                        "const SCRIPT_URL = '{$scriptUrl}'",
+                        $contents
+                    );
+                    $modifiedScriptUrl = true;
+                    break;
+                }
+            }
+            if (!$modifiedScriptUrl) {
+                throw new \Exception("SCRIPT_URL constant not found in plugin file");
+            }
+
+            /**
+             * --- Replace FIREBASE_CONFIG_ENTRIES ---
+            */
             $get = function($key) use ($firebaseConfig) {
                 $v = $firebaseConfig[$key] ?? '';
                 return is_scalar($v) ? (string)$v : json_encode($v);
@@ -639,7 +673,7 @@ class DomainController extends Controller
             }
 
             // Step 7: Send the modified ZIP file for download
-            return response()->download($newZipFilePath, 'self-host-plugin-modified.zip')->deleteFileAfterSend(true);
+            return response()->download($newZipFilePath, 'self-aplu-plugin.zip')->deleteFileAfterSend(true);
 
         } catch (\Exception $e) {
             // Clean up on error

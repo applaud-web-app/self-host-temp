@@ -100,7 +100,7 @@
                                             @if ($addon['local_status'] === 'installed')
                                                 <span class="btn btn-success btn-sm w-100">Activated</span>
                                             @else
-                                                <button type="button" data-name="{{$addon['name']}}" data-version="{{$addon['version']}}" data-bs-toggle="modal" data-bs-target="#purchaseModal" class="btn btn-info btn-sm w-100">
+                                                <button type="button" data-name="{{$addon['preferred_name']}}"  data-key="{{$addon['key']}}" data-version="{{$addon['version']}}" data-bs-toggle="modal" data-bs-target="#purchaseModal" class="btn btn-info btn-sm w-100">
                                                     <i class="fas fa-play me-1"></i> Activate
                                                 </button>
                                             @endif
@@ -112,6 +112,7 @@
                                                         'key' => $addon['key'],
                                                         'name' => $addon['name'],
                                                         'version' => $addon['version'],
+                                                        'preferred_name' => $addon['preferred_name'],
                                                     ];
                                                     $uploadUrl = encryptUrl(route('addons.upload'), $param);
                                                 @endphp
@@ -189,10 +190,12 @@
         $('button[data-bs-toggle="modal"]').on('click', function() {
             var addonName = $(this).data('name');
             var addonVersion = $(this).data('version');
-            
+            var addonKey = $(this).data('key');
+
             $('#purchaseForm').data('addonName', addonName);
             $('#purchaseForm').data('addonVersion', addonVersion);
-            
+            $('#purchaseForm').data('addonKey', addonKey);
+
             // Reset form when modal is shown
             $('#purchaseForm')[0].reset();
             $('#purchaseForm').find('.is-invalid').removeClass('is-invalid');
@@ -229,14 +232,16 @@
                 var url = "{{$url}}";
                 var addonName = form.data('addonName');
                 var addonVersion = form.data('addonVersion');
-                
+                var addonKey = form.data('addonKey');
+
                 var formData = {
                     _token: $('input[name="_token"]').val(),
                     license_key: $('#licenseKey').val(),
                     username: $('#username').val(),
                     email: $('#email').val(),
                     addon_name: addonName,
-                    addon_version: addonVersion
+                    addon_version: addonVersion,
+                    addon_key: addonKey
                 };
 
                 var submitBtn = form.find('button[type="submit"]');

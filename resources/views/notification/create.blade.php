@@ -531,7 +531,7 @@
 
             // radio toggle
             $('#banner_src_url, #banner_src_upload').on('change', function () {
-            setBannerMode(this.value);
+                setBannerMode(this.value);
             });
 
             // live preview for file uploads
@@ -638,7 +638,7 @@
         const BANNER_URLS = {!! $bannerUrls !!};
     </script>
 
-     <script>
+    <script>
         (function() {
             let injected = false;
             $('#bannerImg').on('show.bs.modal', function() {

@@ -42,6 +42,7 @@ class AddonController extends Controller
                 'key'     => $data['key'],
                 'name'    => $data['name'],
                 'version' => $data['version'],
+                'preferred_name' => $data['preferred_name']
             ];
 
             // 3) If an add-on with this name+version already exists, bail out
@@ -78,6 +79,7 @@ class AddonController extends Controller
         $param = [
             'key'     => $data['key'],
             'name'    => $data['name'],
+            'preferred_name' => $data['preferred_name'],
             'version' => $data['version'],
         ];
 
@@ -124,7 +126,9 @@ class AddonController extends Controller
                 ['file_path' => "Modules/{$zipName}"],
                 [
                     'name'      => $param['name'],
+                    'preferred_name' => $param['preferred_name'],
                     'version'   => $param['version'],
+                    'uuid'      => $param['key'],
                     'status'    => 'uploaded',
                     'file_size' => $fileSize,
                 ]
@@ -184,7 +188,7 @@ class AddonController extends Controller
         ]);
 
         // First, find the addon
-        $addon = Addon::where('name', $validated['addon_name'])->where('version', $validated['addon_version'])->first();
+        $addon = Addon::where('preferred_name', $validated['addon_name'])->where('version', $validated['addon_version'])->first();
 
         if (!$addon) {
             return response()->json([
@@ -195,8 +199,10 @@ class AddonController extends Controller
 
         $envKey = strtoupper(str_replace(' ', '_', $validated['addon_name'])) . '_KEY';
         $encKey = encrypt($validated['license_key']);
+        $envKey2 = strtoupper(str_replace(' ', '_', $validated['addon_name'])) . '_NAME';
         $this->updateEnvFile([
-            $envKey => $encKey
+            $envKey => $encKey,
+            $envKey2 => $validated['addon_name']
         ]);
 
         $addon->update(['addon_key' => $encKey, 'status' => 'installed']);

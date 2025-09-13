@@ -68,7 +68,9 @@ class CreateAndDispatchNotifications implements ShouldQueue
                     'segment_type'      => $this->data['segment_type'],
                     'segment_id'        => $this->data['segment_id'] ?? null,
                     'status'            => 'pending',
-                    'sent_at'           => null
+                    'sent_at'           => null,
+                    'created_at'        => now(),
+                    'updated_at'       => now(),
                 ];
             }
 
@@ -84,7 +86,7 @@ class CreateAndDispatchNotifications implements ShouldQueue
 
                 // Instant: fire off immediately
                 if ($notification->schedule_type === 'instant') {
-                    if ($this->segment_type === 'all' || $this->segment_type === 'api') {
+                    if ($this->segment_type === 'all' || $this->segment_type === 'api' || $this->segment_type === 'rss') {
                         Log::info("Dispatching instant notification for ID: {$notification->id}");
                         dispatch(new SendNotificationJob($notification->id))->onQueue('notifications');
                     } else {

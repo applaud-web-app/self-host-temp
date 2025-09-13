@@ -24,8 +24,8 @@ class SendNotificationByNode implements ShouldQueue
     public int $backoff = 60;
 
     private const MAX_FCM_BATCH = 500;
-    private const NODE_SERVICE_URL = 'https://demo.awmtab.in/push/send-notification';
-
+    // private const NODE_SERVICE_URL = 'https://demo.awmtab.in/push/send-notification';
+    private const NODE_SERVICE_URL = 'http://127.0.0.1:3600/send-notification';
     protected array $tokens;
     protected array $message;
     protected string $domainName;
