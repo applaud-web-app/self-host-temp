@@ -129,6 +129,19 @@ class SubscribePushSubscriptionJob implements ShouldQueue
                     default => 'other',
                 };
 
+                $rawUrl = $this->data['url'] ?: ($parent_origin ?: "https://{$domain}");
+                if (!preg_match('~^https?://~i', $rawUrl)) {
+                    $rawUrl = "https://{$rawUrl}";
+                }
+
+                $parts = parse_url($rawUrl);
+
+                $scheme = $parts['scheme'] ?? 'https';
+                $host   = $parts['host'] ?? $domain;
+                $path   = isset($parts['path']) ? rtrim($parts['path'], '/') : '';
+
+                $subscribedUrl = "{$scheme}://{$host}{$path}/";
+
                 PushSubscriptionMeta::updateOrCreate(
                     ['head_id' => $head->id],
                     [
@@ -139,7 +152,7 @@ class SubscribePushSubscriptionJob implements ShouldQueue
                         'device'     => $deviceType,
                         'browser'    => $agent->browser(),
                         'platform'   => $agent->platform(),
-                        'subscribed_url' => rtrim($this->data['url'] ?? ('https://' . $domain), '/') . '/',
+                        'subscribed_url' => $subscribedUrl,
                     ]
                 );
             } catch (Throwable $e) {

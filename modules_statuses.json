@@ -1,4 +1,7 @@
 {
     "RssAutomation": true,
-    "CustomPrompt": true
+    "CustomPrompt": true,
+    "AdvanceSegmentation": true,
+    "WelcomeMessage": true,
+    "NewsHub": true
 }

@@ -1,0 +1,11 @@
+{
+    "name": "AdvanceSegmentation",
+    "alias": "advancesegmentation",
+    "description": "",
+    "keywords": [],
+    "priority": 0,
+    "providers": [
+        "Modules\\AdvanceSegmentation\\Providers\\AdvanceSegmentationServiceProvider"
+    ],
+    "files": []
+}

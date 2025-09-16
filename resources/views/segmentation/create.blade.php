@@ -186,7 +186,6 @@
                         <p class="display-5 fw-bold mb-3" id="count">0</p>
                         <button id="checkInfo" class="btn btn-outline-primary btn-sm w-100"><i
                                 class="fas fa-redo-alt"></i> Refresh Data</button>
-                        <p class="text-success mt-2 mb-0 small">Segmentation demo counts are static.</p>
                     </div>
                 </div>
 

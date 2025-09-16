@@ -1,0 +1,30 @@
+{
+    "name": "nwidart/advancesegmentation",
+    "description": "",
+    "authors": [
+        {
+            "name": "Nicolas Widart",
+            "email": "n.widart@gmail.com"
+        }
+    ],
+    "extra": {
+        "laravel": {
+            "providers": [],
+            "aliases": {
+
+            }
+        }
+    },
+    "autoload": {
+        "psr-4": {
+            "Modules\\AdvanceSegmentation\\": "app/",
+            "Modules\\AdvanceSegmentation\\Database\\Factories\\": "database/factories/",
+            "Modules\\AdvanceSegmentation\\Database\\Seeders\\": "database/seeders/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Modules\\AdvanceSegmentation\\Tests\\": "tests/"
+        }
+    }
+}

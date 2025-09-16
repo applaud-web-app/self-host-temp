@@ -23,7 +23,7 @@ class SegmentationController extends Controller
     {
         if ($request->ajax()) {
 
-            $query = Segment::select(['id','name','domain','type','status','created_at'])->where('status','!=',2);
+            $query = Segment::select(['id','name','domain','type','status','created_at'])->where('status','!=',2)->whereIn('type',['geo','device']);
             if ($request->filled('search_name')) {
                 $query->where('name', 'like', '%'.$request->search_name.'%');
             }

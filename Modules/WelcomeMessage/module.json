@@ -1,0 +1,11 @@
+{
+    "name": "WelcomeMessage",
+    "alias": "welcomemessage",
+    "description": "",
+    "keywords": [],
+    "priority": 0,
+    "providers": [
+        "Modules\\WelcomeMessage\\Providers\\WelcomeMessageServiceProvider"
+    ],
+    "files": []
+}

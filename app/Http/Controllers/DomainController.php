@@ -40,7 +40,7 @@ class DomainController extends Controller
                 $query->where('status', $request->filter_status);
             }
 
-            $hasCustomizePrompt = Addon::where('name', 'CustomPrompt')->where('status', 'installed')->exists();
+            $hasCustomizePrompt = Addon::where('preferred_name', 'CustomPrompt')->where('status', 'installed')->exists();
 
             return DataTables::of($query)
                 ->addIndexColumn()

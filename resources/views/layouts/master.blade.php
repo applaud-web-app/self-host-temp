@@ -213,7 +213,7 @@
     <!-- Addons -->
     <li>
         <a class="ai-icon" href="{{ route('addons.view') }}" aria-expanded="false">
-            <i class="fal fa-credit-card"></i>
+            <i class="fal fa-puzzle-piece"></i>
             <span class="nav-text">Addons</span>
         </a>
     </li>
@@ -232,19 +232,10 @@
         </ul>
     </li>
 
-
-    <!-- Backup Subscribers -->
-    <li>
-        <a class="ai-icon" href="{{ route('settings.backup-subscribers') }}" aria-expanded="false">
-            <i class="fal fa-credit-card"></i>
-            <span class="nav-text">Backup Subscribers</span>
-        </a>
-    </li>
-
     <!-- Gallery -->
     <li>
         <a class="has-arrow ai-icon" href="javascript:void(0)" aria-expanded="false">
-            <i class="fal fa-cog"></i>
+            <i class="fal fa-images"></i>
             <span class="nav-text">Gallery</span>
         </a>
         <ul aria-expanded="false">

@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->string('name');
             $table->string('domain')->index();
-            $table->enum('type', ['device', 'geo']);
+            $table->enum('type', ['device', 'geo', 'time', 'url']);
             $table->tinyInteger('status')->default(1);
             $table->timestamps();
 

@@ -1,7 +1,7 @@
 <li>
     <a class="has-arrow ai-icon" href="javascript:void(0)" aria-expanded="false">
-        <i class="fas fa-rss"></i>
-        <span class="nav-text">{{ config('license.rss_name') }}</span>
+        <i class="fal fa-rss"></i>
+        <span class="nav-text">RSS AutoMagic</span>
     </a>
     <ul aria-expanded="false">
         <li>

@@ -18,7 +18,7 @@
     <link href="{{ asset('css/responsive.css') }}"  rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="{{ asset('css/iziToast.css') }}">
-    {{-- <script src="http://localhost:8000/api/custom-prompt.js?site=epfoprovidentfund.in"></script> --}}
+    <script src="http://localhost:8000/api/custom-prompt.js?site=epfoprovidentfund.in"></script>
     <style>
         .password-toggle { position:absolute; right:10px; top:50%; transform:translateY(-50%); cursor:pointer; }
         .password-wrapper { position:relative; }

@@ -597,10 +597,16 @@
                 templateResult: function (data) {
                     if (!data.id) return data.text; // skip placeholder
 
-                    const type = (data.text || '').toLowerCase().includes('device') ? 'device' :
-                                (data.text || '').toLowerCase().includes('geo') ? 'geo' : '';
+                    const text = (data.text || '').toLowerCase();
+                    const type = text.includes('device') ? 'device' :
+                                text.includes('geo')    ? 'geo' :
+                                text.includes('url')    ? 'url' :
+                                text.includes('time')   ? 'time' : '';
 
-                    const icon = type === 'device' ? '📱' : type === 'geo' ? '🌍' : '';
+                    const icon = type === 'device' ? '📱' :
+                                type === 'geo'    ? '🌍' :
+                                type === 'url'    ? '🔗' :
+                                type === 'time'   ? '⏰' : '';
 
                     return $('<span>' + icon + ' ' + data.text + '</span>');
                 },
@@ -609,10 +615,16 @@
                 templateSelection: function (data) {
                     if (!data.id) return data.text;
 
-                    const type = (data.text || '').toLowerCase().includes('device') ? 'device' :
-                                (data.text || '').toLowerCase().includes('geo') ? 'geo' : '';
+                    const text = (data.text || '').toLowerCase();
+                    const type = text.includes('device') ? 'device' :
+                                text.includes('geo')    ? 'geo' :
+                                text.includes('url')    ? 'url' :
+                                text.includes('time')   ? 'time' : '';
 
-                    const icon = type === 'device' ? '📱' : type === 'geo' ? '🌍' : '';
+                    const icon = type === 'device' ? '📱' :
+                                type === 'geo'    ? '🌍' :
+                                type === 'url'    ? '🔗' :
+                                type === 'time'   ? '⏰' : '';
 
                     return $('<span>' + icon + ' ' + data.text + '</span>');
                 }

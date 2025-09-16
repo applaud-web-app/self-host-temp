@@ -1,0 +1,11 @@
+{
+    "name": "NewsHub",
+    "alias": "newshub",
+    "description": "",
+    "keywords": [],
+    "priority": 0,
+    "providers": [
+        "Modules\\NewsHub\\Providers\\NewsHubServiceProvider"
+    ],
+    "files": []
+}
