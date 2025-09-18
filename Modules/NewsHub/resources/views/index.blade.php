@@ -51,12 +51,15 @@
                             <tr>
                                 <th>#</th>
                                 <th>Domain</th>
-                                <th>Roll Title</th>
+                                {{-- <th>Roll Title</th> --}}
                                 <th>Roll Status</th>
                                 <th>Roll Action</th>
-                                <th>Flask Title</th>
+                                {{-- <th>Flask Title</th> --}}
                                 <th>Flask Status</th>
                                 <th>Flask Action</th>
+                                <th>Slider Status</th>
+                                <th>Slider Action</th>
+                                <th>Integrate</th>
                             </tr>
                         </thead>
                         <tbody></tbody>
@@ -69,6 +72,7 @@
 @endsection
 
 @push('scripts')
+<script async src="http://localhost:8000/api/news-hub.js?site=localhost"></script>
 <script>
 $(function () {
     var table = $('#newsHubTable').DataTable({
@@ -95,12 +99,15 @@ $(function () {
         columns: [
             { data: 'DT_RowIndex', orderable: false },
             { data: 'domain' },
-            { data: 'nr_title' },
+            // { data: 'nr_title' },
             { data: 'nr_status', orderable: false, searchable: false },
             { data: 'nr_action', orderable: false, searchable: false },
-            { data: 'nf_title' },
+            // { data: 'nf_title' },
             { data: 'nf_status', orderable: false, searchable: false },
-            { data: 'nf_action', orderable: false, searchable: false }
+            { data: 'nf_action', orderable: false, searchable: false },
+            { data: 'nbs_status', orderable: false, searchable: false },
+            { data: 'nbs_action', orderable: false, searchable: false },
+            { data: 'integrate', orderable: false, searchable: false }
         ]
     });
 
@@ -118,9 +125,10 @@ $(function () {
 
     // Unified toggle (roll + flask)
     $(document).on('change', '.js-toggle', function () {
-        const id = $(this).data('id');
-        const type = $(this).data('type'); // roll | flask
-        const checked = $(this).is(':checked') ? 1 : 0;
+        const $el = $(this);
+        const id = $el.data('id');
+        const type = $el.data('type'); // roll | flask
+        const checked = $el.is(':checked') ? 1 : 0;
 
         if (!id || !type) { return; }
 
@@ -128,11 +136,47 @@ $(function () {
             url: '{{ route("news-hub.toggle.status") }}',
             type: 'POST',
             data: { _token: csrf, id: id, type: type, status: checked },
-        }).fail(() => {
-            $(this).prop('checked', !checked);
-            alert('Failed to update status.');
+        })
+        .done((res) => {
+            if (res && res.ok) {
+                iziToast.success({
+                    title: 'success',
+                    message: 'Status updated successfully!',
+                    position: 'topRight'
+                });
+            } else {
+                // if response is not ok
+                $el.prop('checked', !checked);
+                iziToast.error({
+                    title: 'Error',
+                    message: 'Failed to update status (invalid response).',
+                    position: 'topRight'
+                });
+            }
+        })
+        .fail(() => {
+            $el.prop('checked', !checked);
+            iziToast.error({
+                title: 'Error',
+                message: 'Failed to update status (server error).',
+                position: 'topRight'
+            });
         });
     });
 });
+</script>
+<script>
+    $(document).ready(function(){
+        $(document).on('click','.js-copy',function(e){
+            e.preventDefault();
+            var copyText = $(this).data('clipboard-text');
+            navigator.clipboard.writeText(copyText);
+            iziToast.success({
+                title: 'Copied',
+                message: 'Code copied to clipboard',
+                position: 'topRight'
+            });
+        });     
+    })
 </script>
 @endpush

@@ -1,0 +1,11 @@
+{
+    "name": "Migrate",
+    "alias": "migrate",
+    "description": "",
+    "keywords": [],
+    "priority": 0,
+    "providers": [
+        "Modules\\Migrate\\Providers\\MigrateServiceProvider"
+    ],
+    "files": []
+}

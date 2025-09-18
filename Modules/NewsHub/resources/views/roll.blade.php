@@ -6,11 +6,18 @@
     $color = old('theme_color', $roll->theme_color ?? '#fd683e');
     $icon  = old('icon', $roll->icon ?? 'fa fa-bell');
 
-    // Show only PATH in the input for edit mode too
     $existingFull = $roll->feed_url ?? '';
     $existingPath = $existingFull
-        ? '/' . ltrim(preg_replace('#^https?://domain\.in#i', '', $existingFull), '/')
+        ? '/' . ltrim(
+            preg_replace(
+                '#^(?:https?://)?(?:www\.)?' . preg_quote($domain->name, '#') . '#i',
+                '',
+                $existingFull
+            ),
+            '/'
+          )
         : '';
+
     $feedPath = old('feed_path', $existingPath);
 @endphp
 
@@ -19,9 +26,14 @@
     .wid-fixed-container{
         position:absolute;
         bottom:20px; right:20px;
-        font-family: system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji","Segoe UI Emoji";
+        font-family: system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,"Noto Sans","Apple Color Emoji","Segoe UI Emoji";
         z-index: 10;
+        display:flex;              /* NEW */
+        flex-direction:column;     /* NEW */
+        gap:10px;                  /* NEW */
+        align-items:flex-end;      /* default right align */
     }
+    .wid-fixed-container.pos-left{ align-items:flex-start; } /* when on left */
     .wid-fixed-icon{
         background-color: {{ $color }};
         color:#fff;
@@ -38,13 +50,13 @@
     .wid-fixed-icon:hover{ opacity:.9;color: #ffffff; }
 
     .wid-fixed-card{
-        background:#fff;
-        width:350px;
-        border:1px solid {{ $color }};
-        border-radius:12px;
-        overflow:hidden;
-        margin-bottom:10px;
-        display:none; /* closed by default */
+        background: #fff;
+        width: 350px;
+        border: 1px solid {{ $color }};
+        border-radius: 12px;
+        overflow: hidden;
+        margin-bottom: 2px;
+        display: none;
     }
     .wid-fixed-card .wid-fixed-header{
         background-color: {{ $color }};
@@ -61,7 +73,7 @@
         background:none; border:none; color:#fff; cursor:pointer;
         font-size:16px; padding:0; margin:0;
     }
-    .wid-fixed-card .wid-fixed-body{ padding:14px; }
+    .wid-fixed-card .wid-fixed-body{ padding:14px;overflow-y: scroll;height: 260px; }
     .smallnote{ font-size:10px; color:#ffffff; }
 </style>
 @endpush
@@ -74,20 +86,6 @@
             <small class="badge badge-secondary">{{ $domain->name }}</small>
         </div>
 
-        @if (session('success'))
-            <div class="alert alert-success">{{ session('success') }}</div>
-        @endif
-
-        @if ($errors->any())
-            <div class="alert alert-danger">
-                <ul class="mb-0">
-                    @foreach ($errors->all() as $e)
-                        <li>{{ $e }}</li>
-                    @endforeach
-                </ul>
-            </div>
-        @endif
-
         <div class="row">
             <div class="col-lg-8">
                 <form method="POST" action="{{ route('news-hub.roll.save') }}" autocomplete="off" id="rollForm">
@@ -98,18 +96,21 @@
                     <div class="card">
                         <div class="card-body row g-4">
                             <div class="col-lg-12">
-                                <label class="form-label">Feed Path (after base) <span class="text-danger">*</span></label>
+                                <label class="form-label">Feed Path <span class="text-danger">*</span></label>
                                 <div class="d-flex gap-2">
                                     <div class="input-group">
-                                        <span class="input-group-text bg-primary text-white">https://{{$domain->name}}</span>
+                                        <span class="input-group-text bg-primary text-white">https://{{ $domain->name }}</span>
                                         <input type="text" name="feed_path" class="form-control" placeholder="/feed.xml" pattern="\/.*" value="{{ $feedPath }}" required>
                                     </div>
-                                    <button type="button" id="fetchFeedBtn" class="btn btn-primary">
+                                    <button type="button" id="fetchFeedBtn" class="btn btn-primary" title="Fetch feed">
                                         <i class="fas fa-undo"></i>
                                     </button>
                                 </div>
-                                <small class="text-muted">Type only the path beginning with “/”. We’ll prefix <code>https://domain.in</code>.</small>
+                                <small class="text-muted">
+                                    Type only the path beginning with “/”. We’ll prefix <code>https://{{ $domain->name }}</code>.
+                                </small>
                             </div>
+
 
                             <div class="col-lg-6">
                                 <label class="form-label">Title <span class="text-danger">*</span></label>
@@ -128,15 +129,12 @@
                                     <option value="fa fa-star"      {{ $iconValue==='fa fa-star' ? 'selected' : '' }}>Star</option>
                                     <option value="fa fa-heart"     {{ $iconValue==='fa fa-heart' ? 'selected' : '' }}>Heart</option>
                                 </select>
-                                <small class="text-muted">Saved as a Font Awesome class.</small>
                             </div>
 
                             <div class="col-lg-6">
                                 <label class="form-label">Widget Placement <span class="text-danger">*</span></label>
                                 @php $wp = old('widget_placement', $roll->widget_placement ?? 'bottom-right'); @endphp
                                 <select name="widget_placement" id="placement" class="form-control" required>
-                                    <option value="top-left"     {{ $wp==='top-left' ? 'selected' : '' }}>Top Left</option>
-                                    <option value="top-right"    {{ $wp==='top-right' ? 'selected' : '' }}>Top Right</option>
                                     <option value="bottom-left"  {{ $wp==='bottom-left' ? 'selected' : '' }}>Bottom Left</option>
                                     <option value="bottom-right" {{ $wp==='bottom-right' ? 'selected' : '' }}>Bottom Right</option>
                                 </select>
@@ -152,7 +150,6 @@
                                            class="form-control p-1"
                                            value="{{ old('theme_color', $roll->theme_color ?? '#fd683e') }}">
                                 </div>
-                                <small class="text-muted">Use hex or named colors; both will sync.</small>
                             </div>
 
                             <div class="col-lg-3">
@@ -188,7 +185,7 @@
                     <div class="card-header">
                         <h4 class="card-title mb-0">Live Preview</h4>
                     </div>
-                    <div class="card-body position-relative">
+                    <div class="card-body position-relative" style="min-height: 420px;">
                         <div class="wid-fixed-container" id="wid-fixedContainer">
                             <div class="wid-fixed-card" id="wid-fixedCard">
                                 <div class="wid-fixed-header">
@@ -201,13 +198,6 @@
                                 </div>
                                 <div class="wid-fixed-body">
                                     <div id="feedItems">
-                                        <div class="d-flex align-items-start gap-2">
-                                            <i class="{{ $icon }} mt-1"></i>
-                                            <div>
-                                                <div class="fw-semibold">Latest headlines</div>
-                                                <div class="text-muted small">Your feed items will appear here…</div>
-                                            </div>
-                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -236,11 +226,12 @@
 
 (function(){
     // Color sync (hex or named -> hex)
-    const picker = document.getElementById('colorPicker');
+    const picker = document.getElementById('colorPicker'); // name="theme_color"
     const code   = document.getElementById('colorCode');
+
     function apply(colorHex){
         code.value   = colorHex;
-        picker.value = colorHex;
+        picker.value = colorHex; // ensures form submits the latest value
         document.querySelector('.wid-fixed-icon').style.backgroundColor = colorHex;
         document.querySelector('.wid-fixed-card').style.borderColor     = colorHex;
         document.querySelector('.wid-fixed-card .wid-fixed-header').style.backgroundColor = colorHex;
@@ -291,13 +282,24 @@
     // Placement live update
     const placement = document.getElementById('placement');
     const wrap      = document.getElementById('wid-fixedContainer');
+
     function setPos(val){
+        // clear coordinates
         wrap.style.top = wrap.style.right = wrap.style.bottom = wrap.style.left = '';
+        wrap.classList.remove('pos-left');
+
         switch(val){
-            case 'top-left':     wrap.style.top='20px';    wrap.style.left='20px';   break;
-            case 'top-right':    wrap.style.top='20px';    wrap.style.right='20px';  break;
-            case 'bottom-left':  wrap.style.bottom='20px'; wrap.style.left='20px';   break;
-            case 'bottom-right': wrap.style.bottom='20px'; wrap.style.right='20px';  break;
+            case 'bottom-left':
+                wrap.style.bottom='20px';
+                wrap.style.left='20px';
+                wrap.classList.add('pos-left'); // align items to left
+                break;
+            case 'bottom-right':
+            default:
+                wrap.style.bottom='20px';
+                wrap.style.right='20px';
+                // default align-items:flex-end -> right
+                break;
         }
     }
     if (placement) {
@@ -321,7 +323,6 @@
             .replace(/"/g,'&quot;')
             .replace(/'/g,'&#039;');
     }
-
     function render(items){
         if (!items || !items.length) {
             itemsBox.innerHTML = '<div class="text-muted small">No items found.</div>';
@@ -330,11 +331,10 @@
         let html = '';
         items.slice(0,5).forEach(it => {
             html += `
-            <div class="d-flex align-items-start gap-2 mb-3">
-                <img src="${esc(it.image)}" alt="" style="width:28px;height:28px;border-radius:6px;object-fit:cover;">
+            <div class="d-flex align-items-start gap-2 mb-3 border-bottom pb-2">
+                <img src="${esc(it.image)}" alt="" style="width:45px;height:40px;border-radius:6px;object-fit:cover;">
                 <div>
-                    <a href="${esc(it.link)}" target="_blank" rel="noopener" class="fw-semibold d-block">${esc(it.title)}</a>
-                    <div class="text-muted small">${esc(it.description).slice(0,140)}${it.description.length>140?'…':''}</div>
+                    <a href="${esc(it.link)}" target="_blank" rel="noopener" class="ms-1 fw-semibold d-block">${esc(it.title).slice(0,70)}${it.title.length>70?'…':''}</a>
                 </div>
             </div>`;
         });
@@ -342,9 +342,11 @@
     }
 
     fetchBtn?.addEventListener('click', async () => {
-        const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
         const fd = new FormData(form);
+
+        // *** IMPORTANT: include _token in the POST body ***
         const payload = new URLSearchParams({
+            _token: '{{ csrf_token() }}', // <-- this fixes the CSRF mismatch
             eq: fd.get('eq'),
             feed_path: fd.get('feed_path') || '',
             feed_type: 'all'
@@ -357,7 +359,6 @@
             const res = await fetch(`{{ route('news-hub.fetch.feed') }}`, {
                 method: 'POST',
                 headers: {
-                    'X-CSRF-TOKEN': token,
                     'Accept': 'application/json',
                     'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8'
                 },
@@ -366,13 +367,13 @@
             const data = await res.json();
             if (data.status) {
                 render(data.items || []);
-                card.style.display = 'block'; // open preview
+                card.style.display = 'block';
             } else {
-                itemsBox.innerHTML = `<div class="text-danger small">${esc(data.message || 'Failed to fetch feed')}</div>`;
+                itemsBox.innerHTML = `<div class="text-danger small">Could not fetch feed items. Please enter a valid feed URL.</div>`;
                 card.style.display = 'block';
             }
         } catch (e) {
-            itemsBox.innerHTML = `<div class="text-danger small">Network error while fetching feed.</div>`;
+            itemsBox.innerHTML = `<div class="text-danger small">Could not fetch feed items. Please enter a valid feed URL.</div>`;
             card.style.display = 'block';
         } finally {
             fetchBtn.disabled = false;
@@ -380,5 +381,47 @@
         }
     });
 })();
+</script>
+<script>
+$(function(){
+  // Custom rule: feed_path must start with "/"
+  $.validator.addMethod("startsWithSlash", function(v){ return /^\/.+/.test(v); }, "Must start with '/'.");
+
+  // Pattern rule for hex color
+  $.validator.addMethod("hexColor", function(v){ return /^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/.test(v); }, "Enter a valid hex color.");
+
+  const $form = $('#rollForm');
+  const $save = $form.find('button[type="submit"]');
+
+  $form.validate({
+    ignore: [],
+    rules: {
+      feed_path:        { required:true, maxlength:512, startsWithSlash:true },
+      title:            { required:true, maxlength:190 },
+      icon:             { maxlength:190 },
+      widget_placement: { required:true }, // already limited to 2 options
+      theme_color:      { required:true, hexColor:true } // bound to the <input type="color" name="theme_color">
+    },
+    errorElement: 'div',
+    errorClass: 'invalid-feedback',
+    highlight: function(el){ el.classList.add('is-invalid'); },
+    unhighlight: function(el){ el.classList.remove('is-invalid'); },
+    errorPlacement: function(error, element){
+      if (element.parent('.input-group').length) {
+        error.insertAfter(element.parent());
+      } else {
+        error.insertAfter(element);
+      }
+    },
+    submitHandler: function(form){
+      // Button -> processing state
+      const original = $save.html();
+      $save.data('original', original)
+           .prop('disabled', true)
+           .html('<i class="fas fa-spinner fa-spin me-1"></i> Saving...');
+      form.submit();
+    }
+  });
+});
 </script>
 @endpush

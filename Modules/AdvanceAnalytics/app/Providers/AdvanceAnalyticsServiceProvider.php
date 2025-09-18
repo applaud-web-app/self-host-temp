@@ -1,6 +1,6 @@
 <?php
 
-namespace Modules\NewsHub\Providers;
+namespace Modules\AdvanceAnalytics\Providers;
 
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\ServiceProvider;
@@ -8,22 +8,19 @@ use Nwidart\Modules\Traits\PathNamespace;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
 
-class NewsHubServiceProvider extends ServiceProvider
+class AdvanceAnalyticsServiceProvider extends ServiceProvider
 {
     use PathNamespace;
 
-    protected string $name = 'NewsHub';
+    protected string $name = 'AdvanceAnalytics';
 
-    protected string $nameLower = 'newshub';
+    protected string $nameLower = 'advanceanalytics';
 
     /**
      * Boot the application events.
      */
     public function boot(): void
     {
-        // Register middleware if required
-        app('router')->aliasMiddleware('verify_license', \Modules\NewsHub\Http\Middleware\CheckLicenseKey::class);
-
         $this->registerCommands();
         $this->registerCommandSchedules();
         $this->registerTranslations();
@@ -79,44 +76,34 @@ class NewsHubServiceProvider extends ServiceProvider
     /**
      * Register config.
      */
-    // protected function registerConfig(): void
-    // {
-    //     $configPath = module_path($this->name, config('modules.paths.generator.config.path'));
-
-    //     if (is_dir($configPath)) {
-    //         $iterator = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($configPath));
-
-    //         foreach ($iterator as $file) {
-    //             if ($file->isFile() && $file->getExtension() === 'php') {
-    //                 $config = str_replace($configPath.DIRECTORY_SEPARATOR, '', $file->getPathname());
-    //                 $config_key = str_replace([DIRECTORY_SEPARATOR, '.php'], ['.', ''], $config);
-    //                 $segments = explode('.', $this->nameLower.'.'.$config_key);
-
-    //                 // Remove duplicated adjacent segments
-    //                 $normalized = [];
-    //                 foreach ($segments as $segment) {
-    //                     if (end($normalized) !== $segment) {
-    //                         $normalized[] = $segment;
-    //                     }
-    //                 }
-
-    //                 $key = ($config === 'config.php') ? $this->nameLower : implode('.', $normalized);
-
-    //                 $this->publishes([$file->getPathname() => config_path($config)], 'config');
-    //                 $this->merge_config_from($file->getPathname(), $key);
-    //             }
-    //         }
-    //     }
-    // }
     protected function registerConfig(): void
     {
-        $this->publishes([
-            module_path('NewsHub', 'config/config.php') => config_path('license.php'),
-        ], 'config');
+        $configPath = module_path($this->name, config('modules.paths.generator.config.path'));
 
-        $this->mergeConfigFrom(
-            module_path('NewsHub', 'config/config.php'), 'license'
-        );
+        if (is_dir($configPath)) {
+            $iterator = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($configPath));
+
+            foreach ($iterator as $file) {
+                if ($file->isFile() && $file->getExtension() === 'php') {
+                    $config = str_replace($configPath.DIRECTORY_SEPARATOR, '', $file->getPathname());
+                    $config_key = str_replace([DIRECTORY_SEPARATOR, '.php'], ['.', ''], $config);
+                    $segments = explode('.', $this->nameLower.'.'.$config_key);
+
+                    // Remove duplicated adjacent segments
+                    $normalized = [];
+                    foreach ($segments as $segment) {
+                        if (end($normalized) !== $segment) {
+                            $normalized[] = $segment;
+                        }
+                    }
+
+                    $key = ($config === 'config.php') ? $this->nameLower : implode('.', $normalized);
+
+                    $this->publishes([$file->getPathname() => config_path($config)], 'config');
+                    $this->merge_config_from($file->getPathname(), $key);
+                }
+            }
+        }
     }
 
     /**

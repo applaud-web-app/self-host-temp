@@ -1,0 +1,30 @@
+{
+    "name": "nwidart/advanceanalytics",
+    "description": "",
+    "authors": [
+        {
+            "name": "Nicolas Widart",
+            "email": "n.widart@gmail.com"
+        }
+    ],
+    "extra": {
+        "laravel": {
+            "providers": [],
+            "aliases": {
+
+            }
+        }
+    },
+    "autoload": {
+        "psr-4": {
+            "Modules\\AdvanceAnalytics\\": "app/",
+            "Modules\\AdvanceAnalytics\\Database\\Factories\\": "database/factories/",
+            "Modules\\AdvanceAnalytics\\Database\\Seeders\\": "database/seeders/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Modules\\AdvanceAnalytics\\Tests\\": "tests/"
+        }
+    }
+}

@@ -1,0 +1,11 @@
+{
+    "name": "AdvanceAnalytics",
+    "alias": "advanceanalytics",
+    "description": "",
+    "keywords": [],
+    "priority": 0,
+    "providers": [
+        "Modules\\AdvanceAnalytics\\Providers\\AdvanceAnalyticsServiceProvider"
+    ],
+    "files": []
+}

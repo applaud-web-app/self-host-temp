@@ -3,5 +3,7 @@
     "CustomPrompt": true,
     "AdvanceSegmentation": true,
     "WelcomeMessage": true,
-    "NewsHub": true
+    "NewsHub": true,
+    "AdvanceAnalytics": true,
+    "Migrate": true
 }
