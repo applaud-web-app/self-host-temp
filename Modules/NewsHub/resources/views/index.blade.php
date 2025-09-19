@@ -72,7 +72,6 @@
 @endsection
 
 @push('scripts')
-<script async src="http://localhost:8000/api/news-hub.js?site=localhost"></script>
 <script>
 $(function () {
     var table = $('#newsHubTable').DataTable({
