@@ -11,4 +11,15 @@ class MigrateController extends Controller
     {
         return view('migrate::index');
     }
+
+    public function report()
+    {
+        // You can pass real migration results later
+        return view('migrate::report');
+    }
+    public function sendNotification()
+    {
+        // Later you can implement sending logic here
+        return view('migrate::send-notification');
+    }
 }
