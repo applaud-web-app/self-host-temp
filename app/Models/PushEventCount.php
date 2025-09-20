@@ -14,7 +14,7 @@ class PushEventCount extends Model
 
     protected $fillable = [
         'message_id',
-        'event',
+        'event', // 'received', 'click'
         'count',
     ];
 }
