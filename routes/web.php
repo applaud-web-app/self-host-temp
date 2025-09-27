@@ -22,6 +22,10 @@ use App\Http\Controllers\LoadController;
 Route::prefix('install')->withoutMiddleware('install')->group(function () {
     Route::get('/setup', [InstallController::class, 'installSetup'])->name('install.setup');
     Route::post('/setup', [InstallController::class, 'postInstallSetup'])->name('install.setup.post');
+
+    Route::get('/firebase', [InstallController::class, 'installFirebase'])->name('install.firebase');
+    Route::post('/firebase', [InstallController::class, 'postInstallFirebase'])->name('install.firebase.post');
+
     Route::get('/sync-sw',   [InstallController::class, 'syncSW'])->name('install.sync-sw');
 });
 

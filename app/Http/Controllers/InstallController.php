@@ -257,5 +257,88 @@ class InstallController
         }
     }
 
+    public function installFirebase(){
+        return view('install.firebase');
+    }
+
+    public function postInstallFirebase(Request $request)
+    {
+        // 1) Validation rules for both Push Configuration and License
+        $rules = [
+            // Push Config validation rules
+            'service_account_json_file' => ['required', 'file', 'mimes:json', 'mimetypes:application/json'],
+            'vapid_public_key' => ['required', 'string'],
+            'vapid_private_key' => ['required', 'string'],
+            'web_apiKey' => ['required', 'string'],
+            'web_authDomain' => ['required', 'string'],
+            'web_projectId' => ['required', 'string'],
+            'web_messagingSenderId' => ['required', 'string'],
+            'web_appId' => ['required', 'string'],
+            'web_measurementId' => ['required', 'string'],
+            'web_storageBucket' => ['required', 'string'],
+        ];
+
+        $messages = [
+            // Push Config validation messages
+            'service_account_json_file.required' => 'Please upload your Service Account JSON file.',
+            'service_account_json_file.mimes' => 'The file must have a .json extension.',
+            'service_account_json_file.mimetypes' => 'The file must be valid JSON (application/json).',
+            'vapid_public_key.required' => 'Please enter your VAPID public key.',
+            'vapid_private_key.required' => 'Please enter your VAPID private key.',
+            'vapid_public_key.string' => 'VAPID public key must be a string.',
+            'vapid_private_key.string' => 'VAPID private key must be a string.',
+            'web_apiKey.required' => 'Firebase API key is required.',
+            'web_authDomain.required' => 'Firebase authDomain is required.',
+            'web_projectId.required' => 'Firebase projectId is required.',
+            'web_messagingSenderId.required' => 'Messaging Sender ID is required.',
+            'web_appId.required' => 'Firebase App ID is required.',
+            'web_measurementId.required' => 'Firebase Measurement ID is required.',
+            'web_storageBucket.required' => 'Firebase Storage Bucket is required.',
+        ];
+
+        try {
+            // 2) Validate both Push Configuration and License fields
+            $validated = $request->validate($rules, $messages);
+
+            // 4) Handle Push Config
+            $rawJson = file_get_contents($request->file('service_account_json_file')->getRealPath());
+
+            $webConfig = [
+                'apiKey' => $validated['web_apiKey'],
+                'authDomain' => $validated['web_authDomain'],
+                'projectId' => $validated['web_projectId'],
+                'storageBucket' => $validated['web_storageBucket'],
+                'messagingSenderId' => $validated['web_messagingSenderId'],
+                'appId' => $validated['web_appId'],
+                'measurementId' => $validated['web_measurementId'],
+            ];
+
+           // 5) Decode & ensure required keys in service account JSON
+            $data = json_decode($rawJson, true, 512, JSON_THROW_ON_ERROR);
+            Log::info('Decoded service account JSON.');
+
+            foreach (['project_id', 'private_key', 'client_email'] as $key) {
+                if (empty($data[$key])) {
+                    Log::error("Missing required JSON key: {$key}");
+                    throw new \Exception("Missing required JSON key: {$key}");
+                }
+            }
+
+            // 5) Save Push Config securely
+            $config = PushConfig::firstOrNew();
+            $config->service_account_json = encrypt($rawJson);
+            $config->vapid_public_key = $validated['vapid_public_key'];
+            $config->vapid_private_key = encrypt($validated['vapid_private_key']);
+            $config->web_app_config = encrypt(json_encode($webConfig));
+            $config->save();
+
+            return redirect()->route('dashboard.view')->with('message', 'PUSH SETUP created successfully!');
+            
+        } catch (\Exception $e) {
+            Log::error('Error in postInstallSetup: ' . $e->getMessage(), ['exception' => $e]);
+            // Handle any other errors
+            return back()->withInput()->with('error', 'Failed to save configuration and license: ' . $e->getMessage());
+        }
+    }
 
 }

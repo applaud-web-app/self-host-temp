@@ -93,6 +93,7 @@ class SendNotificationJobNode implements ShouldQueue
             'image'        => $row->banner_image ?? '',
             'click_action' => $row->target_url,
             'message_id'   => (string)$row->message_id,
+            'source'       => 'firebase',
         ];
 
         $actions = [];
