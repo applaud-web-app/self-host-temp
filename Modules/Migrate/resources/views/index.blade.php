@@ -63,6 +63,17 @@
                                 <div class="form-text">Choose the domain to associate the subscribers with.</div>
                             </div>
 
+                            <!-- Migrate From -->
+                            <div class="mb-4">
+                                <label for="migrate-from-select" class="form-label fw-semibold">Migrate From</label>
+                                <select id="migrate-from-select" class="form-control" name="migrate_from" required>
+                                    <option value="">Select Source</option>
+                                    <option value="aplu">Aplu</option>
+                                    <option value="lara_push">Lara Push</option>
+                                </select>
+                                <div class="form-text">Choose the source to migrate subscribers from.</div>
+                            </div>
+
                             <!-- Files -->
                             <div class="mb-3">
                                 <label class="form-label fw-semibold d-block">Upload Files</label>

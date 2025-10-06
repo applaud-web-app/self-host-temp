@@ -39,6 +39,7 @@ class MigrateController extends Controller
                 'domain_id'     => 'required|exists:domains,id',
                 'files'         => 'required',
                 'files.*'       => 'file|mimes:xlsx,xls|max:51200',
+                'migrate_from'     => 'required|in:aplu,lara_push',
             ]);
 
             // (Optional) Enforce 50MB TOTAL across all files:
@@ -68,7 +69,8 @@ class MigrateController extends Controller
                     taskId:   $task->id,
                     domainId: (int) $validated['domain_id'],
                     storageDisk: 'public',
-                    filePath: $path
+                    filePath: $path,
+                    migrateFrom: $validated['migrate_from'],
                 ));
 
                 $tasks[] = $task->id;

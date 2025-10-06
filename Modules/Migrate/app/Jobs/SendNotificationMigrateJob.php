@@ -48,7 +48,6 @@ class SendNotificationMigrateJob implements ShouldQueue
         $configuredBatch = (int) ($settings->gap_size ?? 500);
         $batchSize       = max(1, min(500, $configuredBatch));   // <= 500
         $timeGapMs       = max(0, (int) ($settings->time_gap ?? 0));
-        // Laravel job delay supports seconds; convert ms → seconds for delay scheduling
         $timeGapSec      = (int) ceil($timeGapMs / 1000);
 
         // 1) Load the notification + its domain name
@@ -214,7 +213,8 @@ class SendNotificationMigrateJob implements ShouldQueue
     //     ];
     // }
 
-    protected function buildWebPush(object $row): array
+    // APLU.IO
+    protected function buildWebPushApluPush(object $row): array
     {
         // Notification data for the browser to display
         $notification = [
@@ -250,4 +250,46 @@ class SendNotificationMigrateJob implements ShouldQueue
             'headers'      => ['Urgency' => 'high'], 
         ];
     }
+
+    // LARAPUSH
+    // protected function buildWebPushLaraPush(object $row): array
+    // {
+    //     // Build the object the SW will JSON.parse() from data.notification
+    //     $notif = [
+    //         'title'              => (string) ($row->title ?? ''),
+    //         'body'               => (string) ($row->description ?? ''),
+    //         'icon'               => (string) ($row->banner_icon ?? ''),
+    //         'image'              => (string) ($row->banner_image ?? ''),
+    //         // clicked URL + ping URL expected by your SW
+    //         'url'                => (string) ($row->target_url ?? ''),
+    //         'api_url'            => (string) (url('/api/notification/click?message_id=' . $row->message_id)), // adjust to your tracking endpoint
+    //         // let SW decide final requireInteraction per OS
+    //         'requireInteraction' => false,
+    //         // actions AS A MAP (the SW reads actions[event.action])
+    //         'actions' => array_filter([
+    //             'btn1' => ($row->btn_1_title && $row->btn_1_url) ? [
+    //                 'title'        => (string) $row->btn_1_title,
+    //                 'click_action' => (string) $row->btn_1_url,
+    //                 'api_url'      => (string) (url('/api/notification/action?btn=1&message_id=' . $row->message_id)),
+    //             ] : null,
+    //             'btn2' => ($row->btn_title_2 && $row->btn_url_2) ? [
+    //                 'title'        => (string) $row->btn_title_2,
+    //                 'click_action' => (string) $row->btn_url_2,
+    //                 'api_url'      => (string) (url('/api/notification/action?btn=2&message_id=' . $row->message_id)),
+    //             ] : null,
+    //         ]),
+    //         // include anything else you want available in event.notification.data
+    //         'message_id' => (string) $row->message_id,
+    //         'swVersion'  => '3.0.9',
+    //     ];
+    //     // IMPORTANT: FCM "data" values must be strings → stringify the notification object.
+    //     $data = [
+    //         'notification' => json_encode($notif, JSON_UNESCAPED_SLASHES),
+    //         'swVersion'    => '3.0.9',
+    //     ];
+    //     return [
+    //         'data'    => $data,
+    //         'headers' => ['Urgency' => 'high'],
+    //     ];
+    // }
 }

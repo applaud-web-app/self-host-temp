@@ -24,6 +24,7 @@ class ProcessSubscriberFileJob implements ShouldQueue
         public int $domainId,
         public string $storageDisk,
         public string $filePath,
+        public string $migrateFrom
     ) {
         $this->onQueue('default'); // adjust queue if you have one
     }
@@ -72,6 +73,7 @@ class ProcessSubscriberFileJob implements ShouldQueue
 
                 // Decide unique constraint for "existing" (often endpoint is unique)
                 $existing = MigrateSubs::where('domain_id', $this->domainId)
+                    ->where('migrate_from', $this->migrateFrom)
                     ->where('endpoint', $endpoint)
                     ->first();
 
@@ -90,6 +92,7 @@ class ProcessSubscriberFileJob implements ShouldQueue
                     MigrateSubs::create([
                         'domain_id'        => $this->domainId,
                         'endpoint'         => $endpoint,
+                        'migrate_from'     => $this->migrateFrom,
                         'public_key'       => $publicKey,
                         'private_key'      => $privateKey,
                         'auth'             => $auth,

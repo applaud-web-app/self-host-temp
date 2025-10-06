@@ -12,6 +12,7 @@ class MigrateSubs extends Model
     protected $fillable = [
         'domain_id',
         'endpoint',
+        'migrate_from',
         'public_key',
         'private_key',
         'auth',

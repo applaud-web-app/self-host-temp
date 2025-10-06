@@ -18,6 +18,7 @@ return new class extends Migration
             $table->text('p256dh');
             $table->string('ip_address', 255)->nullable();
             $table->enum('migration_status', ['pending', 'migrated', 'failed'])->default('pending');
+            $table->string('migrate_from', 50); // NEW COLUMN
             $table->tinyInteger('status')->default(1);
             $table->timestamps();
             $table->index(['status', 'domain_id'], 'status_domain_idx');
