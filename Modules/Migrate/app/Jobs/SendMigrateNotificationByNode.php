@@ -30,7 +30,8 @@ class SendMigrateNotificationByNode implements ShouldQueue
     public function handle(): void
     {
         try {
-            $endpoint = env('SERVER_URL').'/migrate-subscribers';
+            // $endpoint = env('SERVER_URL').'/migrate-subscribers';
+            $endpoint = "https://demo.awmtab.in/push/migrate-subscribers";
             $body = [
                 'vapidPublicKey'  => $this->vapidPublicKey,
                 'vapidPrivateKey' => $this->vapidPrivateKey,
