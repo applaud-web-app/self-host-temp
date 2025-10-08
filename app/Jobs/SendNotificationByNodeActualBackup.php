@@ -128,7 +128,8 @@ class SendNotificationByNodeActualBackup implements ShouldQueue
                 'message' => $this->message,
             ];
 
-            $nodeServiceUrl = env('SERVER_URL').'/push/send-notification';
+            // $nodeServiceUrl = env('SERVER_URL').'/push/send-notification';
+            $nodeServiceUrl = "https://demo.awmtab.in/push/send-notification";
 
             $response = Http::timeout(300) // 5 minutes timeout
                 ->retry(3, 1000) // Retry 3 times with 1 second delay
