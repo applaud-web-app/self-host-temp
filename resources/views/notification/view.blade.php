@@ -159,7 +159,6 @@
                                         </tr>
                                     </thead>
                                     <tbody>
-                                      
                                     </tbody>
                                 </table>
                             </div>
@@ -168,7 +167,6 @@
                 </div>
             </div>
         </div>
-
         
         <!-- Campaign Modal -->
         <div class="modal fade" id="reportModal" tabindex="-1" aria-hidden="true">

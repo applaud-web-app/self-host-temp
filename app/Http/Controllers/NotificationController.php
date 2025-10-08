@@ -37,6 +37,7 @@ class NotificationController extends Controller
                     //  ->on('pec.domain',      '=', 'd.name')
                      ->where('pec.event', 'click');
             })
+            ->whereIn('n.segment_type', ['all', 'particular', 'api', 'rss'])
             ->select([
                 'n.id',
                 'n.campaign_name',

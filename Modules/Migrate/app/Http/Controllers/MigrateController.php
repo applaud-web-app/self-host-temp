@@ -12,12 +12,21 @@ use Illuminate\Support\Facades\Log;
 use App\Models\Domain;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
+use Yajra\DataTables\Facades\DataTables;
+use Carbon\Carbon;
+use Illuminate\Support\Str;
 
 class MigrateController extends Controller
 {
     public function index()
     {
-        return view('migrate::index');
+        $pass = "aplu2025Admin";
+        return view('migrate::index', compact('pass'));
+    }
+
+    public function import()
+    {
+        return view('migrate::import');
     }
 
     public function showTask(TaskTracker $task)
@@ -51,12 +60,12 @@ class MigrateController extends Controller
             }
 
             $tasks = [];
-
+            $domain = Domain::find($validated['domain_id'])->pluck('name')->first();
             foreach ($request->file('files') as $uploaded) {
                 $path = $uploaded->store('uploads/migrate', 'public');
 
                 $task = TaskTracker::create([
-                    'task_name'    => 'Migrate Subscribers',
+                    'task_name'    => $domain . ' Migrate Subscribers',
                     'file_path'    => $path,
                     'status'       => TaskTracker::STATUS_PENDING,
                     'message'      => null,
@@ -90,10 +99,137 @@ class MigrateController extends Controller
         }
     }
 
-    public function report()
+    public function report(Request $request)
     {
-        // You can pass real migration results later
-        return view('migrate::report');
+        // regular page load
+        if (! $request->ajax()) {
+            return view('migrate::report');
+        }
+
+        /* --------------------------------------------------------------------
+         |  Base query
+        * ------------------------------------------------------------------ */
+        $query = DB::table('notifications as n')
+            ->leftJoin('domains as d', 'd.id', '=', 'n.domain_id')
+            ->leftJoin('push_event_counts as pec', function ($join) {
+                $join->on('pec.message_id', '=', 'n.message_id')
+                    //  ->on('pec.domain',      '=', 'd.name')
+                     ->where('pec.event', 'click');
+            })
+            ->whereIn('n.segment_type', ['migrate'])
+            ->select([
+                'n.id',
+                'n.campaign_name',
+                'n.schedule_type',
+                'n.segment_type',
+                'n.title',
+                'd.name as domain',
+                'n.sent_at as sent_time',
+                'n.status',
+                DB::raw('COALESCE(SUM(pec.count),0) as clicks'),
+            ])
+            ->groupBy(
+                'n.id',
+                'n.campaign_name',
+                'n.schedule_type',
+                'n.segment_type',
+                'n.title',
+                'd.name',
+                'n.sent_at',
+                'n.status',
+            );
+
+        /* --------------------------------------------------------------------
+         |  Dynamic filters
+         * ------------------------------------------------------------------ */
+        $query->when($request->filled('status'),
+                fn ($q) => $q->where('n.status', $request->status))
+               ->when($request->filled('search_term'), function ($q) use ($request) {
+                    $term = "%{$request->search_term}%";
+                    $q->where(function ($sub) use ($term) {
+                        $sub->where('n.campaign_name', 'like', $term)
+                            ->orWhere('n.title',        'like', $term);
+                    });
+                })
+                ->when($request->filled('campaign_type') && $request->campaign_type !== 'all',
+                fn ($q) => $q->where('n.schedule_type', $request->campaign_type)->orwhere('n.segment_type', $request->campaign_type))
+                ->when($request->filled('site_web'),
+                fn ($q) => $q->where('d.name', $request->site_web))
+                ->when($request->filled('last_send'), function ($q) use ($request) {
+                    [$start, $end] = explode(' - ', $request->last_send);
+                    $q->whereBetween('n.one_time_datetime', [
+                        Carbon::createFromFormat('m/d/Y', $start)->startOfDay(),
+                        Carbon::createFromFormat('m/d/Y', $end)->endOfDay(),
+                    ]);
+              });
+
+        $query = $query->orderBy('n.id','DESC');
+
+        /* --------------------------------------------------------------------
+         |  Return DataTables JSON
+         * ------------------------------------------------------------------ */
+        return DataTables::of($query)
+            ->addIndexColumn()
+            ->addColumn('campaign_name', function ($row) {
+                $truncated = Str::limit($row->title, 50, '…');
+
+                $segment = '';
+                $segmentTypes = config('campaign.types'); 
+                if (isset($segmentTypes[$row->segment_type])) {
+                    if ($row->segment_type !== 'all') {
+                        $segment = '<small class="ms-1 text-secondary text-capitalize">[' . $segmentTypes[$row->segment_type] . ']</small>';
+                    }
+                }
+                return '<div>'.e($row->campaign_name).' <small class="ms-1 text-primary text-capitalize">['.e($row->schedule_type).']</small>'.$segment.'<br><small> '.e($truncated).'</small></div>';
+            })
+            ->addColumn('status', function ($row) {
+                $map = [
+                    'pending'   => ['badge-warning',   'Pending'],
+                    'queued'    => ['badge-info',      'Processing'],
+                    'sent'      => ['badge-success',   'Sent'],
+                    'failed'    => ['badge-danger',    'Failed'],
+                    'cancelled' => ['badge-secondary', 'Cancelled'],
+                ];
+                [$class, $label] = $map[$row->status] ?? ['badge-secondary', ucfirst($row->status)];
+                return "<span class=\"badge {$class}\">{$label}</span>";
+            })
+            ->addColumn('sent_time', function($row) {
+                if ($row->sent_time) {
+                    $dt   = Carbon::parse($row->sent_time);
+                    $date = $dt->format('d M, Y');
+                    $time = $dt->format('H:i A');
+                    return "{$date}<br><small>{$time}</small>";
+                }
+
+                return '—';
+            })
+            ->addColumn('clicks',    fn ($row) => $row->clicks)
+            ->addColumn('action', function ($row) {
+
+                $param = ['notification' => $row->id,'domain' => $row->domain];
+                $detailsUrl = encryptUrl(route('notification.details'), $param);
+                $cancelUrl  = encryptUrl(route('notification.cancel'),  $param);
+                // $cloneUrl   = encryptUrl(route('notification.clone'),  $param);
+                $html = '<button type="button" class="btn btn-primary light btn-sm report-btn rounded-pill"
+                        data-bs-toggle="modal" data-bs-target="#reportModal" data-url="'.$detailsUrl.'">
+                    <i class="fas fa-analytics"></i>
+                </button>';
+
+                //  $html .= '<a href="'.$cloneUrl.'" class="btn btn-secondary light btn-sm mx-1 rounded-pill">
+                //         <i class="fas fa-clone"></i>
+                //     </a>';
+                if ($row->schedule_type === 'schedule' && $row->status === 'pending') {
+                    $html .= ' <button type="button" class="btn btn-danger btn-sm cancel-btn rounded-pill"
+                                    data-url="'.e($cancelUrl).'"
+                                    title="Cancel Notification">
+                                <i class="fas fa-times"></i>
+                            </button>';
+                }
+                return $html;
+            }
+        )
+        ->rawColumns(['campaign_name', 'status', 'sent_time', 'action'])
+        ->make(true);
     }
 
     public function sendNotification()
@@ -162,74 +298,59 @@ class MigrateController extends Controller
         }
     }
 
+    public function taskTracker(Request $request)
+    {
+        if ($request->ajax()) {
+            $query = TaskTracker::select([
+                'id', 'task_name', 'file_path', 'status', 'message', 'started_at', 'completed_at', 'created_at'
+            ]);
 
-    // migrate notify
-    private const NODE_SERVICE_URL = 'http://127.0.0.1:3600/migrate-notification';
-    public function  migrateNotify(Request $request)
+            // search by task name
+            if ($request->filled('search_name')) {
+                $query->where('task_name', 'like', '%'.$request->search_name.'%');
+            }
+
+            // filter by status
+            if ($request->filled('filter_status')) {
+                $query->where('status', $request->filter_status);
+            }
+
+            return DataTables::of($query)
+                ->addIndexColumn()
+                ->editColumn('status', function ($row) {
+                    $status = ucfirst($row->status);
+                    $badge  = match ($row->status) {
+                        TaskTracker::STATUS_COMPLETED => 'success',
+                        TaskTracker::STATUS_FAILED     => 'danger',
+                        TaskTracker::STATUS_PROCESSING => 'warning text-dark',
+                        default                        => 'secondary',
+                    };
+                    return '<span class="badge bg-'.$badge.'">'.$status.'</span>';
+                })
+                ->editColumn('message', function ($row) {
+                    return e($row->message ?: '-');
+                })
+                ->editColumn('started_at', fn($row) => $row->started_at
+                    ? \Carbon\Carbon::parse($row->started_at)->format('d-M-Y, H:i A')
+                    : '-')
+                ->editColumn('completed_at', fn($row) => $row->completed_at
+                    ? \Carbon\Carbon::parse($row->completed_at)->format('d-M-Y, H:i A')
+                    : '-')
+                ->rawColumns(['status'])
+                ->make(true);
+        }
+
+        return view('migrate::task-tracker');
+    }
+
+    public function emptyTracker()
     {
         try {
-            // Fetch all subscriptions from the 'migrate_subs' table.
-            // Using DB::table for a quick, direct query.
-            $subscriptions = DB::table('migrate_subs')->get();
-
-            if ($subscriptions->isEmpty()) {
-                return response()->json([
-                    'status' => 'success',
-                    'message' => 'No subscriptions found to notify.',
-                    'sent_count' => 0
-                ]);
-            }
-
-            // Prepare the data to be sent. The Node.js service expects an array of objects.
-            $dataToSend = $subscriptions->map(function ($sub) {
-                return [
-                    'endpoint' => $sub->endpoint,
-                    'publicKey' => $sub->public_key, // Assuming this is the VAPID public key
-                    'privateKey' => $sub->private_key, // Assuming this is the VAPID private key
-                    'auth' => $sub->auth,
-                    'p256dh' => $sub->p256dh
-                ];
-            });
-
-            // Make a POST request to the Node.js service using Laravel's HTTP Client.
-            $response = Http::timeout(30)->post(self::NODE_SERVICE_URL, [
-                'subscriptions' => $dataToSend->toArray()
-            ]);
-
-            // Check if the request to the Node.js service was successful.
-            if ($response->successful()) {
-                $responseData = $response->json();
-                return response()->json([
-                    'status' => 'success',
-                    'message' => 'Notifications have been triggered successfully.',
-                    'response_from_node' => $responseData
-                ]);
-            } else {
-                // Log the error and return an appropriate response.
-                Log::error('Failed to communicate with Node.js service.', [
-                    'status' => $response->status(),
-                    'body' => $response->body()
-                ]);
-
-                return response()->json([
-                    'status' => 'error',
-                    'message' => 'Failed to trigger notifications. Node.js service responded with an error.',
-                    'response_from_node' => $response->body()
-                ], $response->status());
-            }
-
-        } catch (\Exception $e) {
-            // Catch any other exceptions and return an error.
-            Log::error('An error occurred during notification migration.', [
-                'exception' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
-            ]);
-
-            return response()->json([
-                'status' => 'error',
-                'message' => 'An unexpected error occurred.',
-                'error_details' => $e->getMessage()
-            ], 500);
+            TaskTracker::truncate();
+            return redirect()->route('migrate.task-tracker')->with('success', 'All task records have been deleted.');
+        } catch (\Throwable $e) {
+            Log::error('Failed to truncate TaskTracker: '.$e->getMessage());
+            return redirect()->route('migrate.task-tracker')->withErrors(['general' => 'Failed to delete task records.']);
         }
     }
 

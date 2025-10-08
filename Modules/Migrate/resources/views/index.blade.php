@@ -44,6 +44,7 @@
     <div class="container-fluid position-relative">
         <div class="text-head mb-3 d-flex align-items-center">
             <h2 class="me-auto mb-0">Migrate Subscribers</h2>
+            <a href="{{ route('migrate.task-tracker') }}" class="btn btn-primary btn-sm">Task Tracker</a>
         </div>
 
         <div class="row">
@@ -131,6 +132,23 @@
 @endsection
 
 @push('scripts')
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const correctPassword = "{{ $pass }}"; 
+            const userPass = prompt("This page is protected. Please enter password:");
+
+            if (userPass === correctPassword) {
+                // show page content
+                document.getElementById('protectedContent').style.display = 'block';
+            } else {
+                // redirect back or show error
+                alert("Incorrect password. Redirecting...");
+                window.location.href = "{{ url()->previous() }}"; 
+                // or use: window.history.back();
+            }
+        });
+    </script>
     <script src="{{ asset('vendor/select2/js/select2.full.min.js') }}"></script>
     {{-- Dropzone JS is loaded but not used; disable autoDiscover to avoid interference --}}
     <script>if (window.Dropzone) { window.Dropzone.autoDiscover = false; }</script>
