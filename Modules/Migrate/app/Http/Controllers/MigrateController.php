@@ -289,7 +289,7 @@ class MigrateController extends Controller
 
         try {
             dispatch(new DispatchNotifications($data, $ids))->onQueue('migrate-create-notifications');
-            return redirect()->route('notification.view')->with('success', "Notification campaign queued.");
+            return redirect()->route('migrate.report')->with('success', "Notification campaign queued.");
         } catch (\Throwable $e) {
             Log::error("Failed to create notification: {$e->getMessage()}", [
                 'data' => $data,
