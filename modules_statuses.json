@@ -5,5 +5,6 @@
     "WelcomeMessage": true,
     "NewsHub": true,
     "AdvanceAnalytics": true,
-    "Migrate": true
+    "Migrate": true,
+    "URLShortener": true
 }

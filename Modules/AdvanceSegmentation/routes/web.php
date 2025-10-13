@@ -3,7 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use Modules\AdvanceSegmentation\Http\Controllers\AdvanceSegmentationController;
 
-Route::prefix('advance-segmentation')->middleware(['auth','verify_license'])->name('advance-segmentation.')->controller(AdvanceSegmentationController::class)->group(function () {
+Route::prefix('advance-segmentation')->middleware(['auth'])->name('advance-segmentation.')->controller(AdvanceSegmentationController::class)->group(function () {
     Route::get('/', 'index')->name('index');
     Route::get('/create', 'create')->name('create');
     Route::post('/store', 'store')->name('store');

@@ -3,7 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use Modules\RssAutomation\Http\Controllers\RssAutomationController;
 
-Route::group([ 'prefix' => 'rss', 'middleware' => ['auth','rss_license']], function () {
+Route::group([ 'prefix' => 'rss', 'middleware' => ['auth']], function () {
     Route::get('/view', [RssAutomationController::class, 'view'])->name('rss.view');
     Route::get('/create', [RssAutomationController::class, 'create'])->name('rss.create');
     Route::post('/store', [RssAutomationController::class, 'store'])->name('rss.store');
