@@ -26,7 +26,7 @@
                 @endphp
 
                 @if ($hasAdvanceSegment)
-                    <a href="{{ route('advance-segmentation.index') }}" class="btn btn-primary ms-auto">
+                    <a href="{{ route('advance-segmentation.create') }}" class="btn btn-primary ms-auto">
                         <i class="fas fa-bullseye-arrow"></i> Advance Segment
                     </a>
                 @endif
