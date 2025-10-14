@@ -13,6 +13,7 @@ class UrlShorter extends Model
     protected $table = 'url_shorter';
 
     protected $fillable = [
+        'domain', // store domain name
         'target_url',
         'short_url',
         'prompt',

@@ -13,6 +13,7 @@ return new class extends Migration
     {
         Schema::create('url_shorter', function (Blueprint $table) {
             $table->id();
+            $table->string('domain')->default('default.com');
             $table->string('target_url')->unique();
             $table->string('short_url')->unique();
             $table->string('prompt',225)->nullable();
