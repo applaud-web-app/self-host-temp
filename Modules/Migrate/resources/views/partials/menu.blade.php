@@ -5,7 +5,7 @@
     </a>
     <ul aria-expanded="false">
         <li>
-            <a href="{{ route('migrate.index') }}">
+            <a href="{{ route('migrate.import') }}">
                 <span class="nav-text">Import</span>
             </a>
         </li>
