@@ -314,7 +314,7 @@ class NewsHubController extends Controller
                 Cache::forget("apsh_cfg_{$domainName}");
             }
 
-            return back()->with('success','News Roll saved successfully.');
+            return redirect()->route('news-hub.index')->with('success','News Roll saved successfully.');
         } catch (\Throwable $th) {
             return redirect()->back()->with('error','Error : '.$th->getMessage());
         }
