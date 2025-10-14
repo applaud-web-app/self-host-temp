@@ -18,11 +18,22 @@
 @section('content')
 <section class="content-body" id="create_segmentation_page">
     <div class="container-fluid">
-        <div class="d-flex flex-wrap align-items-center text-head mb-3">
+        <div class="d-flex flex-wrap align-items-center justify-content-between text-head mb-3">
             <h2 class="mb-0">Add New Segment</h2>
-            <a href="{{ route('segmentation.view') }}" class="btn btn-secondary ms-auto">
-                <i class="fas fa-arrow-left me-1"></i>Back to List
-            </a>
+            <div>
+                @php
+                    $hasAdvanceSegment = App\Models\Addon::where('preferred_name', 'AdvanceSegmentation')->where('status', 'installed')->exists();
+                @endphp
+
+                @if ($hasAdvanceSegment)
+                    <a href="{{ route('advance-segmentation.index') }}" class="btn btn-primary ms-auto">
+                        <i class="fas fa-bullseye-arrow"></i> Advance Segment
+                    </a>
+                @endif
+                <a href="{{ route('segmentation.view') }}" class="btn btn-secondary ms-auto">
+                    <i class="fas fa-arrow-left me-1"></i> Back to List
+                </a>
+            </div>
         </div>
         <div class="row">
             <!-- FORM COLUMN -->
