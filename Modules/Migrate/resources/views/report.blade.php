@@ -64,7 +64,7 @@
             <div class="d-flex flex-wrap align-items-center text-head">
                 <h2 class="mb-3 me-auto">Migrate Campaign Reports</h2>
                 <div class="mb-3">
-                    <a href="{{ route('migrate.index') }}" class="btn btn-primary">
+                    <a href="{{ route('migrate.send-notification') }}" class="btn btn-primary">
                         <i class="far fa-plus-circle me-2"></i> Add New
                     </a>
                 </div>

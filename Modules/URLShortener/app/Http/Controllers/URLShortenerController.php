@@ -12,7 +12,7 @@ use App\Models\PushConfig;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\URL;
-
+use Illuminate\Support\Facades\DB;
 
 class URLShortenerController extends Controller
 {
@@ -24,43 +24,73 @@ class URLShortenerController extends Controller
     public function youtube(Request $request)
     {
         if ($request->ajax()) {
-            $query = UrlShorter::where('type', 'yt')
-                ->select(['id', 'target_url', 'short_url', 'created_at', 'status']);
+            // 1) Aggregate subscribers by normalized domain (strip leading '@'), status=1
+            $subsAgg = DB::table('push_subscriptions_head as p')
+                ->select([
+                    DB::raw("TRIM(LEADING '@' FROM p.domain) as handle"),   // normalize @Netflix -> Netflix
+                    DB::raw('COUNT(*) as total_subscribers')
+                ])
+                ->where('p.status', 1)
+                ->groupBy('handle');
 
-            // Unified text search across channel handle (@handle), full target_url, and short_url
+            // 2) Extract channel handle from url_shorter.target_url ONCE (without '@')
+            $urlsWithHandle = DB::table('url_shorter as u')
+                ->where('u.type', 'yt')
+                ->select([
+                    'u.id',
+                    'u.target_url',
+                    'u.short_url',
+                    'u.created_at',
+                    'u.status',
+                    DB::raw("
+                        SUBSTRING_INDEX(
+                            SUBSTRING_INDEX(SUBSTRING_INDEX(u.target_url, '?', 1), '/@', -1),
+                            '/', 1
+                        ) as handle
+                    ")
+                ]);
+
+            // 3) Join derived tables on normalized handle
+            $query = DB::query()
+                ->fromSub($urlsWithHandle, 'u')
+                ->leftJoinSub($subsAgg, 'psh', function ($join) {
+                    $join->on('u.handle', '=', 'psh.handle');
+                })
+                ->select([
+                    'u.id',
+                    'u.target_url',
+                    'u.short_url',
+                    'u.created_at',
+                    'u.status',
+                    DB::raw('COALESCE(psh.total_subscribers, 0) as total_subscribers'),
+                ]);
+
+            // --- Filters/search ---
             if ($request->filled('search_term')) {
                 $term = trim($request->search_term);
-
-                // If the user types with @, normalize both cases
                 $cleanHandle = ltrim($term, '@');
-
                 $query->where(function ($q) use ($term, $cleanHandle) {
-                    // Match full target URL
-                    $q->where('target_url', 'like', '%' . $term . '%')
-                      // Match @handle inside the URL
-                      ->orWhere('target_url', 'like', '%@' . $cleanHandle . '%')
-                      // Match short URL
-                      ->orWhere('short_url', 'like', '%' . $term . '%');
+                    $q->where('u.target_url', 'like', '%' . $term . '%')
+                    ->orWhere('u.target_url', 'like', '%@' . $cleanHandle . '%')
+                    ->orWhere('u.short_url', 'like', '%' . $term . '%')
+                    ->orWhere('u.handle', 'like', '%' . $cleanHandle . '%');
                 });
             }
 
-            // Filter by exact channel from dropdown (Select2)
             if ($request->filled('channel_list')) {
-                $selected = ltrim($request->channel_list, '@'); // accept with/without '@'
-                $query->where('target_url', 'like', '%@' . $selected . '%');
+                $selected = ltrim($request->channel_list, '@');
+                $query->where('u.handle', $selected);
             }
 
-            // Filter by status
             if ($request->filled('filter_status')) {
-                $status = (int) $request->filter_status;
-                $query->where('status', $status);
+                $query->where('u.status', (int) $request->filter_status);
             }
 
             return DataTables::of($query)
                 ->addIndexColumn()
                 ->editColumn('target_url', function ($row) {
-                    // Extract @channelname and render a link + copy icon
                     $channelName = preg_replace('/^https?:\/\/(www\.)?youtube\.com\/@/i', '', $row->target_url);
+                    $channelName = preg_replace('#/.*$#', '', $channelName);
                     $channelAnchor = '<a href="' . e($row->target_url) . '" target="_blank">@' . e($channelName) . '</a>';
                     $copyBtn = '<button type="button" class="btn btn-link p-0 ms-2 copy-url" data-url="' . e($row->target_url) . '" title="Copy channel URL"><i class="far fa-copy"></i></button>';
                     return $channelAnchor . $copyBtn;
@@ -71,18 +101,17 @@ class URLShortenerController extends Controller
                     $copyBtn = '<button type="button" class="btn btn-link p-0 ms-2 copy-url" data-url="' . e($shortLink) . '" title="Copy short URL"><i class="far fa-copy"></i></button>';
                     return $shortAnchor . $copyBtn;
                 })
-                ->editColumn('created_at', function ($row) {
-                    return $row->created_at->format('d-M, Y');
-                })
+                ->editColumn('created_at', fn($row) => \Carbon\Carbon::parse($row->created_at)->format('d-M, Y'))
+                ->addColumn('total_subscribers', fn($row) => (int) $row->total_subscribers)
                 ->addColumn('status', function ($row) {
                     $checked = $row->status == 1 ? 'checked' : '';
                     return '<div class="form-check form-switch">
                                 <input class="form-check-input status_input" type="checkbox" role="switch" ' . $checked . ' data-id="' . e($row->id) . '">
                             </div>';
                 })
-                ->addColumn('actions', function ($row) {
-                    return '<button type="button" class="btn btn-sm btn-danger" onclick="deleteUrl(' . e($row->id) . ')" title="Delete"> <i class="fas fa-trash"></i></button>';
-                })
+                ->addColumn('actions', fn($row) =>
+                    '<button type="button" class="btn btn-sm btn-danger" onclick="deleteUrl(' . e($row->id) . ')" title="Delete"><i class="fas fa-trash"></i></button>'
+                )
                 ->rawColumns(['target_url', 'short_url', 'status', 'actions'])
                 ->make(true);
         }
@@ -243,13 +272,15 @@ class URLShortenerController extends Controller
                 return PushConfig::firstOrFail();
             });
 
-            // ---- domain value for API payload ----
-            // if a YouTube handle is embedded, use '@handle'; otherwise host of target; fallback to current host
-            $domainForApi = parse_url($urlEntry->target_url ?? '', PHP_URL_HOST) ?: $request->getHost();
-            if ($urlEntry->type === 'yt' && is_string($urlEntry->target_url)) {
-                if (preg_match('/@([A-Za-z0-9._-]+)/', $urlEntry->target_url, $m)) {
-                    $domainForApi = '@' . $m[1];
+            if($urlEntry->type === 'yt'){
+                $domainForApi = parse_url($urlEntry->target_url ?? '', PHP_URL_HOST) ?: $request->getHost();
+                if ($urlEntry->type === 'yt' && is_string($urlEntry->target_url)) {
+                    if (preg_match('/@([A-Za-z0-9._-]+)/', $urlEntry->target_url, $m)) {
+                        $domainForApi = '@' . $m[1];
+                    }
                 }
+            }else{
+                $domainForApi = $urlEntry->short_url;
             }
 
             $defaultParent = $urlEntry->domain ?? 'default.com';
@@ -273,50 +304,67 @@ class URLShortenerController extends Controller
     public function link(Request $request)
     {
         if ($request->ajax()) {
-            $query = UrlShorter::where('type', 'url')->select(['id', 'target_url', 'short_url', 'created_at', 'status']);
+
+            // Filter early to shrink LEFT side before join
+            $base = DB::table('url_shorter as u')->where('u.type', 'url');
 
             if ($request->filled('search_term')) {
                 $term = trim($request->search_term);
-
-                $query->where(function ($q) use ($term) {
-                    $q->where('target_url', 'like', '%' . $term . '%')->orWhere('short_url', 'like', '%' . $term . '%');
+                $base->where(function ($q) use ($term) {
+                    $q->where('u.target_url', 'like', "%{$term}%")
+                    ->orWhere('u.short_url',  'like', "%{$term}%");
                 });
             }
 
-            // Filter by status
             if ($request->filled('filter_status')) {
-                $status = (int) $request->filter_status;
-                $query->where('status', $status);
+                $base->where('u.status', (int) $request->filter_status);
             }
 
-            return DataTables::of($query)
+            // Simple LEFT JOIN + COUNT — nothing fancy
+            $query = $base
+                ->leftJoin('push_subscriptions_head as p', function ($join) {
+                    $join->on('p.domain', '=', 'u.short_url')
+                        ->where('p.status', 1);
+                })
+                ->groupBy('u.id') // ensures one row per short link
+                ->select([
+                    'u.id',
+                    DB::raw('MAX(u.target_url)  as target_url'),
+                    DB::raw('MAX(u.short_url)   as short_url'),
+                    DB::raw('MAX(u.status)      as status'),
+                    DB::raw('MAX(u.created_at)  as created_at'),
+                    DB::raw("DATE_FORMAT(MAX(u.created_at), '%d-%b, %Y') as created_at_fmt"),
+                    DB::raw('COUNT(p.id)        as total_subscribers'),
+                ]);
+
+            return \DataTables::of($query)
                 ->addIndexColumn()
                 ->editColumn('target_url', function ($row) {
-                    $channelAnchor = '<a href="' . e($row->target_url) . '" target="_blank">' . e($row->target_url) . '</a>';
-                    $copyBtn = '<button type="button" class="btn btn-link p-0 ms-2 copy-url" data-url="' . e($row->target_url) . '" title="Copy channel URL"><i class="far fa-copy"></i></button>';
-                    return $channelAnchor . $copyBtn;
+                    $a = '<a href="'.e($row->target_url).'" target="_blank">'.e($row->target_url).'</a>';
+                    $copy = '<button type="button" class="btn btn-link p-0 ms-2 copy-url" data-url="'.e($row->target_url).'" title="Copy URL"><i class="far fa-copy"></i></button>';
+                    return $a . $copy;
                 })
                 ->editColumn('short_url', function ($row) {
                     $shortLink = route('api.shorturl.subs', ['type' => 'url', 'code' => $row->short_url]);
-                    $shortAnchor = '<a href="' . e($shortLink) . '" target="_blank">' . e($shortLink) . '</a>';
-                    $copyBtn = '<button type="button" class="btn btn-link p-0 ms-2 copy-url" data-url="' . e($shortLink) . '" title="Copy short URL"><i class="far fa-copy"></i></button>';
-                    return $shortAnchor . $copyBtn;
+                    $a = '<a href="'.e($shortLink).'" target="_blank">'.e($shortLink).'</a>';
+                    $copy = '<button type="button" class="btn btn-link p-0 ms-2 copy-url" data-url="'.e($shortLink).'" title="Copy short URL"><i class="far fa-copy"></i></button>';
+                    return $a . $copy;
                 })
-                ->editColumn('created_at', function ($row) {
-                    return $row->created_at->format('d-M, Y');
-                })
+                ->editColumn('created_at', fn($row) => $row->created_at_fmt)
+                ->addColumn('total_subscribers', fn($row) => (int) $row->total_subscribers)
                 ->addColumn('status', function ($row) {
-                    $checked = $row->status == 1 ? 'checked' : '';
+                    $checked = ((int)$row->status === 1) ? 'checked' : '';
                     return '<div class="form-check form-switch">
-                                <input class="form-check-input status_input" type="checkbox" role="switch" ' . $checked . ' data-id="' . e($row->id) . '">
+                            <input class="form-check-input status_input" type="checkbox" role="switch" '.$checked.' data-id="'.e($row->id).'">
                             </div>';
                 })
-                ->addColumn('actions', function ($row) {
-                    return '<button type="button" class="btn btn-sm btn-danger" onclick="deleteUrl(' . e($row->id) . ')" title="Delete"> <i class="fas fa-trash"></i></button>';
-                })
-                ->rawColumns(['target_url', 'short_url', 'status', 'actions'])
+                ->addColumn('actions', fn($row) =>
+                    '<button type="button" class="btn btn-sm btn-danger" onclick="deleteUrl('.e($row->id).')" title="Delete"><i class="fas fa-trash"></i></button>'
+                )
+                ->rawColumns(['target_url','short_url','status','actions'])
                 ->make(true);
         }
+
         return view('urlshortener::link');
     }
 

@@ -49,6 +49,7 @@
                                 <th>#</th>
                                 <th>Target URL</th>
                                 <th>Short URL</th>
+                                <th>Total Subscribers</th>
                                 <th>Created At</th>
                                 <th>Status</th>
                                 <th>Actions</th>
@@ -99,6 +100,7 @@ $(document).ready(function() {
             { data: 'DT_RowIndex', name: 'DT_RowIndex', orderable: false, searchable: false },
             { data: 'target_url', name: 'target_url', orderable: false },
             { data: 'short_url',  name: 'short_url',  orderable: false },
+            { data: 'total_subscribers',  name: 'total_subscribers',  orderable: false },
             { data: 'created_at', name: 'created_at' },
             { data: 'status',     name: 'status', orderable: false },
             { data: 'actions',    name: 'actions', orderable: false, searchable: false }
