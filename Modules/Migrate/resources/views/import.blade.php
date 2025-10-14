@@ -45,7 +45,7 @@
                     <li><code>P256dh</code> – Subscription’s P-256 ECDH client key</li>
                     <li><code>Auth</code> – Subscription’s authentication secret</li>
                     <li><code>IP Address</code> – (optional) last known IP address</li>
-                    <li><code>Migrate From</code> – Source system (e.g. <em>aplu</em>, <em>larapush</em>, default)</li>
+                    <li><code>Migrate From</code> – Source system (e.g. <em>aplu</em>, <em>larapush</em>, etc)</li>
                 </ul>
 
                 <h2 class="mb-3">Old Push Service Worker File</h2>
