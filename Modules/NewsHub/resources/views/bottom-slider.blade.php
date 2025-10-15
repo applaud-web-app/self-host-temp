@@ -53,13 +53,19 @@
 
         .slider-item img {
             width: 120px;
-            height: auto;
+            height: 70px;
             object-fit: cover;
             border-radius: 4px;
             margin-right: 10px;
         }
 
         .slider-text {
+            font-size: 14px;
+            font-weight: 600;
+            line-height: 1.4;
+        }
+
+        .slider-text a{
             font-size: 14px;
             font-weight: 600;
             line-height: 1.4;
@@ -127,6 +133,10 @@
             }
 
             .slider-text {
+                font-size: 13px;
+            }
+
+            .slider-text a{
                 font-size: 13px;
             }
         }
@@ -413,8 +423,11 @@
                           const colors = ["#007BFF", "#28A745", "#E83E8C", "#FD7E14", "#6F42C1"];
                           const rColor = () => colors[Math.floor(Math.random() * colors.length)];
                           items.forEach(it => {
-                              const img = it.image || 'https://via.placeholder.com/120x80?text=No+Image';
-                              const t = it.title || 'Untitled';
+                                const img = it.image || 'https://via.placeholder.com/120x80?text=No+Image';
+                                let t = it.title || 'Untitled';
+                                if (t.length > 80) {
+                                    t = t.substring(0, 80) + '…';
+                                }
                               html += `
                                 <div class="slider-item">
                                   <img src="${esc(img)}" alt="news">

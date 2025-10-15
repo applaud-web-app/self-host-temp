@@ -269,8 +269,8 @@ function apluselfhost(cfg){
 
       var mask = h("div",{class:"aplu-push-self-host-apsh-wrap aplu-push-self-host-apsh-flask-mask"});
       var card = h("div",{class:"aplu-push-self-host-apsh-card aplu-push-self-host-apsh-flask"});
-      var header = h("div",{class:"aplu-push-self-host-apsh-header",style:{background:flask.theme_color||"#fd683e"}},[
-        h("div",{html:esc(flask.title||"News Flask")}),
+      var header = h("div",{class:"aplu-push-self-host-apsh-header",style:{background:flask.theme_color||"#fd683e",textAlign:"center"}},[
+        h("div",{style:{width:"100%"}}, {html:esc(flask.title||"News Flask")}),
         h("button",{class:"aplu-push-self-host-apsh-close",onclick:function(){ hideFlask(); }}, "×")
       ]);
       var body = h("div",{class:"aplu-push-self-host-apsh-body-flask"},[
