@@ -369,6 +369,7 @@ function apluselfhost(cfg){
       }catch(_){ return []; }
     }
 
+    // Replace the entire initBottomSlider function with this updated version:
     (function initBottomSlider(){
       if(!cfg.sliders || !cfg.sliders.length) return;
       var sl = cfg.sliders[0];
@@ -376,10 +377,71 @@ function apluselfhost(cfg){
 
       var bar = h("div",{class:"aplu-push-self-host-apsh-wrap aplu-push-self-host-apsh-slider",style:{borderTopColor: sl.theme_color||"#000"}});
       var track = h("div",{class:"aplu-push-self-host-apsh-slider-track"});
-      var close = h("span",{class:"aplu-push-self-host-apsh-slider-x",onclick:function(){ bar.style.display="none"; }}, "×");
-      var prev = h("button",{class:"aplu-push-self-host-apsh-arrow aplu-push-self-host-apsh-prev",style:{background: sl.theme_color||"#000", borderColor: sl.theme_color||"#000"}, onclick:function(){ track.scrollBy({left:-320,behavior:"smooth"}) }}, "‹");
-      var next = h("button",{class:"aplu-push-self-host-apsh-arrow aplu-push-self-host-apsh-next",style:{background: sl.theme_color||"#000", borderColor: sl.theme_color||"#000"}, onclick:function(){ track.scrollBy({left:320,behavior:"smooth"}) }}, "›");
+      var close = h("span",{class:"aplu-push-self-host-apsh-slider-x",onclick:function(){ 
+        bar.style.display="none";
+        if(autoScrollInterval) clearInterval(autoScrollInterval);
+      }}, "×");
+      var prev = h("button",{class:"aplu-push-self-host-apsh-arrow aplu-push-self-host-apsh-prev",style:{background: sl.theme_color||"#000", borderColor: sl.theme_color||"#000"}, onclick:function(){ 
+        track.scrollBy({left:-320,behavior:"smooth"});
+        resetAutoScroll();
+      }}, "‹");
+      var next = h("button",{class:"aplu-push-self-host-apsh-arrow aplu-push-self-host-apsh-next",style:{background: sl.theme_color||"#000", borderColor: sl.theme_color||"#000"}, onclick:function(){ 
+        track.scrollBy({left:320,behavior:"smooth"});
+        resetAutoScroll();
+      }}, "›");
       bar.appendChild(prev); bar.appendChild(next); bar.appendChild(close); bar.appendChild(track); B.appendChild(bar);
+
+      var autoScrollInterval = null;
+      var autoScrollSpeed = 3000; // 3 seconds per slide
+
+      function startAutoScroll(){
+        if(autoScrollInterval) clearInterval(autoScrollInterval);
+        autoScrollInterval = setInterval(function(){
+          var maxScroll = track.scrollWidth - track.clientWidth;
+          var currentScroll = track.scrollLeft;
+          
+          // Check if we're at the end
+          if(currentScroll >= maxScroll - 5){
+            // Reset to beginning for infinite loop
+            track.scrollTo({left: 0, behavior: "smooth"});
+          } else {
+            // Scroll to next item
+            track.scrollBy({left: 320, behavior: "smooth"});
+          }
+        }, autoScrollSpeed);
+      }
+
+      function resetAutoScroll(){
+        if(autoScrollInterval) clearInterval(autoScrollInterval);
+        // Restart auto-scroll after user interaction
+        setTimeout(startAutoScroll, autoScrollSpeed);
+      }
+
+      // Pause auto-scroll on hover
+      track.addEventListener('mouseenter', function(){
+        if(autoScrollInterval) clearInterval(autoScrollInterval);
+      });
+
+      track.addEventListener('mouseleave', function(){
+        startAutoScroll();
+      });
+
+      // Handle manual scrolling
+      var scrollTimeout;
+      track.addEventListener('scroll', function(){
+        clearTimeout(scrollTimeout);
+        scrollTimeout = setTimeout(function(){
+          var maxScroll = track.scrollWidth - track.clientWidth;
+          var currentScroll = track.scrollLeft;
+          
+          // If scrolled to end, loop back to start
+          if(currentScroll >= maxScroll - 5){
+            setTimeout(function(){
+              track.scrollTo({left: 0, behavior: "smooth"});
+            }, 1000);
+          }
+        }, 150);
+      });
 
       fetchFeed(sl.feed_url).then(function(items){
         if(!items.length){ return; }
@@ -389,7 +451,11 @@ function apluselfhost(cfg){
         list = limit(list, count);
 
         if(!list.length) return;
-        list.forEach(function(it){
+        
+        // Clone items for seamless infinite scroll
+        var itemsToRender = list.concat(list);
+        
+        itemsToRender.forEach(function(it){
           var item = h("div",{class:"aplu-push-self-host-apsh-slider-item"},[
             h("img",{src:it.image||"",alt:""}),
             h("div",{class:"aplu-push-self-host-apsh-slider-text"},[
@@ -411,6 +477,9 @@ function apluselfhost(cfg){
         });
 
         bar.style.display="block";
+        
+        // Start auto-scroll after content is loaded
+        setTimeout(startAutoScroll, 1000);
       });
     })();
 
