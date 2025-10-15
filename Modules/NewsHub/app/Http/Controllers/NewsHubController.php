@@ -153,7 +153,7 @@ class NewsHubController extends Controller
                 $script = '<script async src="'.e($url).'"></script>';
 
                 if ($row->nr_id || $row->nf_id || $row->nbs_id) {
-                    return '<button class="btn btn-info btn-sm js-copy" data-clipboard-text="'.e($script).'" title="Copy Integration Code"><i class="fas fa-code"></i></button>';
+                    return '<button class="btn btn-info btn-sm js-copy" data-clipboard-text="'.e($script).'" title="Copy Integration Code" data-bs-toggle="modal" data-bs-target="#openIntegrationModal"><i class="fas fa-code"></i></button>';
                 }
                 else {
                     return '<button class="btn btn-danger btn-sm" title="Please setup at least one component"><i class="fas fa-ban"></i></button>';
