@@ -163,7 +163,7 @@ function apluselfhost(cfg){
 .aplu-push-self-host-apsh-arrow{position:absolute;top:50%;transform:translateY(-50%);width:26px;height:26px;border-radius:6px;border:1px solid currentColor;background:currentColor;color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:16px;}
 .aplu-push-self-host-apsh-prev{left:6px}
 .aplu-push-self-host-apsh-next{right:6px}
-.aplu-push-self-host-apsh-cat-badge{position:absolute; right:0px; bottom:0px;padding:4px 8px; border-bottom-right-radius:5px;font-size:10px; line-height:1; font-weight:700; color:#fff;user-select:none; pointer-events:none;}
+.aplu-push-self-host-apsh-cat-badge{font-family:sans-serif;position:absolute; right:0px; bottom:0px;padding:4px 8px; border-bottom-right-radius:5px;font-size:10px; line-height:1; font-weight:700; color:#fff;user-select:none; pointer-events:none;}
 `;
       var st=h("style",{id:"aplu-push-self-host-style"},css); D.head.appendChild(st);
     }
