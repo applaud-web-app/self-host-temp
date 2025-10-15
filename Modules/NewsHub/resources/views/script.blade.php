@@ -157,8 +157,8 @@ function apluselfhost(cfg){
 .aplu-push-self-host-apsh-slider{position:fixed;left:0;right:0;bottom:0;background:#fff;border-top:2px solid #000;box-shadow:0 -8px 24px rgba(0,0,0,.15);padding:10px 34px;display:none}
 .aplu-push-self-host-apsh-slider-track{display:flex;gap:8px;overflow:hidden;scroll-snap-type:x mandatory}
 .aplu-push-self-host-apsh-slider-item{min-width:355px;max-width:355px;scroll-snap-align:center;background:#F9F9F9;border:1px solid #ddd;border-radius:6px;padding:6px;display:flex;gap:10px;position:relative}
-.aplu-push-self-host-apsh-slider-item img{width:110px;height:72px;object-fit:cover;border-radius:5px}
-.aplu-push-self-host-apsh-slider-text a{font-weight:600;text-decoration:none;color:#222;display: -webkit-box;-webkit-box-orient: vertical;-webkit-line-clamp: 3;overflow: hidden;text-overflow: ellipsis;}
+.aplu-push-self-host-apsh-slider-item img{width:110px;height:70px;object-fit:cover;border-radius:5px}
+.aplu-push-self-host-apsh-slider-text a{font-family:sans-serif;font-size:14px;font-weight:600;text-decoration:none;color:#222;display: -webkit-box;-webkit-box-orient: vertical;-webkit-line-clamp: 3;overflow: hidden;text-overflow: ellipsis;}
 .aplu-push-self-host-apsh-slider-x{position:absolute;top:4px;right:8px;font-size:20px;cursor:pointer;color:#666}
 .aplu-push-self-host-apsh-arrow{position:absolute;top:50%;transform:translateY(-50%);width:26px;height:26px;border-radius:6px;border:1px solid currentColor;background:currentColor;color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:16px;}
 .aplu-push-self-host-apsh-prev{left:6px}
@@ -393,7 +393,7 @@ function apluselfhost(cfg){
           var item = h("div",{class:"aplu-push-self-host-apsh-slider-item"},[
             h("img",{src:it.image||"",alt:""}),
             h("div",{class:"aplu-push-self-host-apsh-slider-text"},[
-              h("a",{href:it.link||"#",target:"_blank",rel:"noopener"},esc(crop(it.title||"Untitled",80)))
+              h("a",{href:it.link||"#",target:"_blank",rel:"noopener"},esc(crop(it.title||"Untitled",70)))
             ])
           ]);
 
