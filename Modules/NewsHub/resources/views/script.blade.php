@@ -160,7 +160,7 @@ function apluselfhost(cfg){
 .aplu-push-self-host-apsh-slider-item img{width:110px;height:70px;object-fit:cover;border-radius:5px}
 .aplu-push-self-host-apsh-slider-text a{font-family:sans-serif;font-size:14px;font-weight:600;text-decoration:none;color:#222;display: -webkit-box;-webkit-box-orient: vertical;-webkit-line-clamp: 3;overflow: hidden;text-overflow: ellipsis;}
 .aplu-push-self-host-apsh-slider-x{position:absolute;top:4px;right:8px;font-size:20px;cursor:pointer;color:#666}
-.aplu-push-self-host-apsh-arrow{font-family:sans-serif;position:absolute;top:50%;transform:translateY(-50%);width:26px;height:26px;border-radius:6px;border:1px solid currentColor;background:currentColor;color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:16px;padding:10px;}
+.aplu-push-self-host-apsh-arrow{font-family:sans-serif;position:absolute;top:50%;transform:translateY(-50%);width:26px;height:26px;border-radius:6px;border:1px solid currentColor;background:currentColor;color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:18px;padding:10px;line-height:15px;}
 .aplu-push-self-host-apsh-prev{left:6px}
 .aplu-push-self-host-apsh-next{right:6px}
 .aplu-push-self-host-apsh-cat-badge{font-family:sans-serif;position:absolute; right:0px; bottom:0px;padding:4px 8px; border-bottom-right-radius:5px;font-size:10px; line-height:1; font-weight:700; color:#fff;user-select:none; pointer-events:none;}
