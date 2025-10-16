@@ -89,8 +89,6 @@ class NewsHubController extends Controller
             ->addColumn('domain', function ($row) {
                 return '<a href="https://' . e($row->domain) . '" target="_blank">' . e($row->domain) . '</a>';
             })
-            // ->addColumn('nr_title', fn ($row) => $row->nr_title ? e($row->nr_title) : '<span class="text-muted">---</span>')
-            // ->addColumn('nf_title', fn ($row) => $row->nf_title ? e($row->nf_title) : '<span class="text-muted">---</span>')
             ->addColumn('nr_status', function ($row) {
                 $checked  = (int) $row->nr_status === 1 ? 'checked' : '';
                 $disabled = is_null($row->nr_id) ? 'disabled' : '';
