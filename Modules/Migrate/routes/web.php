@@ -12,4 +12,7 @@ Route::prefix('migrate')->middleware(['auth'])->name('migrate.')->controller(Mig
     Route::post('/store', 'store')->name('store');
     Route::get('/task-tracker', 'taskTracker')->name('task-tracker');
     Route::get('/empty-tracker', 'emptyTracker')->name('empty-tracker');
+    Route::get('/overview', 'overview')->name('overview');
+    Route::get('/fetch-migrate-data', 'fetchMigrateData')->name('fetch-migrate-data');
+    Route::post('/validate-migrate-subs', 'validateMigrateSubs')->name('validate-migrate-subs');
 });

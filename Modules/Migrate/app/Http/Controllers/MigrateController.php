@@ -15,6 +15,9 @@ use Illuminate\Support\Facades\Http;
 use Yajra\DataTables\Facades\DataTables;
 use Carbon\Carbon;
 use Illuminate\Support\Str;
+use Modules\Migrate\Models\MigrateSubs;
+use Modules\Migrate\Jobs\ValidateMigrateSubscriber;
+use Illuminate\Support\Facades\Cache;
 
 class MigrateController extends Controller
 {
@@ -112,9 +115,7 @@ class MigrateController extends Controller
         $query = DB::table('notifications as n')
             ->leftJoin('domains as d', 'd.id', '=', 'n.domain_id')
             ->leftJoin('push_event_counts as pec', function ($join) {
-                $join->on('pec.message_id', '=', 'n.message_id')
-                    //  ->on('pec.domain',      '=', 'd.name')
-                     ->where('pec.event', 'click');
+                $join->on('pec.message_id', '=', 'n.message_id')->where('pec.event', 'click');
             })
             ->whereIn('n.segment_type', ['migrate'])
             ->select([
@@ -353,5 +354,92 @@ class MigrateController extends Controller
             return redirect()->route('migrate.task-tracker')->withErrors(['general' => 'Failed to delete task records.']);
         }
     }
+
+    public function overview()
+    {
+        return view('migrate::overview');
+    }
+
+    public function fetchMigrateData(Request $request)
+    {
+        try {
+            $validated = $request->validate([
+                'domain_id' => 'required|integer|exists:domains,id'
+            ]);
+
+            $domainId = $validated['domain_id'];
+
+            $counts = MigrateSubs::selectRaw('migration_status, COUNT(*) as count')
+                                ->where('domain_id', $domainId)
+                                ->groupBy('migration_status')
+                                ->get()
+                                ->pluck('count', 'migration_status')
+                                ->toArray();
+
+            $totalSubscribers = MigrateSubs::where('domain_id', $domainId)->count();
+            $migratedSubscribers = $counts['migrated'] ?? 0;
+            $failedSubscribers = $counts['failed'] ?? 0;
+            $pendingSubscribers = $counts['pending'] ?? 0;
+
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'totalSubscribers' => $totalSubscribers,
+                    'migratedSubscribers' => $migratedSubscribers,
+                    'failedSubscribers' => $failedSubscribers,
+                    'pendingSubscribers' => $pendingSubscribers,
+                ]
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to fetch subscriber data. Please try again.'
+            ], 500);
+        }
+    }
+
+    public function validateMigrateSubs(Request $request)
+    {
+        try {
+            $validated = $request->validate([
+                'domain_id' => 'required|integer|exists:domains,id'
+            ]);
+
+            $domainId = $validated['domain_id'];
+            $domain = Domain::findOrFail($domainId);
+
+            $cacheKey = 'validate-subscriber-' . $domain->id;
+            if (Cache::has($cacheKey)) {
+                return response()->json(['success' => false, 'message' => 'You can only validate once every 5 minutes. Please try again later.'], 400);
+            }
+
+            Cache::put($cacheKey, true, now()->addMinutes(5));
+
+            // Run the job only if there are subscribers for the domain
+            $migrateSubsCount = MigrateSubs::where('migration_status', 'pending')->where('domain_id', $domainId)->count();
+            if ($migrateSubsCount > 0) {
+                // Create TaskTracker record
+                $task = TaskTracker::create([
+                    'task_name' => 'Validate ' . $domain->name . ' Subscriber',
+                    'status' => TaskTracker::STATUS_PENDING,
+                    'started_at' => now(),
+                    'completed_at' => null,
+                    'message' => 'Validation started.',
+                    'file_path' => '---',
+                ]);
+
+                dispatch(new ValidateMigrateSubscriber($domain, $task->id));
+                $task->status = TaskTracker::STATUS_PROCESSING;
+                $task->save();
+
+                return response()->json(['success' => true]);
+            } 
+
+            return response()->json(['success' => false, 'message' => 'No subscribers to validate.'], 500);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => 'An error occurred: ' . $e->getMessage()], 500);
+        }
+    }
+
 
 }

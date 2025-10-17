@@ -10,6 +10,11 @@
             </a>
         </li>
         <li>
+            <a href="{{ route('migrate.overview') }}">
+                <span class="nav-text">Overview</span>
+            </a>
+        </li>
+        <li>
             <a href="{{ route('migrate.send-notification') }}">
                 <span class="nav-text">Send Notification</span>
             </a>
