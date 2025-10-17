@@ -315,9 +315,6 @@ class NotificationController extends Controller
         ]);
     }
 
-    /**
-     * Extracts title, meta description and og:image (or link[rel=image_src]) via regex
-     */
     protected function parseMetaRegex(string $html): array
     {
         // helper to trim + decode
@@ -383,6 +380,8 @@ class NotificationController extends Controller
             'banner_icon'       => 'nullable|url',
             'schedule_type'     => 'required|in:Instant,Schedule',
             'one_time_datetime' => 'required_if:schedule_type,Schedule|nullable|date',
+            'multiple_datetimes' => 'nullable|array',
+            'multiple_datetimes.*' => 'nullable|date',
             'segment_type'      => 'required|in:all,particular',
             'domain_name'       => 'required_if:segment_type,all|array|min:1',
             'domain_name.*'     => 'required_if:segment_type,all|string|exists:domains,name',
@@ -394,6 +393,7 @@ class NotificationController extends Controller
             'segment_id'        => 'nullable|required_if:segment_type,particular|exists:segments,id',
         ], [], [
             'one_time_datetime' => 'one-time date & time',
+            'multiple_datetimes' => 'multiple time slots',
             'btn_1_title'       => 'Button 1 title',
             'btn_1_url'         => 'Button 1 URL',
             'btn_title_2'       => 'Button 2 title',
@@ -428,8 +428,18 @@ class NotificationController extends Controller
         }
 
         try {
-            // Dispatch the job for notification creation and job dispatching
-            dispatch(new CreateAndDispatchNotifications($data, $ids, $data['segment_type']))->onQueue('create-notifications');
+
+            $timeSlots = $data['multiple_datetimes'] ?? [];
+            
+            if ($data['schedule_type'] === 'Schedule' && !empty($timeSlots)) {
+
+                foreach ($timeSlots as $timeSlot) {
+                    $data['one_time_datetime'] = $timeSlot;
+                    dispatch(new CreateAndDispatchNotifications($data, $ids, $data['segment_type']))->onQueue('create-notifications');
+                }
+            } else {
+                dispatch(new CreateAndDispatchNotifications($data, $ids, $data['segment_type']))->onQueue('create-notifications');
+            }
 
             return redirect()->route('notification.view')->with('success', "Notification campaign queued.");
         } catch (\Throwable $e) {

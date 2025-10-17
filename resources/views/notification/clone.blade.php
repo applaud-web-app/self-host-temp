@@ -315,6 +315,11 @@
                                                 <i class="fas fa-history"></i> One Time
                                             </a>
                                         </li>
+                                        <li class="nav-item">
+                                            <a class="nav-link" data-bs-toggle="tab" href="#multiple_time">
+                                                <i class="fas fa-clock"></i> Multiple Time
+                                            </a>
+                                        </li>
                                     </ul>
                                     <div class="tab-content">
                                         <!-- One Time Tab -->
@@ -336,6 +341,35 @@
                                                     </div>
                                                 </div>
                                             </div>
+                                        </div>
+                                        <!-- Multiple Time Tab -->
+                                        <div class="tab-pane fade mb-3 p-3 border" id="multiple_time" role="tabpanel"
+                                            aria-labelledby="multiple_time_tab">
+                                            <div id="multipleContainer">
+                                                <!-- Initial Slot (slot 0) -->
+                                                <div class="mb-3 multiple-slot" data-index="0">
+                                                    <label for="multiple_datetime_0">Schedule Slot #1 <span
+                                                            class="text-danger">*</span></label>
+                                                    <div class="input-group">
+                                                        <input type="datetime-local"
+                                                            class="form-control multiple-datetime"
+                                                            name="multiple_datetimes[]" id="multiple_datetime_0"
+                                                            min="{{ \Carbon\Carbon::now()->format('Y-m-d\TH:i') }}"
+                                                            required>
+                                                        <button type="button"
+                                                            class="btn btn-outline-danger remove-slot-btn"
+                                                            style="display: none;">
+                                                            <i class="fas fa-trash"></i>
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <button type="button" class="btn btn-sm btn-outline-primary"
+                                                id="addMoreSlotBtn" style="margin-bottom: .75rem;">
+                                                <i class="fas fa-plus"></i> Add Another Slot
+                                            </button>
+                                            <p class="small text-danger">You can add up to 5 slots. Slots must not be
+                                                identical.</p>
                                         </div>
                                     </div>
                                 </div>
@@ -497,6 +531,108 @@
 @push('scripts')
     <script src="{{ asset('vendor/select2/js/select2.full.min.js') }}"></script>
     
+    <script>
+        $(document).ready(function() {
+            // Maximum number of slots
+            const MAX_SLOTS = 5;
+
+            // Cache selectors
+            const $multipleContainer = $('#multipleContainer');
+            const $addBtn = $('#addMoreSlotBtn');
+
+            // Function to re-index labels & input IDs
+            function refreshSlotLabels() {
+                $multipleContainer.find('.multiple-slot').each(function(idx) {
+                    $(this).attr('data-index', idx);
+                    $(this).find('label').attr('for', 'multiple_datetime_' + idx)
+                        .text('Schedule Slot #' + (idx + 1) + ' ');
+                    $(this).find('input.multiple-datetime')
+                        .attr('id', 'multiple_datetime_' + idx);
+                    // Show remove button on all except index 0
+                    if (idx > 0) {
+                        $(this).find('.remove-slot-btn').show();
+                    } else {
+                        $(this).find('.remove-slot-btn').hide();
+                    }
+                });
+
+                // Hide “Add” button if we reached max
+                if ($multipleContainer.find('.multiple-slot').length >= MAX_SLOTS) {
+                    $addBtn.prop('disabled', true);
+                } else {
+                    $addBtn.prop('disabled', false);
+                }
+            }
+
+            // Initial call (just in case)
+            refreshSlotLabels();
+
+            // Add a new slot
+            $addBtn.on('click', function() {
+                const currentCount = $multipleContainer.find('.multiple-slot').length;
+                if (currentCount < MAX_SLOTS) {
+                    const newIdx = currentCount;
+                    const $newSlot = $(`
+                <div class="mb-3 multiple-slot" data-index="${newIdx}">
+                    <label for="multiple_datetime_${newIdx}">Schedule Slot #${newIdx + 1} <span class="text-danger">*</span></label>
+                    <div class="input-group">
+                        <input 
+                            type="datetime-local" 
+                            class="form-control multiple-datetime" 
+                            name="multiple_datetimes[]" 
+                            id="multiple_datetime_${newIdx}"
+                            min="{{ \Carbon\Carbon::now()->format('Y-m-d\\TH:i') }}"
+                            required>
+                        <button 
+                            type="button" 
+                            class="btn btn-outline-danger remove-slot-btn">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+            `);
+                    $multipleContainer.append($newSlot);
+                    refreshSlotLabels();
+                }
+            });
+
+            // Remove a slot
+            $multipleContainer.on('click', '.remove-slot-btn', function() {
+                $(this).closest('.multiple-slot').remove();
+                refreshSlotLabels();
+            });
+
+            // Client-side check for duplicate datetime before submission
+            $('#notificationform').on('submit', function(e) {
+                // Only check if “Schedule Notification” & “Multiple Time” tab is active
+                if ($('#Schedule').is(':checked') && $('#multiple_time').hasClass('active')) {
+                    const values = [];
+                    let duplicateFound = false;
+
+                    $('.multiple-datetime').each(function() {
+                        const val = $(this).val();
+                        if (val) {
+                            if (values.includes(val)) {
+                                duplicateFound = true;
+                                return false; // break out
+                            }
+                            values.push(val);
+                        }
+                    });
+
+                    if (duplicateFound) {
+                        // iziToast.error({
+                        //     title: "Warning!",
+                        //     message: "You have duplicate schedule slots. Please ensure each slot is unique.",
+                        //     position: "topRight",
+                        // });
+                        e.preventDefault();
+                        return false;
+                    }
+                }
+            });
+        });
+    </script>
     <script>
         function setBannerMode(mode) {
             const $urlGroup = $('#banner_url_group');
@@ -1034,6 +1170,31 @@
                     $(el).removeClass('is-invalid');
                 },
                 submitHandler: function(form) {
+                     if ($('#Schedule').is(':checked') && $('#multiple_time').hasClass('active')) {
+                        const values = [];
+                        let duplicateFound = false;
+
+                        $('.multiple-datetime').each(function() {
+                            const val = $(this).val();
+                            if (val) {
+                                if (values.includes(val)) {
+                                    duplicateFound = true;
+                                    return false; // break out of the loop
+                                }
+                                values.push(val);
+                            }
+                        });
+
+                        if (duplicateFound) {
+                            iziToast.error({
+                                title: "Warning!",
+                                message: "You have duplicate schedule slots. Please ensure each slot is unique.",
+                                position: "topRight",
+                            });
+                            e.preventDefault();
+                            return false; // Prevent form submission
+                        }
+                    }
                     var $btn = $('#sendNotification')
                         .prop('disabled', true)
                         .html('<i class="fas fa-spinner fa-spin me-2"></i> Processing...');

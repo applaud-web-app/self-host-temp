@@ -31,7 +31,7 @@
             display: block;
         }
 
-        .banner-model-img{
+        .banner-model-img {
             height: 140px;
             object-fit: contain;
             width: 140px !important;
@@ -112,11 +112,13 @@
                                             <span>Banner Image</span>
                                             <span class="custom-radio ms-auto d-inline-flex align-items-center gap-1">
                                                 <label class="mb-0">
-                                                    <input type="radio" name="banner_src_type" id="banner_src_url" value="url" checked>
+                                                    <input type="radio" name="banner_src_type" id="banner_src_url"
+                                                        value="url" checked>
                                                     <span class="py-2 px-3" style="font-size:12px;">URL</span>
                                                 </label>
                                                 <label class="mb-0">
-                                                    <input type="radio" name="banner_src_type" id="banner_src_upload" value="upload">
+                                                    <input type="radio" name="banner_src_type" id="banner_src_upload"
+                                                        value="upload">
                                                     <span class="py-2 px-3" style="font-size:12px;">Upload</span>
                                                 </label>
                                             </span>
@@ -127,25 +129,30 @@
                                             <div class="input-group">
                                                 <div id="banner_url_group" class="w-100">
                                                     <div class="input-group">
-                                                        <input type="url" class="form-control" name="banner_image" id="image_input"
+                                                        <input type="url" class="form-control" name="banner_image"
+                                                            id="image_input"
                                                             placeholder="e.g.: https://example.com/image.jpg"
                                                             aria-label="Banner Image URL"
                                                             onchange="changeBanner(this.value)" />
-                                                        <button class="input-group-text" type="button" style="margin:inherit"
-                                                            data-bs-toggle="modal" data-bs-target="#bannerImg"
-                                                            id="choose-banner">
+                                                        <button class="input-group-text" type="button"
+                                                            style="margin:inherit" data-bs-toggle="modal"
+                                                            data-bs-target="#bannerImg" id="choose-banner">
                                                             <i class="fas fa-upload"></i> Choose
                                                         </button>
                                                     </div>
-                                                    <small class="text-muted d-block mt-1">Paste a direct image URL (https://…)</small>
+                                                    <small class="text-muted d-block mt-1">Paste a direct image URL
+                                                        (https://…)</small>
                                                 </div>
 
                                                 <!-- Upload mode -->
                                                 <div id="banner_upload_group" class="w-100" style="display:none">
                                                     <div class="input-group">
-                                                        <input type="file" class="form-control" name="banner_image_file" id="banner_image_file" accept="image/*" disabled>
+                                                        <input type="file" class="form-control"
+                                                            name="banner_image_file" id="banner_image_file"
+                                                            accept="image/*" disabled>
                                                     </div>
-                                                    <small class="text-muted d-block mt-1">Max 1MB. JPG, JPEG, PNG, GIF, WEBP.</small>
+                                                    <small class="text-muted d-block mt-1">Max 1MB. JPG, JPEG, PNG, GIF,
+                                                        WEBP.</small>
                                                 </div>
                                             </div>
                                         </div>
@@ -261,7 +268,8 @@
                             <div class="card-body">
                                 <div class="mb-1">
                                     <label for="segmentSelect" class="form-label">Choose a Segment:</label>
-                                    <select class="form-select select-segment" name="segment_id" id="segmentSelect" required>
+                                    <select class="form-select select-segment" name="segment_id" id="segmentSelect"
+                                        required>
                                         <option disabled selected>Select a segment</option>
                                     </select>
                                 </div>
@@ -277,11 +285,13 @@
                                     <label class="form-check-label" for="select_all_domain">Select All</label>
                                 </div>
                                 <!-- filter box -->
-                                <input type="search" id="domainFilter" class="form-control domain-input" placeholder="Search domains…" style="max-width: 200px;">
+                                <input type="search" id="domainFilter" class="form-control domain-input"
+                                    placeholder="Search domains…" style="max-width: 200px;">
                             </div>
                             <div class="card-body">
                                 <div id="domain-loader" class="text-center my-3" style="display: none;">
-                                    <div class="spinner-border" role="status"><span class="visually-hidden">Loading…</span></div>
+                                    <div class="spinner-border" role="status"><span
+                                            class="visually-hidden">Loading…</span></div>
                                 </div>
                                 <div class="row scrollbar" id="domain-list">
                                     <!-- AJAX-injected items -->
@@ -315,14 +325,19 @@
                                                 <i class="fas fa-history"></i> One Time
                                             </a>
                                         </li>
+                                        <li class="nav-item">
+                                            <a class="nav-link" data-bs-toggle="tab" href="#multiple_time">
+                                                <i class="fas fa-clock"></i> Multiple Time
+                                            </a>
+                                        </li>
                                     </ul>
                                     <div class="tab-content">
                                         <!-- One Time Tab -->
                                         <div class="tab-pane show active fade mb-3 p-3 border" id="one_time"
                                             role="tabpanel">
                                             @php
-                                                $minDt   = \Carbon\Carbon::now()->format('Y-m-d\TH:i');
-                                                $minLabel= \Carbon\Carbon::now()->format('j M Y, H:i');
+                                                $minDt = \Carbon\Carbon::now()->format('Y-m-d\TH:i');
+                                                $minLabel = \Carbon\Carbon::now()->format('j M Y, H:i');
                                             @endphp
                                             <div class="row">
                                                 <div class="col-12 mb-3">
@@ -331,11 +346,41 @@
                                                                 class="text-danger">*</span></label>
                                                         <input type="datetime-local" class="form-control"
                                                             name="one_time_datetime" id="one_time_start_date"
-                                                            min="{{ $minDt }}" value="{{ old('one_time_datetime', $minDt) }}" required>
+                                                            min="{{ $minDt }}"
+                                                            value="{{ old('one_time_datetime', $minDt) }}" required>
                                                         <div class="invalid-feedback"></div>
                                                     </div>
                                                 </div>
                                             </div>
+                                        </div>
+                                        <!-- Multiple Time Tab -->
+                                        <div class="tab-pane fade mb-3 p-3 border" id="multiple_time" role="tabpanel"
+                                            aria-labelledby="multiple_time_tab">
+                                            <div id="multipleContainer">
+                                                <!-- Initial Slot (slot 0) -->
+                                                <div class="mb-3 multiple-slot" data-index="0">
+                                                    <label for="multiple_datetime_0">Schedule Slot #1 <span
+                                                            class="text-danger">*</span></label>
+                                                    <div class="input-group">
+                                                        <input type="datetime-local"
+                                                            class="form-control multiple-datetime"
+                                                            name="multiple_datetimes[]" id="multiple_datetime_0"
+                                                            min="{{ \Carbon\Carbon::now()->format('Y-m-d\TH:i') }}"
+                                                            required>
+                                                        <button type="button"
+                                                            class="btn btn-outline-danger remove-slot-btn"
+                                                            style="display: none;">
+                                                            <i class="fas fa-trash"></i>
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <button type="button" class="btn btn-sm btn-outline-primary"
+                                                id="addMoreSlotBtn" style="margin-bottom: .75rem;">
+                                                <i class="fas fa-plus"></i> Add Another Slot
+                                            </button>
+                                            <p class="small text-danger">You can add up to 5 slots. Slots must not be
+                                                identical.</p>
                                         </div>
                                     </div>
                                 </div>
@@ -373,8 +418,8 @@
                                             </div>
                                             <div class="preview_content d-flex align-items-center">
                                                 <div class="flex-shrink-0">
-                                                    <img src="{{ asset('images/push/icons/alarm-1.png') }}"
-                                                        id="icon_prv" class="img-fluid" alt="Icon Preview">
+                                                    <img src="{{ asset('images/push/icons/alarm-1.png') }}" id="icon_prv"
+                                                        class="img-fluid" alt="Icon Preview">
                                                 </div>
                                                 <div class="flex-grow-1 ms-2">
                                                     <span class="fs-16 text-white prv_title" id="prv_title">Title
@@ -501,6 +546,108 @@
 @push('scripts')
     <script src="{{ asset('vendor/select2/js/select2.full.min.js') }}"></script>
     <script>
+        $(document).ready(function() {
+            // Maximum number of slots
+            const MAX_SLOTS = 5;
+
+            // Cache selectors
+            const $multipleContainer = $('#multipleContainer');
+            const $addBtn = $('#addMoreSlotBtn');
+
+            // Function to re-index labels & input IDs
+            function refreshSlotLabels() {
+                $multipleContainer.find('.multiple-slot').each(function(idx) {
+                    $(this).attr('data-index', idx);
+                    $(this).find('label').attr('for', 'multiple_datetime_' + idx)
+                        .text('Schedule Slot #' + (idx + 1) + ' ');
+                    $(this).find('input.multiple-datetime')
+                        .attr('id', 'multiple_datetime_' + idx);
+                    // Show remove button on all except index 0
+                    if (idx > 0) {
+                        $(this).find('.remove-slot-btn').show();
+                    } else {
+                        $(this).find('.remove-slot-btn').hide();
+                    }
+                });
+
+                // Hide “Add” button if we reached max
+                if ($multipleContainer.find('.multiple-slot').length >= MAX_SLOTS) {
+                    $addBtn.prop('disabled', true);
+                } else {
+                    $addBtn.prop('disabled', false);
+                }
+            }
+
+            // Initial call (just in case)
+            refreshSlotLabels();
+
+            // Add a new slot
+            $addBtn.on('click', function() {
+                const currentCount = $multipleContainer.find('.multiple-slot').length;
+                if (currentCount < MAX_SLOTS) {
+                    const newIdx = currentCount;
+                    const $newSlot = $(`
+                <div class="mb-3 multiple-slot" data-index="${newIdx}">
+                    <label for="multiple_datetime_${newIdx}">Schedule Slot #${newIdx + 1} <span class="text-danger">*</span></label>
+                    <div class="input-group">
+                        <input 
+                            type="datetime-local" 
+                            class="form-control multiple-datetime" 
+                            name="multiple_datetimes[]" 
+                            id="multiple_datetime_${newIdx}"
+                            min="{{ \Carbon\Carbon::now()->format('Y-m-d\\TH:i') }}"
+                            required>
+                        <button 
+                            type="button" 
+                            class="btn btn-outline-danger remove-slot-btn">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+            `);
+                    $multipleContainer.append($newSlot);
+                    refreshSlotLabels();
+                }
+            });
+
+            // Remove a slot
+            $multipleContainer.on('click', '.remove-slot-btn', function() {
+                $(this).closest('.multiple-slot').remove();
+                refreshSlotLabels();
+            });
+
+            // Client-side check for duplicate datetime before submission
+            $('#notificationform').on('submit', function(e) {
+                // Only check if “Schedule Notification” & “Multiple Time” tab is active
+                if ($('#Schedule').is(':checked') && $('#multiple_time').hasClass('active')) {
+                    const values = [];
+                    let duplicateFound = false;
+
+                    $('.multiple-datetime').each(function() {
+                        const val = $(this).val();
+                        if (val) {
+                            if (values.includes(val)) {
+                                duplicateFound = true;
+                                return false; // break out
+                            }
+                            values.push(val);
+                        }
+                    });
+
+                    if (duplicateFound) {
+                        // iziToast.error({
+                        //     title: "Warning!",
+                        //     message: "You have duplicate schedule slots. Please ensure each slot is unique.",
+                        //     position: "topRight",
+                        // });
+                        e.preventDefault();
+                        return false;
+                    }
+                }
+            });
+        });
+    </script>
+    <script>
         function setBannerMode(mode) {
             const $urlGroup = $('#banner_url_group');
             const $uploadGroup = $('#banner_upload_group');
@@ -508,42 +655,46 @@
             const $fileInput = $('#banner_image_file');
 
             if (mode === 'url') {
-            $urlGroup.show();
-            $uploadGroup.hide();
-            $urlInput.prop('disabled', false);
-            $fileInput.prop('disabled', true).val('');
-            // preview from URL (or reset if empty)
-            const v = ($urlInput.val() || '').trim();
-            if (v) changeBanner(v); else resetImage();
+                $urlGroup.show();
+                $uploadGroup.hide();
+                $urlInput.prop('disabled', false);
+                $fileInput.prop('disabled', true).val('');
+                // preview from URL (or reset if empty)
+                const v = ($urlInput.val() || '').trim();
+                if (v) changeBanner(v);
+                else resetImage();
             } else {
-            $urlGroup.hide();
-            $uploadGroup.show();
-            $urlInput.prop('disabled', true);
-            $fileInput.prop('disabled', false);
-            // if no file chosen yet, show default preview
-            if (!$fileInput[0].files.length) resetImage();
+                $urlGroup.hide();
+                $uploadGroup.show();
+                $urlInput.prop('disabled', true);
+                $fileInput.prop('disabled', false);
+                // if no file chosen yet, show default preview
+                if (!$fileInput[0].files.length) resetImage();
             }
         }
 
-        $(document).ready(function () {
+        $(document).ready(function() {
             // default to URL mode
             setBannerMode('url');
 
             // radio toggle
-            $('#banner_src_url, #banner_src_upload').on('change', function () {
+            $('#banner_src_url, #banner_src_upload').on('change', function() {
                 setBannerMode(this.value);
             });
 
             // live preview for file uploads
-            $('#banner_image_file').on('change', function () {
-            const file = this.files && this.files[0];
-            if (!file) { resetImage(); return; }
-            const reader = new FileReader();
-            reader.onload = function (e) {
-                $('#banner_image').attr('src', e.target.result);
-                $('.message_image').attr('src', e.target.result).show();
-            };
-            reader.readAsDataURL(file);
+            $('#banner_image_file').on('change', function() {
+                const file = this.files && this.files[0];
+                if (!file) {
+                    resetImage();
+                    return;
+                }
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    $('#banner_image').attr('src', e.target.result);
+                    $('.message_image').attr('src', e.target.result).show();
+                };
+                reader.readAsDataURL(file);
             });
         });
     </script>
@@ -563,7 +714,7 @@
         });
     </script>
     <script>
-        $(function () {
+        $(function() {
             let loaded = false;
 
             $('#segmentSelect').select2({
@@ -572,20 +723,24 @@
                 width: '100%',
 
                 ajax: {
-                    transport: function (params, success, failure) {
+                    transport: function(params, success, failure) {
                         if (loaded) {
-                            success({ results: $('#segmentSelect').data('segments') });
+                            success({
+                                results: $('#segmentSelect').data('segments')
+                            });
                             return;
                         }
 
                         $.ajax({
                             url: "{{ route('segmentation.segment-list') }}",
                             dataType: 'json',
-                            success: function (resp) {
+                            success: function(resp) {
                                 if (resp.success) {
                                     $('#segmentSelect').data('segments', resp.data);
                                     loaded = true;
-                                    success({ results: resp.data });
+                                    success({
+                                        results: resp.data
+                                    });
                                 } else {
                                     failure();
                                 }
@@ -599,37 +754,37 @@
                 minimumInputLength: 0,
 
                 // ✅ Format dropdown list items
-                templateResult: function (data) {
+                templateResult: function(data) {
                     if (!data.id) return data.text; // skip placeholder
 
                     const text = (data.text || '').toLowerCase();
                     const type = text.includes('device') ? 'device' :
-                                text.includes('geo')    ? 'geo' :
-                                text.includes('url')    ? 'url' :
-                                text.includes('time')   ? 'time' : '';
+                        text.includes('geo') ? 'geo' :
+                        text.includes('url') ? 'url' :
+                        text.includes('time') ? 'time' : '';
 
                     const icon = type === 'device' ? '📱' :
-                                type === 'geo'    ? '🌍' :
-                                type === 'url'    ? '🔗' :
-                                type === 'time'   ? '⏰' : '';
+                        type === 'geo' ? '🌍' :
+                        type === 'url' ? '🔗' :
+                        type === 'time' ? '⏰' : '';
 
                     return $('<span>' + icon + ' ' + data.text + '</span>');
                 },
 
                 // ✅ Format selected item
-                templateSelection: function (data) {
+                templateSelection: function(data) {
                     if (!data.id) return data.text;
 
                     const text = (data.text || '').toLowerCase();
                     const type = text.includes('device') ? 'device' :
-                                text.includes('geo')    ? 'geo' :
-                                text.includes('url')    ? 'url' :
-                                text.includes('time')   ? 'time' : '';
+                        text.includes('geo') ? 'geo' :
+                        text.includes('url') ? 'url' :
+                        text.includes('time') ? 'time' : '';
 
                     const icon = type === 'device' ? '📱' :
-                                type === 'geo'    ? '🌍' :
-                                type === 'url'    ? '🔗' :
-                                type === 'time'   ? '⏰' : '';
+                        type === 'geo' ? '🌍' :
+                        type === 'url' ? '🔗' :
+                        type === 'time' ? '⏰' : '';
 
                     return $('<span>' + icon + ' ' + data.text + '</span>');
                 }
@@ -672,7 +827,7 @@
             });
         })();
     </script>
-    
+
     <script>
         // unified show/hide + required toggling
         function hideOrShow() {
@@ -750,7 +905,7 @@
             }
         }
 
-        function setBannerUrl(url){
+        function setBannerUrl(url) {
             document.getElementById('image_input').value = url;
             changeBanner(url);
             var modal = document.getElementById('bannerImg');
@@ -1039,6 +1194,31 @@
                     $(el).removeClass('is-invalid');
                 },
                 submitHandler: function(form) {
+                    if ($('#Schedule').is(':checked') && $('#multiple_time').hasClass('active')) {
+                        const values = [];
+                        let duplicateFound = false;
+
+                        $('.multiple-datetime').each(function() {
+                            const val = $(this).val();
+                            if (val) {
+                                if (values.includes(val)) {
+                                    duplicateFound = true;
+                                    return false; // break out of the loop
+                                }
+                                values.push(val);
+                            }
+                        });
+
+                        if (duplicateFound) {
+                            iziToast.error({
+                                title: "Warning!",
+                                message: "You have duplicate schedule slots. Please ensure each slot is unique.",
+                                position: "topRight",
+                            });
+                            e.preventDefault();
+                            return false; // Prevent form submission
+                        }
+                    }
                     var $btn = $('#sendNotification')
                         .prop('disabled', true)
                         .html('<i class="fas fa-spinner fa-spin me-2"></i> Processing...');
@@ -1203,12 +1383,12 @@
             // initially load all domains
             loadDomains();
 
-             // 1) Client-side filter
+            // 1) Client-side filter
             $('#domainFilter').on('input', function() {
                 const term = this.value.trim().toLowerCase();
                 $('#domain-list .domain-item').each(function() {
-                const label = $(this).find('label').text().toLowerCase();
-                $(this).toggle(label.includes(term));
+                    const label = $(this).find('label').text().toLowerCase();
+                    $(this).toggle(label.includes(term));
                 });
                 // whenever you filter, uncheck the “Select All” box
                 $('#select_all_domain').prop('checked', false);
@@ -1220,10 +1400,10 @@
                 // first, clear every checkbox
                 $("input[name='domain_name[]']").prop('checked', false);
                 if (shouldCheck) {
-                // then check only the visible ones
-                $('#domain-list .domain-item:visible')
-                    .find("input[name='domain_name[]']")
-                    .prop('checked', true);
+                    // then check only the visible ones
+                    $('#domain-list .domain-item:visible')
+                        .find("input[name='domain_name[]']")
+                        .prop('checked', true);
                 }
             });
         });
