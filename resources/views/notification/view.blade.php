@@ -27,7 +27,6 @@
             margin-top: 1rem;
         }
 
-        /* Modal enhancements */
         #reportModal .modal-header {
             border-bottom: 1px solid #e9ecef;
         }
@@ -36,7 +35,6 @@
             border-top: 1px solid #e9ecef;
         }
 
-        /* Notification preview styling */
         .windows_view {
             border-radius: 8px;
             transition: all 0.3s ease;
@@ -46,14 +44,12 @@
             box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.1);
         }
 
-        /* Text truncation */
         .line-clamp-2 {
             display: -webkit-box;
             -webkit-line-clamp: 2;
             -webkit-box-orient: vertical;
             overflow: hidden;
         }
-
     </style>
 @endpush
 

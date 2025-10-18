@@ -295,4 +295,47 @@ class SendNotificationMigrateJob implements ShouldQueue
             'headers' => ['Urgency' => 'high'],
         ];
     }
+
+    // FEEDIFY 
+    protected function buildWebPushFeedify(object $row): array
+    {
+        // Build the object the SW will JSON.parse() from data.notification
+        $notif = [
+            'title'              => (string) ($row->title ?? ''),
+            'body'               => (string) ($row->description ?? ''),
+            'icon'               => (string) ($row->banner_icon ?? ''),
+            'image'              => (string) ($row->banner_image ?? ''),
+            // clicked URL + ping URL expected by your SW
+            'url'                => (string) ($row->target_url ?? ''),
+            'api_url'            => (string) (url('/api/notification/click?message_id=' . $row->message_id)), // tracking endpoint
+            'requireInteraction' => false,  // let SW decide final requireInteraction per OS
+            // actions handled by SW, like buttons for interactions
+            'actions'            => array_filter([
+                'btn1' => ($row->btn_1_title && $row->btn_1_url) ? [
+                    'title'        => (string) $row->btn_1_title,
+                    'click_action' => (string) $row->btn_1_url,
+                    'api_url'      => (string) (url('/api/notification/action?btn=1&message_id=' . $row->message_id)),
+                ] : null,
+                'btn2' => ($row->btn_title_2 && $row->btn_url_2) ? [
+                    'title'        => (string) $row->btn_title_2,
+                    'click_action' => (string) $row->btn_url_2,
+                    'api_url'      => (string) (url('/api/notification/action?btn=2&message_id=' . $row->message_id)),
+                ] : null,
+            ]),
+            'message_id' => (string) $row->message_id,  // Unique message identifier
+            'swVersion'  => '3.0.9',  // SW version (should match your SW)
+        ];
+
+        // IMPORTANT: Feedify "data" values must be strings → stringify the notification object
+        $data = [
+            'notification' => json_encode($notif, JSON_UNESCAPED_SLASHES),
+            'swVersion'    => '3.0.9',  // Adjust SW version if necessary
+        ];
+
+        return [
+            'data'    => $data,
+            'headers' => ['Urgency' => 'high'],  // Ensure high urgency for Feedify
+        ];
+    }
+
 }
