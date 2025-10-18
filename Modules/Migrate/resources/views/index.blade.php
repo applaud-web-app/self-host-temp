@@ -71,6 +71,8 @@
                                     <option value="">Select Source</option>
                                     <option value="aplu">Aplu</option>
                                     <option value="lara_push">Lara Push</option>
+                                    <option value="feedify">Feedify</option>
+                                    <option value="izooto">Izooto</option>
                                 </select>
                                 <div class="form-text">Choose the source to migrate subscribers from.</div>
                             </div>

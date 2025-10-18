@@ -51,7 +51,7 @@ class MigrateController extends Controller
                 'domain_id'     => 'required|exists:domains,id',
                 'files'         => 'required',
                 'files.*'       => 'file|mimes:xlsx,xls|max:51200',
-                'migrate_from'     => 'required|in:aplu,lara_push',
+                'migrate_from'     => 'required|in:aplu,lara_push,feedify,izooto',
             ]);
 
             // (Optional) Enforce 50MB TOTAL across all files:

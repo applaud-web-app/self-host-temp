@@ -122,7 +122,7 @@ class SendNotificationMigrateJob implements ShouldQueue
             }
 
             // 2) Dispatch in the order of sources: aplu → lara_push → default
-            foreach (['aplu','lara_push','default'] as $srcOrder) {
+            foreach (['aplu','lara_push','default','feedify','izooto'] as $srcOrder) {
                 if (empty($sourceBuckets[$srcOrder])) {
                     continue;
                 }
@@ -134,6 +134,12 @@ class SendNotificationMigrateJob implements ShouldQueue
                         break;
                     case 'lara_push':
                         $payload = $this->buildWebPushLaraPush($row);
+                        break;
+                    case 'feedify':
+                        $payload = $this->buildWebPushFeedify($row);
+                        break;
+                    case 'izooto':
+                        $payload = $this->buildWebPushIzooto($row);
                         break;
                     default:
                         $payload = $this->buildWebPush($row);
@@ -296,20 +302,17 @@ class SendNotificationMigrateJob implements ShouldQueue
         ];
     }
 
-    // FEEDIFY 
+    // FEEDIFY
     protected function buildWebPushFeedify(object $row): array
     {
-        // Build the object the SW will JSON.parse() from data.notification
         $notif = [
             'title'              => (string) ($row->title ?? ''),
             'body'               => (string) ($row->description ?? ''),
             'icon'               => (string) ($row->banner_icon ?? ''),
             'image'              => (string) ($row->banner_image ?? ''),
-            // clicked URL + ping URL expected by your SW
             'url'                => (string) ($row->target_url ?? ''),
-            'api_url'            => (string) (url('/api/notification/click?message_id=' . $row->message_id)), // tracking endpoint
-            'requireInteraction' => false,  // let SW decide final requireInteraction per OS
-            // actions handled by SW, like buttons for interactions
+            'api_url'            => (string) (url('/api/notification/click?message_id=' . $row->message_id)),
+            'requireInteraction' => false,
             'actions'            => array_filter([
                 'btn1' => ($row->btn_1_title && $row->btn_1_url) ? [
                     'title'        => (string) $row->btn_1_title,
@@ -322,19 +325,63 @@ class SendNotificationMigrateJob implements ShouldQueue
                     'api_url'      => (string) (url('/api/notification/action?btn=2&message_id=' . $row->message_id)),
                 ] : null,
             ]),
-            'message_id' => (string) $row->message_id,  // Unique message identifier
-            'swVersion'  => '3.0.9',  // SW version (should match your SW)
+            'message_id' => (string) $row->message_id,
+            'swVersion'  => '3.0.9',
         ];
 
-        // IMPORTANT: Feedify "data" values must be strings → stringify the notification object
         $data = [
             'notification' => json_encode($notif, JSON_UNESCAPED_SLASHES),
-            'swVersion'    => '3.0.9',  // Adjust SW version if necessary
+            'swVersion'    => '3.0.9',
         ];
 
         return [
             'data'    => $data,
-            'headers' => ['Urgency' => 'high'],  // Ensure high urgency for Feedify
+            'headers' => ['Urgency' => 'high'],
+        ];
+    }
+
+    // IZOOTO
+    protected function buildWebPushIzooto(object $row): array
+    {
+        $notif = [
+            'title'              => (string) ($row->title ?? ''),
+            'message'            => (string) ($row->description ?? ''),
+            'icon'               => (string) ($row->banner_icon ?? ''),
+            'banner'             => (string) ($row->banner_image ?? ''),
+            'link'               => (string) ($row->target_url ?? ''),
+            'tag'                => (string) ($row->message_id ?? ''),  // Use message_id as tag for uniqueness
+            'requireInteraction' => false,  // You can change this if you want the notification to stay until interacted
+            'actions'            => [
+                [
+                    'action'       => 'action1',
+                    'title'        => (string) ($row->btn_1_title ?? 'Action 1'),  // Button 1 title
+                    'url'          => (string) ($row->btn_1_url ?? '#'),  // Button 1 link
+                    'icon'         => (string) ($row->btn_1_icon ?? ''),  // Optional Button 1 icon
+                ],
+                [
+                    'action'       => 'action2',
+                    'title'        => (string) ($row->btn_2_title ?? 'Action 2'),  // Button 2 title
+                    'url'          => (string) ($row->btn_2_url ?? '#'),  // Button 2 link
+                    'icon'         => (string) ($row->btn_2_icon ?? ''),  // Optional Button 2 icon
+                ]
+            ],
+            'message_id'         => (string) ($row->message_id ?? ''),
+            'swVersion'          => '3.0.9',  // Can be set dynamically if needed
+        ];
+
+        // Additional Data (optional, you can add any extra attributes needed)
+        $data = [
+            'notification' => json_encode($notif, JSON_UNESCAPED_SLASHES),
+            'swVersion'    => '3.0.9',
+            'priority'     => 'high',  // Notification priority (could be 'high' or 'normal')
+            'urgency'      => 'high',  // Can be set based on your needs
+        ];
+
+        return [
+            'data'    => $data,
+            'headers' => [
+                'Urgency' => 'high',  // Setting header for urgency if needed
+            ]
         ];
     }
 
