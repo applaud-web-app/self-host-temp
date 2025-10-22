@@ -51,12 +51,12 @@ class SendNotificationByNodeActualBackup implements ShouldQueue
             $totalFailure = 0;
             $allFailedTokens = [];
 
-            Log::info("Processing " . count($this->tokens) . " tokens in " . count($batches) . " batches for domain: {$this->domainName}");
+            // Log::info("Processing " . count($this->tokens) . " tokens in " . count($batches) . " batches for domain: {$this->domainName}");
 
             $hasConnectionError = false;
 
             foreach ($batches as $batchIndex => $batch) {
-                Log::info("Processing batch " . ($batchIndex + 1) . " of " . count($batches) . " with " . count($batch) . " tokens");
+                // Log::info("Processing batch " . ($batchIndex + 1) . " of " . count($batches) . " with " . count($batch) . " tokens");
 
                 $response = $this->sendBatchToNodeService($batch);
 
@@ -137,11 +137,11 @@ class SendNotificationByNodeActualBackup implements ShouldQueue
 
             if ($response->successful()) {
                 $data = $response->json();
-                Log::debug("Node service response", [
-                    'success_count' => $data['successCount'] ?? 0,
-                    'failure_count' => $data['failureCount'] ?? 0,
-                    'failed_tokens_count' => count($data['failedTokens'] ?? [])
-                ]);
+                // Log::debug("Node service response", [
+                //     'success_count' => $data['successCount'] ?? 0,
+                //     'failure_count' => $data['failureCount'] ?? 0,
+                //     'failed_tokens_count' => count($data['failedTokens'] ?? [])
+                // ]);
                 return $data;
             } else {
                 Log::error("Node service returned error", [

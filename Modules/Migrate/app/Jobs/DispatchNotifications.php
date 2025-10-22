@@ -75,7 +75,7 @@ class DispatchNotifications implements ShouldQueue
             // Handle job dispatching for instant notifications
             foreach ($this->ids as $value) {
                 $notification = Notification::where('domain_id', $value)->where('status', 'pending')->latest('created_at')->first();
-                Log::info("Dispatching instant notification for ID: {$notification->id}");
+                // Log::info("Dispatching instant notification for ID: {$notification->id}");
                 dispatch(new SendNotificationMigrateJob($notification->id)); // ->onQueue('migrate-notifications')
             }
         } catch (\Throwable $e) {

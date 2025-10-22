@@ -77,7 +77,6 @@
                                 <div class="form-text">Choose the source to migrate subscribers from.</div>
                             </div>
 
-                            <!-- Files -->
                             <div class="mb-3">
                                 <label class="form-label fw-semibold d-block">Upload Files</label>
 
@@ -91,7 +90,6 @@
                                     </div>
                                 </div>
 
-                                {{-- Keep input programmatically clickable (not display:none) --}}
                                 <input id="files" name="files[]" class="sr-only-file" type="file" multiple
                                        accept=".xlsx,.xls" />
 
@@ -102,13 +100,11 @@
                                 <div id="fileList" class="file-list"></div>
                             </div>
 
-                            <!-- Progress -->
                             <div id="progress" class="progress mb-3" style="display:none;">
                                 <div id="progress-bar" class="progress-bar" role="progressbar" style="width:0%;"
                                      aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
                             </div>
 
-                            <!-- Actions -->
                             <div class="d-flex gap-2">
                                 <button type="submit" class="btn btn-primary px-4" id="submitButton" disabled>
                                     Submit

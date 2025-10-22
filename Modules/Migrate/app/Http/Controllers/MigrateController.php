@@ -370,11 +370,11 @@ class MigrateController extends Controller
             $domainId = $validated['domain_id'];
 
             $counts = MigrateSubs::selectRaw('migration_status, COUNT(*) as count')
-                                ->where('domain_id', $domainId)
-                                ->groupBy('migration_status')
-                                ->get()
-                                ->pluck('count', 'migration_status')
-                                ->toArray();
+            ->where('domain_id', $domainId)
+            ->groupBy('migration_status')
+            ->get()
+            ->pluck('count', 'migration_status')
+            ->toArray();
 
             $totalSubscribers = MigrateSubs::where('domain_id', $domainId)->count();
             $migratedSubscribers = $counts['migrated'] ?? 0;

@@ -132,11 +132,11 @@ class PushApiController extends Controller
           $batchId   = (string) Str::uuid();
           $batchSize = count($payload['analytics']);
 
-          Log::info('Analytics batch received', [
-              'batch_id' => $batchId,
-              'size'     => $batchSize,
-              'ip'       => $request->ip(),
-          ]);
+          // Log::info('Analytics batch received', [
+          //     'batch_id' => $batchId,
+          //     'size'     => $batchSize,
+          //     'ip'       => $request->ip(),
+          // ]);
 
           // Store canonical batch in Redis (1h TTL) and process async
           $redisKey = "analytics_batch:{$batchId}";

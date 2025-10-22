@@ -87,10 +87,10 @@ class CreateAndDispatchNotifications implements ShouldQueue
                 // Instant: fire off immediately
                 if ($notification->schedule_type === 'instant') {
                     if ($this->segment_type === 'all' || $this->segment_type === 'api' || $this->segment_type === 'rss') {
-                        Log::info("Dispatching instant notification for ID: {$notification->id}");
+                        // Log::info("Dispatching instant notification for ID: {$notification->id}");
                         dispatch(new SendNotificationJob($notification->id))->onQueue('notifications');
                     } else {
-                        Log::info("Dispatching instant notification for ID: {$notification->id}");
+                        // Log::info("Dispatching instant notification for ID: {$notification->id}");
                         dispatch(new SendSegmentNotificationJob($notification->id))->onQueue('notifications');
                     }
                 }
