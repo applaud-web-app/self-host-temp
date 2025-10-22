@@ -566,12 +566,24 @@
                 if (engagementChart) engagementChart.destroy();
 
                 engagementChart = new ApexCharts(document.querySelector('#engagement-chart'), {
-                    chart: { type: 'pie', height: 250 },
+                    chart: { 
+                        type: 'pie',
+                        height: 250
+                        animations: {
+                            enabled: true,
+                            easing: 'easeinout',
+                            speed: 800
+                        }
+                    },
                     series: [clickedPercentage, notClickedPercentage],
                     labels: [
                         `Clicked (${clicked.toLocaleString()})`,
                         `Not Clicked (${(received - clicked).toLocaleString()})`
                     ],
+                    legend: { 
+                        position: 'bottom',
+                        markers: { radius: 3 }
+                    },
                     colors: ['#36b9cc', '#f6c23e'],
                     dataLabels: { enabled: true, formatter: val => Math.round(val) + '%' },
                     tooltip: {
