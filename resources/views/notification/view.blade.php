@@ -514,45 +514,71 @@
                 deliveryChart.render();
             }
 
+            // function renderEngagementChart(received, clicked) {
+            //     const clickedPercentage = totalSent ? (clicked / totalSent) * 100 : 0;
+            //     const notClickedPercentage = 100 - clickedPercentage;
+                
+            //     if (engagementChart) engagementChart.destroy();
+                
+            //     engagementChart = new ApexCharts(document.querySelector('#engagement-chart'), {
+            //         chart: { 
+            //             type: 'pie', 
+            //             height: 250,
+            //             animations: {
+            //                 enabled: true,
+            //                 easing: 'easeinout',
+            //                 speed: 800
+            //             }
+            //         },
+            //         series: [clickedPercentage, notClickedPercentage],
+            //         labels: [
+            //             `Clicked (${clicked.toLocaleString()})`, 
+            //             `Not Clicked (${(received - clicked).toLocaleString()})`
+            //         ],
+            //         legend: { 
+            //             position: 'bottom',
+            //             markers: { radius: 3 }
+            //         },
+            //         colors: ['#36b9cc', '#f6c23e'],
+            //         dataLabels: {
+            //             enabled: true,
+            //             formatter: function(val) {
+            //                 return Math.round(val) + '%';
+            //             }
+            //         },
+            //         tooltip: {
+            //             y: {
+            //                 formatter: function(value, { seriesIndex }) {
+            //                     const counts = [clicked, received - clicked];
+            //                     return `${counts[seriesIndex].toLocaleString()} users (${Math.round(value)}%)`;
+            //                 }
+            //             }
+            //         }
+            //     });
+            //     engagementChart.render();
+            // }
+
             function renderEngagementChart(received, clicked) {
-                const clickedPercentage = totalSent ? (clicked / totalSent) * 100 : 0;
+                if (!received) received = totalSent; // fallback if received missing
+                const clickedPercentage = (clicked / received) * 100;
                 const notClickedPercentage = 100 - clickedPercentage;
-                
+
                 if (engagementChart) engagementChart.destroy();
-                
+
                 engagementChart = new ApexCharts(document.querySelector('#engagement-chart'), {
-                    chart: { 
-                        type: 'pie', 
-                        height: 250,
-                        animations: {
-                            enabled: true,
-                            easing: 'easeinout',
-                            speed: 800
-                        }
-                    },
+                    chart: { type: 'pie', height: 250 },
                     series: [clickedPercentage, notClickedPercentage],
                     labels: [
-                        `Clicked (${clicked.toLocaleString()})`, 
+                        `Clicked (${clicked.toLocaleString()})`,
                         `Not Clicked (${(received - clicked).toLocaleString()})`
                     ],
-                    legend: { 
-                        position: 'bottom',
-                        markers: { radius: 3 }
-                    },
                     colors: ['#36b9cc', '#f6c23e'],
-                    dataLabels: {
-                        enabled: true,
-                        formatter: function(val) {
-                            return Math.round(val) + '%';
-                        }
-                    },
+                    dataLabels: { enabled: true, formatter: val => Math.round(val) + '%' },
                     tooltip: {
-                        y: {
-                            formatter: function(value, { seriesIndex }) {
-                                const counts = [clicked, received - clicked];
-                                return `${counts[seriesIndex].toLocaleString()} users (${Math.round(value)}%)`;
-                            }
-                        }
+                        y: { formatter: function(value, { seriesIndex }) {
+                            const counts = [clicked, received - clicked];
+                            return `${counts[seriesIndex].toLocaleString()} users (${Math.round(value)}%)`;
+                        }}
                     }
                 });
                 engagementChart.render();
