@@ -136,8 +136,9 @@ class SendNotificationByNode implements ShouldQueue
 
             // Mark notification as failed only for exceptions, not connection errors
             $this->updateNotificationStatus(0, count($this->tokens), count($this->tokens), 'failed');
-            
-            throw $e; // Re-throw to trigger retry mechanism
+           
+            return; // ⬅️ do NOT: throw $e;
+            // throw $e; // Re-throw to trigger retry mechanism
         }
     }
 
