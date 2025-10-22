@@ -568,7 +568,7 @@
                 engagementChart = new ApexCharts(document.querySelector('#engagement-chart'), {
                     chart: { 
                         type: 'pie',
-                        height: 250
+                        height: 250,
                         animations: {
                             enabled: true,
                             easing: 'easeinout',
