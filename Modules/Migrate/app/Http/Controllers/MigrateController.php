@@ -63,7 +63,7 @@ class MigrateController extends Controller
             }
 
             $tasks = [];
-            $domain = Domain::find($validated['domain_id'])->pluck('name')->first();
+            $domain = Domain::where('id', $validated['domain_id'])->pluck('name')->first();
             foreach ($request->file('files') as $uploaded) {
                 $path = $uploaded->store('uploads/migrate', 'public');
 
