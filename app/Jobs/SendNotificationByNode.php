@@ -217,12 +217,12 @@ class SendNotificationByNode implements ShouldQueue
         try {
             $uniqueFailedTokens = array_unique($failedTokens);
             
-            // $updatedCount = PushSubscriptionHead::whereIn('token', $uniqueFailedTokens)
-            //     ->where('parent_origin', $this->domainName)
-            //     ->update([
-            //         'status' => 0,
-            //         'updated_at' => now()
-            //     ]);
+            $updatedCount = PushSubscriptionHead::whereIn('token', $uniqueFailedTokens)
+                ->where('parent_origin', $this->domainName)
+                ->update([
+                    'status' => 0,
+                    'updated_at' => now()
+                ]);
 
             Log::info("Marked {$updatedCount} tokens as inactive for domain: {$this->domainName}");
         } catch (Throwable $e) {

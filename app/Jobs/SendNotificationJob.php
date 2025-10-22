@@ -70,7 +70,7 @@ class SendNotificationJob implements ShouldQueue
                         'failed_count' => 0
                     ]);
                 
-                Log::warning("No active tokens found for domain {$pendingNotification->domain_name} for notification {$this->notificationId}");
+                // Log::warning("No active tokens found for domain {$pendingNotification->domain_name} for notification {$this->notificationId}");
                 return;
             }
 
