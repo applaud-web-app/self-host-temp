@@ -4,29 +4,6 @@
     <link rel="stylesheet" href="{{ asset('vendor/select2/css/select2.min.css') }}">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/izitoast/dist/css/iziToast.min.css">
     <style>
-        .card {
-            border: 1px solid #e0e0e0;
-            border-radius: 10px;
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-        }
-        .card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-        }
-        .card-body {
-            padding: 20px;
-        }
-        .card-title {
-            font-size: 18px;
-            font-weight: bold;
-            margin-bottom: 10px;
-        }
-        .card-footer {
-            text-align: center;
-            background-color: #f8f9fa;
-            padding: 10px;
-            border-radius: 0 0 10px 10px;
-        }
         /* .pie-chart-container {
             width: 100%;
             height: 350px;
