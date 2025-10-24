@@ -64,7 +64,7 @@ $(function () {
             }
         },
         ajax: {
-            url: "{{ route('migrate.task-tracker') }}",
+            url: "{{ route('mig.task-tracker') }}",
             data: function(d) {
                 d.search_name   = $('#searchName').val();
                 d.filter_status = $('#filterStatus').val();
@@ -103,7 +103,7 @@ $(function () {
             }).then((result) => {
                 if (result.isConfirmed) {
                     $.ajax({
-                        url: "{{ route('migrate.empty-tracker') }}",
+                        url: "{{ route('mig.empty-tracker') }}",
                         type: 'GET',
                         success: function(response) {
                             Swal.fire({

@@ -290,7 +290,7 @@ class MigrateController extends Controller
 
         try {
             dispatch(new DispatchNotifications($data, $ids))->onQueue('migrate-create-notifications');
-            return redirect()->route('migrate.report')->with('success', "Notification campaign queued.");
+            return redirect()->route('mig.report')->with('success', "Notification campaign queued.");
         } catch (\Throwable $e) {
             Log::error("Failed to create notification: {$e->getMessage()}", [
                 'data' => $data,
@@ -348,10 +348,10 @@ class MigrateController extends Controller
     {
         try {
             TaskTracker::truncate();
-            return redirect()->route('migrate.task-tracker')->with('success', 'All task records have been deleted.');
+            return redirect()->route('mig.task-tracker')->with('success', 'All task records have been deleted.');
         } catch (\Throwable $e) {
             Log::error('Failed to truncate TaskTracker: '.$e->getMessage());
-            return redirect()->route('migrate.task-tracker')->withErrors(['general' => 'Failed to delete task records.']);
+            return redirect()->route('mig.task-tracker')->withErrors(['general' => 'Failed to delete task records.']);
         }
     }
 

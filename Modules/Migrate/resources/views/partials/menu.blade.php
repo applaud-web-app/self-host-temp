@@ -5,22 +5,22 @@
     </a>
     <ul aria-expanded="false">
         <li>
-            <a href="{{ route('migrate.import') }}">
+            <a href="{{ route('mig.import') }}">
                 <span class="nav-text">Import</span>
             </a>
         </li>
         <li>
-            <a href="{{ route('migrate.overview') }}">
+            <a href="{{ route('mig.overview') }}">
                 <span class="nav-text">Overview</span>
             </a>
         </li>
         <li>
-            <a href="{{ route('migrate.send-notification') }}">
+            <a href="{{ route('mig.send-notification') }}">
                 <span class="nav-text">Send Notification</span>
             </a>
         </li>
         <li>
-            <a href="{{ route('migrate.report') }}">
+            <a href="{{ route('mig.report') }}">
                 <span class="nav-text">Report</span>
             </a>
         </li>

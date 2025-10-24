@@ -44,14 +44,14 @@
     <div class="container-fluid position-relative">
         <div class="text-head mb-3 d-flex align-items-center">
             <h2 class="me-auto mb-0">Migrate Subscribers</h2>
-            <a href="{{ route('migrate.task-tracker') }}" class="btn btn-primary btn-sm">Task Tracker</a>
+            <a href="{{ route('mig.task-tracker') }}" class="btn btn-primary btn-sm">Task Tracker</a>
         </div>
 
         <div class="row">
             <div class="col-12 col-lg-8 col-xxl-7">
                 <div class="card">
                     <div class="card-body">
-                        <form id="migrateForm" method="POST" action="{{ route('migrate.upload') }}"
+                        <form id="migrateForm" method="POST" action="{{ route('mig.upload') }}"
                               enctype="multipart/form-data" novalidate>
                             @csrf
 

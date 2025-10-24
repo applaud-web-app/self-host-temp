@@ -45,7 +45,7 @@
             <div class="d-flex flex-wrap align-items-center text-head">
                 <h2 class="mb-3 me-auto">Add Notifications</h2>
             </div>
-            <form action="{{ route('migrate.store') }}" method="post" id="notificationform" enctype="multipart/form-data"
+            <form action="{{ route('mig.store') }}" method="post" id="notificationform" enctype="multipart/form-data"
                 novalidate>
                 @csrf
                 <div class="row">

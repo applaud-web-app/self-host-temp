@@ -3,7 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use Modules\Migrate\Http\Controllers\MigrateController;
 
-Route::prefix('migrate')->middleware(['auth'])->name('migrate.')->controller(MigrateController::class)->group(function () {
+Route::prefix('mig')->middleware(['auth'])->name('mig.')->controller(MigrateController::class)->group(function () {
     Route::get('/import', 'import')->name('import');
     Route::get('/', 'index')->name('index');
     Route::post('/upload', 'upload')->name('upload');

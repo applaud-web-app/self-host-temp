@@ -64,7 +64,7 @@
             <div class="d-flex flex-wrap align-items-center text-head">
                 <h2 class="mb-3 me-auto">Migrate Campaign Reports</h2>
                 <div class="mb-3">
-                    <a href="{{ route('migrate.send-notification') }}" class="btn btn-primary">
+                    <a href="{{ route('mig.send-notification') }}" class="btn btn-primary">
                         <i class="far fa-plus-circle me-2"></i> Add New
                     </a>
                 </div>
@@ -306,7 +306,7 @@
             processing: true,
             serverSide: true,
             ajax: {
-                url: '{{ route("migrate.report") }}',
+                url: '{{ route("mig.report") }}',
                 data: d => {
                     d.search_term = $('#filter_campaign_name').val();
                     d.status = $('#filter_status').val();

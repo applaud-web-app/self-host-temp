@@ -40,7 +40,7 @@
     <div class="container-fluid">
         <div class="text-head mb-3 d-flex align-items-center">
             <h2 class="me-auto mb-0">Migrate Subscribers Overview</h2>
-            <a href="{{ route('migrate.task-tracker') }}" target="_blank" class="btn btn-primary btn-sm">Task Tracker</a>
+            <a href="{{ route('mig.task-tracker') }}" target="_blank" class="btn btn-primary btn-sm">Task Tracker</a>
         </div>
 
         <div class="row">
@@ -134,7 +134,7 @@
 
             // Make an AJAX call to fetch subscriber data
             $.ajax({
-                url: "{{ route('migrate.fetch-migrate-data') }}", // Route for fetching data
+                url: "{{ route('mig.fetch-migrate-data') }}", // Route for fetching data
                 method: 'GET',
                 data: { domain_id: domainId },
                 success: function(response) {
@@ -195,7 +195,7 @@
 
             // Trigger validation job
             $.ajax({
-                url: "{{ route('migrate.validate-migrate-subs') }}",
+                url: "{{ route('mig.validate-migrate-subs') }}",
                 method: 'POST',
                 data: {
                     domain_id: domainId,
@@ -232,7 +232,7 @@
 
             // Trigger the same logic to refresh subscriber data
             $.ajax({
-                url: "{{ route('migrate.fetch-migrate-data') }}",
+                url: "{{ route('mig.fetch-migrate-data') }}",
                 method: 'GET',
                 data: { domain_id: domainId },
                 success: function(response) {
