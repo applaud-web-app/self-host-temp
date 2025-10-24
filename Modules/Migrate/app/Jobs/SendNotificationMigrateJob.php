@@ -11,6 +11,7 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use App\Models\Setting;
+use Modules\Migrate\Jobs\SendMigrateNotificationByNode;
 
 class SendNotificationMigrateJob implements ShouldQueue
 {
@@ -68,6 +69,23 @@ class SendNotificationMigrateJob implements ShouldQueue
         }
 
         // $payload = $this->buildWebPush($row);
+        $subscriberCount = DB::table('migrate_subs')
+            ->where('domain_id', $row->domain_id)
+            ->where('migration_status', 'pending')
+            ->where('status', 1)
+            ->count();
+
+        if ($subscriberCount == 0) {
+            // If no subscribers, mark the notification as "sent" and exit
+            DB::table('notifications')
+                ->where('id', $this->notificationId)
+                ->update([
+                    'status' => 'sent', // Mark as sent
+                    'sent_at' => now(), // Set sent timestamp
+                ]);
+            Log::info("Notification {$this->notificationId} marked as sent because no subscribers were found.");
+            return; // Exit early, don't process further
+        }
 
         // Mark as queued early
         DB::table('notifications')->where('id', $this->notificationId)->update(['status' => 'queued']);
