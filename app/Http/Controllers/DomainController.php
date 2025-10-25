@@ -29,7 +29,7 @@ class DomainController extends Controller
     public function view(Request $request)
     {
         if ($request->ajax()) {
-            $query = Domain::select(['id', 'name', 'status', 'created_at']);
+            $query = Domain::select(['id', 'name', 'status', 'created_at'])->orderBy('id','DESC');
 
             // server-side “search by name”
             if ($request->filled('search_name')) {
