@@ -271,7 +271,7 @@ class DomainController extends Controller
                     $q->where('name', 'LIKE', "%{$search}%");
                 })
                 ->orderBy('name')
-                ->limit(20)
+                // ->limit(20)
                 ->get(['id', 'name']);
 
             // map into Select2 format
