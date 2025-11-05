@@ -26,7 +26,7 @@ class SendRssNotifications extends Command
     public function handle()
     {
         $now = Carbon::now();
-        Log::info('Starting RSS dispatch', ['time' => $now->toDateTimeString()]);
+        // Log::info('Starting RSS dispatch', ['time' => $now->toDateTimeString()]);
 
         try {
             RssFeed::query()
@@ -79,7 +79,7 @@ class SendRssNotifications extends Command
             Log::error('Error dispatching RSS notifications', ['error' => $e->getMessage()]);
         }
 
-        Log::info('Finished RSS dispatch', ['total_dispatched' => $this->totalDispatched]);
+        // Log::info('Finished RSS dispatch', ['total_dispatched' => $this->totalDispatched]);
     }
 
     private function fetchRssFeed(string $url, string $feedType, int $randomCount = 1)
