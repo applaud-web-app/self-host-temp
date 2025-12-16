@@ -208,7 +208,7 @@ class SubscribePushSubscriptionJob implements ShouldQueue
         // Best-effort dedupe check
         try {
             if (Redis::sismember('processed:push_subscriptions', $hash)) {
-                Log::info('Job skipped - subscription already processed', ['hash' => $hash]);
+                // Log::info('Job skipped - subscription already processed', ['hash' => $hash]);
                 return;
             }
         } catch (\Throwable $e) {
@@ -272,11 +272,11 @@ class SubscribePushSubscriptionJob implements ShouldQueue
                 if ($oldHeadId && $oldHeadId !== $headId) {
                     DB::table('push_subscriptions_head')->where('id', $oldHeadId)->delete();
 
-                    Log::info('Old token subscription deleted via cascade', [
-                        'old_token'   => substr($this->data['old_token'], 0, 20) . '...',
-                        'old_head_id' => $oldHeadId,
-                        'new_head_id' => $headId
-                    ]);
+                    // Log::info('Old token subscription deleted via cascade', [
+                    //     'old_token'   => substr($this->data['old_token'], 0, 20) . '...',
+                    //     'old_head_id' => $oldHeadId,
+                    //     'new_head_id' => $headId
+                    // ]);
                 }
             }
         });
