@@ -2,8 +2,8 @@
 
 use Illuminate\Support\Facades\Route;
 use Modules\AdvanceAnalytics\Http\Controllers\AdvanceAnalyticsController;
-
-Route::prefix('advance-analytics')->middleware(['auth','verify_advance_analytics'])->name('advance-analytics.')->controller(AdvanceAnalyticsController::class)->group(function () {
+// ,'verify_advance_analytics'
+Route::prefix('advance-analytics')->middleware(['auth'])->name('advance-analytics.')->controller(AdvanceAnalyticsController::class)->group(function () {
     Route::get('/', 'index')->name('index');
     Route::get('/performance', 'performance')->name('performance');
     Route::get('/subscribers', 'subscribers')->name('subscribers');

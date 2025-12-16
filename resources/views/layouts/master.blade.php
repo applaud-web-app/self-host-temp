@@ -280,7 +280,7 @@
 
     <!-- Required vendors -->
     <script src="{{ asset('vendor/global/global.min.js') }}"></script>
-    <script src="https://self.aplu.io/js/cdn-apluio-manager.js"></script>
+    {{-- <script src="https://self.aplu.io/js/cdn-apluio-manager.js"></script> --}}
     <script src="{{ asset('vendor/moment/moment.min.js') }}"></script>
     <!-- Datatable -->
     <script src="{{ asset('vendor/datatables/js/jquery.dataTables.min.js') }}"></script>

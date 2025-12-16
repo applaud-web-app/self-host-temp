@@ -65,6 +65,8 @@
             width: 2.5rem;
             height: 2.5rem;
         }
+
+        .chart-toggle{ margin-top: 0px; }
     </style>
 @endpush
 @section('content')
@@ -88,11 +90,11 @@
                     <div class="btn-group" role="group" aria-label="Date ranges">
                         <button type="button" class="btn btn-outline-primary perf-range active py-2 px-3"
                             data-range="24h">last 24 hours</button>
-                        <button type="button" class="btn btn-outline-primary perf-range py-2 px-3" data-range="7d">seven
+                        <button type="button" class="btn btn-outline-primary perf-range py-2 px-3" data-range="7d">7
                             days</button>
                         <button type="button" class="btn btn-outline-primary perf-range py-2 px-3" data-range="28d">28
                             days</button>
-                        <button type="button" class="btn btn-outline-primary perf-range py-2 px-3" data-range="3m">three
+                        <button type="button" class="btn btn-outline-primary perf-range py-2 px-3" data-range="3m">3
                             months</button>
                     </div>
                     <button type="button" class="btn btn-outline-secondary py-2 px-3" data-bs-toggle="modal"
@@ -105,7 +107,7 @@
             <!-- KPI cards -->
             <div class="row g-3 mb-3">
                 <div class="col-12 col-md-4">
-                    <div class="card h-100 position-relative kpi-card kpi-clicks" style="border-left:4px solid #4e5cf8;">
+                    <div class="card h-100 position-relative kpi-card kpi-clicks" style="border-left:4px solid #4e73df;">
                         <div class="card-body py-3">
                             <div class="d-flex align-items-center justify-content-between">
                                 <div class="text-muted small">Total clicks</div>
@@ -123,7 +125,7 @@
 
                 <div class="col-12 col-md-4">
                     <div class="card h-100 position-relative kpi-card kpi-impressions"
-                        style="border-left:4px solid #7a4ff8;">
+                        style="border-left:4px solid #f6c23e ;">
                         <div class="card-body py-3">
                             <div class="d-flex align-items-center justify-content-between">
                                 <div class="text-muted small">Total impressions</div>
@@ -140,7 +142,7 @@
                 </div>
 
                 <div class="col-12 col-md-4">
-                    <div class="card h-100 position-relative kpi-card kpi-ctr" style="border-left:4px solid #00c49a;">
+                    <div class="card h-100 position-relative kpi-card kpi-ctr" style="border-left:4px solid #1cc88a ;">
                         <div class="card-body py-3">
                             <div class="d-flex align-items-center justify-content-between">
                                 <div class="text-muted small">Average CTR</div>
@@ -158,22 +160,49 @@
                 </div>
             </div>
 
-            <!-- Chart -->
-            <div class="card mb-3 position-relative">
-                <div id="loading-chart" class="loading-overlay">
-                    <div class="spinner-border text-primary" role="status" aria-hidden="true"></div>
-                </div>
-                <div class="card-body">
-                    <div class="d-flex align-items-center justify-content-between mb-1">
-                        <small class="text-muted">Number of clicks</small>
-                        <small id="range-label" class="text-muted">Last 24 hours</small>
-                    </div>
-                    <div style="height:280px">
-                        <canvas id="perfChart"></canvas>
-                    </div>
-                </div>
-            </div>
-
+      <!-- Chart -->
+<div class="card mb-3 position-relative">
+    <div id="loading-chart" class="loading-overlay">
+        <div class="spinner-border text-primary" role="status" aria-hidden="true"></div>
+    </div>
+    <div class="card-body">
+        <div class="d-flex align-items-center justify-content-between mb-3">
+            <small class="text-muted">Number of clicks</small>
+            <small id="range-label" class="text-muted">Last 24 hours</small>
+        </div>
+        
+        <!-- Custom Legend Checkboxes -->
+        <div class="d-flex gap-3 mb-3 flex-wrap">
+            <label class="d-flex align-items-center gap-2" style="cursor: pointer;">
+                <input type="checkbox" class="form-check-input chart-toggle" data-dataset="0" checked>
+                <span class="d-flex align-items-center gap-1">
+                    <span style="width: 20px; height: 3px; background-color: #4e73df; display: inline-block; border-radius: 2px;"></span>
+                    <span>Clicks</span>
+                </span>
+            </label>
+            
+            <label class="d-flex align-items-center gap-2" style="cursor: pointer;">
+                <input type="checkbox" class="form-check-input chart-toggle" data-dataset="1" checked>
+                <span class="d-flex align-items-center gap-1">
+                    <span style="width: 20px; height: 3px; background-color: #f6c23e; display: inline-block; border-radius: 2px;"></span>
+                    <span>Impressions</span>
+                </span>
+            </label>
+            
+            <label class="d-flex align-items-center gap-2" style="cursor: pointer;">
+                <input type="checkbox" class="form-check-input chart-toggle" data-dataset="2">
+                <span class="d-flex align-items-center gap-1">
+                    <span style="width: 20px; height: 3px; background-color: #1cc88a; display: inline-block; border-radius: 2px;"></span>
+                    <span>CTR</span>
+                </span>
+            </label>
+        </div>
+        
+        <div style="height:300px;">
+            <canvas id="perfChart"></canvas>
+        </div>
+    </div>
+</div>
             <!-- Pages table -->
             <div class="card position-relative">
                 <div id="loading-table" class="loading-overlay">
@@ -182,7 +211,7 @@
                 <div class="card-body">
                     <div class="table-responsive">
                         <table class="table table-sm display align-middle" id="pages-table">
-                            <thead class="table-primary">
+                            <thead class="thead">
                                 <tr>
                                     <th>#</th>
                                     <th>Main Page</th>
@@ -254,434 +283,480 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
 
-    <script>
-        (function() {
-            // ---------- Cookie helpers ----------
-            function setCookie(name, value, days = 90) {
-                const d = new Date();
-                d.setTime(d.getTime() + (days * 24 * 60 * 60 * 1000));
-                document.cookie = name + "=" + encodeURIComponent(value) + ";expires=" + d.toUTCString() + ";path=/";
-            }
+  <script>
+    (function() {
+        // ---------- Cookie helpers ----------
+        function setCookie(name, value, days = 90) {
+            const d = new Date();
+            d.setTime(d.getTime() + (days * 24 * 60 * 60 * 1000));
+            document.cookie = name + "=" + encodeURIComponent(value) + ";expires=" + d.toUTCString() + ";path=/";
+        }
 
-            function getCookie(name) {
-                const cname = name + "=";
-                const ca = document.cookie.split(';');
-                for (let i = 0; i < ca.length; i++) {
-                    let c = ca[i].trim();
-                    if (c.indexOf(cname) === 0) return decodeURIComponent(c.substring(cname.length, c.length));
+        function getCookie(name) {
+            const cname = name + "=";
+            const ca = document.cookie.split(';');
+            for (let i = 0; i < ca.length; i++) {
+                let c = ca[i].trim();
+                if (c.indexOf(cname) === 0) return decodeURIComponent(c.substring(cname.length, c.length));
+            }
+            return null;
+        }
+
+        function deleteCookie(name) {
+            document.cookie = name + "=;expires=Thu, 01 Jan 1970 00:00:00 UTC;path=/";
+        }
+
+        const COOKIE_DOMAIN_ID = "adv_last_domain_id";
+        const COOKIE_DOMAIN_TEXT = "adv_last_domain_text";
+
+        // ---------- DataTable ----------
+        const table = $('#pages-table').DataTable({
+            paging: true,
+            searching: false,
+            ordering: true,
+            info: true,
+            lengthChange: true,
+            pageLength: 10,
+            responsive: true,
+            language: {
+                paginate: {
+                    previous: '<i class="fas fa-angle-double-left"></i>',
+                    next: '<i class="fas fa-angle-double-right"></i>'
                 }
-                return null;
-            }
+            },
+            columnDefs: [{
+                targets: 0,
+                orderable: false
+            }]
+        });
 
-            function deleteCookie(name) {
-                document.cookie = name + "=;expires=Thu, 01 Jan 1970 00:00:00 UTC;path=/";
-            }
+        table.on('order.dt search.dt draw.dt', function() {
+            let i = 1;
+            table
+                .cells(null, 0, {
+                    search: 'applied',
+                    order: 'applied'
+                })
+                .every(function() {
+                    this.data(i++);
+                });
+        });
 
-            const COOKIE_DOMAIN_ID = "adv_last_domain_id";
-            const COOKIE_DOMAIN_TEXT = "adv_last_domain_text";
+        function paintTables(pagesMaybePaginator) {
+            const rows = Array.isArray(pagesMaybePaginator) ?
+                pagesMaybePaginator :
+                (pagesMaybePaginator && Array.isArray(pagesMaybePaginator.data) ? pagesMaybePaginator.data : []);
 
-            // ---------- DataTable ----------
-            const table = $('#pages-table').DataTable({
-                paging: true,
-                searching: false,
-                ordering: true,
-                info: true,
-                lengthChange: true,
-                pageLength: 10,
+            table.clear();
+
+            rows.forEach((x, idx) => {
+                const clicks = Number(x.clicks || 0);
+                const imps = Number(x.impressions || 0);
+                const ctr = imps ? (clicks / imps) * 100 : 0;
+
+                table.row.add([
+                    idx + 1,
+                    `<span class="text-truncate" style="max-width:420px;display:inline-block">${x.page || x.q || '-'}</span>`,
+                    `<p class="text-end mb-0">${clicks.toLocaleString()}</p>`,
+                    `<p class="text-end mb-0">${imps.toLocaleString()}</p>`,
+                    `<p class="text-end mb-0">${ctr.toFixed(2)}%</p>`
+                ]);
+            });
+
+            table.draw(false);
+        }
+
+        // ---------- Bootstrap tooltips ----------
+        const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        tooltipTriggerList.map(el => new bootstrap.Tooltip(el));
+
+        // ---------- Select2 (Domain search) ----------
+        $('#domain-select').select2({
+            placeholder: 'Search for Domain…',
+            allowClear: true,
+            ajax: {
+                url: "{{ route('domain.domain-list') }}",
+                dataType: 'json',
+                delay: 250,
+                data: p => ({
+                    q: p.term || ''
+                }),
+                processResults: r => ({
+                    results: (r.data || []).map(i => ({
+                        id: i.id,
+                        text: i.text
+                    }))
+                }),
+                cache: true
+            },
+            templateResult: d => d.loading ? d.text : $(
+                `<span><i class="fal fa-globe me-1"></i>${d.text}</span>`),
+            escapeMarkup: m => m
+        });
+
+        // ---------- Chart.js (Clicks / Impressions / CTR) ----------
+        const ctx = document.getElementById('perfChart').getContext('2d');
+        const chart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: [],
+                datasets: [{
+                          label: 'Clicks',
+                        data: [],
+                        borderColor: '#4e73df',
+                        backgroundColor: 'rgba(78, 115, 223, 0.1)',
+                        borderWidth: 2,
+                        tension: 0.3,
+                        pointRadius: 0,
+                        yAxisID: 'y'
+                    },
+                    {
+                        label: 'Impressions',
+                        data: [],
+                        borderColor: '#f6c23e',
+                        backgroundColor: 'rgba(246, 194, 62, 0.1)',
+                        borderWidth: 2,
+                        tension: 0.3,
+                        pointRadius: 0,
+                        yAxisID: 'y'
+                    },
+                    {
+                        label: 'CTR',
+                        data: [],
+                        borderColor: '#1cc88a',
+                        backgroundColor: 'rgba(28, 200, 138, 0.1)',
+                        borderWidth: 2,
+                        tension: 0.3,
+                        pointRadius: 0,
+                        hidden: true,
+                        yAxisID: 'y1'
+                    }
+                ]
+            },
+            options: {
                 responsive: true,
-                language: {
-                    paginate: {
-                        previous: '<i class="fas fa-angle-double-left"></i>',
-                        next: '<i class="fas fa-angle-double-right"></i>'
+                maintainAspectRatio: false,
+                interaction: {
+                    mode: 'index',
+                    intersect: false
+                },
+                plugins: {
+                    legend: {
+                        display: false  // HIDE THE DEFAULT LEGEND
                     }
                 },
-                columnDefs: [{
-                    targets: 0,
-                    orderable: false
-                }]
-            });
+                scales: {
+                    x: {
+                        grid: {
+                            display: false
+                        }
+                    },
+                    y: {
+                        beginAtZero: true
+                    },
+                    y1: {
+                        beginAtZero: true,
+                        position: 'right',
+                        grid: {
+                            drawOnChartArea: false
+                        },
+                        ticks: {
+                            callback: (v) => v + '%'
+                        }
+                    }
+                }
+            }
+        });
 
-            table.on('order.dt search.dt draw.dt', function() {
-                let i = 1;
-                table
-                    .cells(null, 0, {
-                        search: 'applied',
-                        order: 'applied'
-                    })
-                    .every(function() {
-                        this.data(i++);
-                    });
-            });
+        // ---------- Helpers ----------
+        const $kClicks = document.getElementById('kpi-clicks');
+        const $kImps = document.getElementById('kpi-impressions');
+        const $kCtr = document.getElementById('kpi-ctr');
+        const $rangeLb = document.getElementById('range-label');
 
-            function paintTables(pagesMaybePaginator) {
-                const rows = Array.isArray(pagesMaybePaginator) ?
-                    pagesMaybePaginator :
-                    (pagesMaybePaginator && Array.isArray(pagesMaybePaginator.data) ? pagesMaybePaginator.data : []);
+        const prettyRange = {
+            '24h': 'Last 24 hours',
+            '7d': 'Last 7 days',
+            '28d': 'Last 28 days',
+            '3m': 'Last 3 months'
+        };
 
-                table.clear();
+        function pct(c, i) {
+            return i ? (c / i * 100) : 0;
+        }
 
-                rows.forEach((x, idx) => {
-                    const clicks = Number(x.clicks || 0);
-                    const imps = Number(x.impressions || 0);
-                    const ctr = imps ? (clicks / imps) * 100 : 0;
+        function setKpis({
+            clicks = 0,
+            impressions = 0,
+            ctr = null
+        }) {
+            const ctrVal = (ctr === null || ctr === undefined) ? pct(clicks, impressions) : ctr;
+            $kClicks.textContent = Number(clicks).toLocaleString();
+            $kImps.textContent = Number(impressions).toLocaleString();
+            $kCtr.textContent = `${Number(ctrVal).toFixed(2)}%`;
+        }
 
-                    table.row.add([
-                        idx + 1,
-                        `<span class="text-truncate" style="max-width:420px;display:inline-block">${x.page || x.q || '-'}</span>`,
-                        `<p class="text-end mb-0">${clicks.toLocaleString()}</p>`,
-                        `<p class="text-end mb-0">${imps.toLocaleString()}</p>`,
-                        `<p class="text-end mb-0">${ctr.toFixed(2)}%</p>`
-                    ]);
+        function computeCtrSeries(clicks = [], impressions = []) {
+            const out = [];
+            const n = Math.max(clicks.length, impressions.length);
+            for (let i = 0; i < n; i++) {
+                const c = Number(clicks[i] || 0);
+                const im = Number(impressions[i] || 0);
+                out.push(im ? (c / im * 100) : 0);
+            }
+            return out;
+        }
+
+        function updateChart(labels, clicks, impressions) {
+            const ctrSeries = computeCtrSeries(clicks, impressions);
+            chart.data.labels = labels || [];
+            chart.data.datasets[0].data = clicks || [];
+            chart.data.datasets[1].data = impressions || [];
+            chart.data.datasets[2].data = ctrSeries;
+            chart.update();
+        }
+
+        function timeAgoFrom(iso) {
+            if (!iso) return '';
+            const now = new Date();
+            const t = new Date(iso);
+            const ms = Math.max(0, now - t);
+            const mins = ms / 60000;
+            if (mins < 1.5) return 'Last updated: just now';
+            if (mins < 120) return `Last updated: ${Math.round(mins)} minutes ago`;
+            const hours = mins / 60;
+            if (hours < 24) return `Last updated: ${hours.toFixed(1)} hours ago`;
+            const days = hours / 24;
+            return `Last updated: ${days.toFixed(1)} days ago`;
+        }
+
+        // ---------- Loading overlays ----------
+        const showLoaders = (on) => {
+            document.getElementById('loading-chart').classList.toggle('show', on);
+            document.getElementById('loading-table').classList.toggle('show', on);
+        };
+
+        // ---------- API / state ----------
+        const METRICS_URL = "{{ route('advance-analytics.fetch') }}"; // backend endpoint
+        let activeRange = '24h'; // default; will be used on restore
+        let moreRange = null;
+
+        function buildQuery(domainId) {
+            const q = {
+                domain: Number(domainId)
+            };
+            if (['24h', '7d', '28d', '3m'].includes(activeRange)) {
+                q.range = activeRange;
+            } else if (moreRange) {
+                q.range = 'more';
+                if (['6m', '12m', '18m', '24m'].includes(moreRange.type)) {
+                    q.months = parseInt(moreRange.type, 10);
+                } else if (moreRange.type === 'custom') {
+                    q.start = moreRange.start;
+                    q.end = moreRange.end;
+                }
+            }
+            return q;
+        }
+
+        function prettyRangeLabel() {
+            return prettyRange[activeRange] || (
+                moreRange ?
+                (['6m', '12m', '18m', '24m'].includes(moreRange.type) ?
+                    `Last ${parseInt(moreRange.type,10)} months` :
+                    `${moreRange.start || '…'} to ${moreRange.end || '…'}`) :
+                ''
+            );
+        }
+
+        function debounce(fn, ms = 400) {
+            let t;
+            return (...args) => {
+                clearTimeout(t);
+                t = setTimeout(() => fn(...args), ms);
+            };
+        }
+
+        const loadPerformance = debounce(async function() {
+            const domain = $('#domain-select').val(); // this is the **ID**
+            if (!domain) {
+                setKpis({
+                    clicks: 0,
+                    impressions: 0,
+                    ctr: 0
                 });
-
-                table.draw(false);
-            }
-
-            // ---------- Bootstrap tooltips ----------
-            const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-            tooltipTriggerList.map(el => new bootstrap.Tooltip(el));
-
-            // ---------- Select2 (Domain search) ----------
-            $('#domain-select').select2({
-                placeholder: 'Search for Domain…',
-                allowClear: true,
-                ajax: {
-                    url: "{{ route('domain.domain-list') }}",
-                    dataType: 'json',
-                    delay: 250,
-                    data: p => ({
-                        q: p.term || ''
-                    }),
-                    processResults: r => ({
-                        results: (r.data || []).map(i => ({
-                            id: i.id,
-                            text: i.text
-                        }))
-                    }),
-                    cache: true
-                },
-                templateResult: d => d.loading ? d.text : $(
-                    `<span><i class="fal fa-globe me-1"></i>${d.text}</span>`),
-                escapeMarkup: m => m
-            });
-
-            // ---------- Chart.js (Clicks / Impressions / CTR) ----------
-            const ctx = document.getElementById('perfChart').getContext('2d');
-            const chart = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: [],
-                    datasets: [{
-                            label: 'Clicks',
-                            data: [],
-                            borderWidth: 2,
-                            tension: 0.3,
-                            pointRadius: 0,
-                            yAxisID: 'y'
-                        },
-                        {
-                            label: 'Impressions',
-                            data: [],
-                            borderWidth: 2,
-                            tension: 0.3,
-                            pointRadius: 0,
-                            yAxisID: 'y'
-                        },
-                        {
-                            label: 'CTR',
-                            data: [],
-                            borderWidth: 2,
-                            tension: 0.3,
-                            pointRadius: 0,
-                            hidden: true,
-                            yAxisID: 'y1'
-                        }
-                    ]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    interaction: {
-                        mode: 'index',
-                        intersect: false
-                    },
-                    plugins: {
-                        legend: {
-                            display: true
-                        }
-                    },
-                    scales: {
-                        x: {
-                            grid: {
-                                display: false
-                            }
-                        },
-                        y: {
-                            beginAtZero: true
-                        },
-                        y1: {
-                            beginAtZero: true,
-                            position: 'right',
-                            grid: {
-                                drawOnChartArea: false
-                            },
-                            ticks: {
-                                callback: (v) => v + '%'
-                            }
-                        }
-                    }
-                }
-            });
-
-            // ---------- Helpers ----------
-            const $kClicks = document.getElementById('kpi-clicks');
-            const $kImps = document.getElementById('kpi-impressions');
-            const $kCtr = document.getElementById('kpi-ctr');
-            const $rangeLb = document.getElementById('range-label');
-
-            const prettyRange = {
-                '24h': 'Last 24 hours',
-                '7d': 'Last 7 days',
-                '28d': 'Last 28 days',
-                '3m': 'Last 3 months'
-            };
-
-            function pct(c, i) {
-                return i ? (c / i * 100) : 0;
-            }
-
-            function setKpis({
-                clicks = 0,
-                impressions = 0,
-                ctr = null
-            }) {
-                const ctrVal = (ctr === null || ctr === undefined) ? pct(clicks, impressions) : ctr;
-                $kClicks.textContent = Number(clicks).toLocaleString();
-                $kImps.textContent = Number(impressions).toLocaleString();
-                $kCtr.textContent = `${Number(ctrVal).toFixed(2)}%`;
-            }
-
-            function computeCtrSeries(clicks = [], impressions = []) {
-                const out = [];
-                const n = Math.max(clicks.length, impressions.length);
-                for (let i = 0; i < n; i++) {
-                    const c = Number(clicks[i] || 0);
-                    const im = Number(impressions[i] || 0);
-                    out.push(im ? (c / im * 100) : 0);
-                }
-                return out;
-            }
-
-            function updateChart(labels, clicks, impressions) {
-                const ctrSeries = computeCtrSeries(clicks, impressions);
-                chart.data.labels = labels || [];
-                chart.data.datasets[0].data = clicks || [];
-                chart.data.datasets[1].data = impressions || [];
-                chart.data.datasets[2].data = ctrSeries;
-                chart.update();
-            }
-
-            function timeAgoFrom(iso) {
-                if (!iso) return '';
-                const now = new Date();
-                const t = new Date(iso);
-                const ms = Math.max(0, now - t);
-                const mins = ms / 60000;
-                if (mins < 1.5) return 'Last updated: just now';
-                if (mins < 120) return `Last updated: ${Math.round(mins)} minutes ago`;
-                const hours = mins / 60;
-                if (hours < 24) return `Last updated: ${hours.toFixed(1)} hours ago`;
-                const days = hours / 24;
-                return `Last updated: ${days.toFixed(1)} days ago`;
-            }
-
-            // ---------- Loading overlays ----------
-            const showLoaders = (on) => {
-                document.getElementById('loading-chart').classList.toggle('show', on);
-                document.getElementById('loading-table').classList.toggle('show', on);
-            };
-
-            // ---------- API / state ----------
-            const METRICS_URL = "{{ route('advance-analytics.fetch') }}"; // backend endpoint
-            let activeRange = '24h'; // default; will be used on restore
-            let moreRange = null;
-
-            function buildQuery(domainId) {
-                const q = {
-                    domain: Number(domainId)
-                };
-                if (['24h', '7d', '28d', '3m'].includes(activeRange)) {
-                    q.range = activeRange;
-                } else if (moreRange) {
-                    q.range = 'more';
-                    if (['6m', '12m', '18m', '24m'].includes(moreRange.type)) {
-                        q.months = parseInt(moreRange.type, 10);
-                    } else if (moreRange.type === 'custom') {
-                        q.start = moreRange.start;
-                        q.end = moreRange.end;
-                    }
-                }
-                return q;
-            }
-
-            function prettyRangeLabel() {
-                return prettyRange[activeRange] || (
-                    moreRange ?
-                    (['6m', '12m', '18m', '24m'].includes(moreRange.type) ?
-                        `Last ${parseInt(moreRange.type,10)} months` :
-                        `${moreRange.start || '…'} to ${moreRange.end || '…'}`) :
-                    ''
-                );
-            }
-
-            function debounce(fn, ms = 400) {
-                let t;
-                return (...args) => {
-                    clearTimeout(t);
-                    t = setTimeout(() => fn(...args), ms);
-                };
-            }
-
-            const loadPerformance = debounce(async function() {
-                const domain = $('#domain-select').val(); // this is the **ID**
-                if (!domain) {
-                    setKpis({
-                        clicks: 0,
-                        impressions: 0,
-                        ctr: 0
-                    });
-                    updateChart([], [], []);
-                    paintTables([]);
-                    $rangeLb.textContent = prettyRangeLabel();
-                    return;
-                }
-
+                updateChart([], [], []);
+                paintTables([]);
                 $rangeLb.textContent = prettyRangeLabel();
-                showLoaders(true);
+                return;
+            }
 
-                try {
-                    const params = buildQuery(domain);
-                    const res = await $.ajax({
-                        url: METRICS_URL,
-                        data: params,
-                        method: 'GET',
-                        cache: false,
-                        timeout: 20000
-                    });
+            $rangeLb.textContent = prettyRangeLabel();
+            showLoaders(true);
 
-                    const {
-                        kpis = {}, series = {}, tables = {}, meta = {}
-                    } = res || {};
-                    setKpis({
-                        clicks: kpis.clicks,
-                        impressions: kpis.impressions,
-                        ctr: kpis.ctr
-                    });
-                    updateChart(series.labels || [], series.clicks || [], series.impressions || []);
-                    paintTables(tables.pages);
-
-                    const rel = timeAgoFrom(meta.cached_at);
-                    const base = prettyRangeLabel();
-                    $rangeLb.textContent = base ? `${base} • ${rel}` : rel;
-                } catch (e) {
-                    console.error('Analytics fetch failed:', e);
-                    setKpis({
-                        clicks: 0,
-                        impressions: 0,
-                        ctr: 0
-                    });
-                    updateChart([], [], []);
-                    paintTables([]);
-                } finally {
-                    showLoaders(false);
-                }
-            }, 250);
-
-            // ---------- Events ----------
-            // On domain change, save cookies and load
-            $('#domain-select').on('change', function() {
-                const val = $(this).val();
-                const data = $('#domain-select').select2('data');
-                if (val) {
-                    const label = data && data[0] ? (data[0].text || '') : '';
-                    setCookie(COOKIE_DOMAIN_ID, String(val));
-                    setCookie(COOKIE_DOMAIN_TEXT, label);
-                } else {
-                    deleteCookie(COOKIE_DOMAIN_ID);
-                    deleteCookie(COOKIE_DOMAIN_TEXT);
-                }
-                loadPerformance();
-            });
-
-            // Range buttons
-            document.querySelectorAll('.perf-range').forEach(btn => {
-                btn.addEventListener('click', function() {
-                    document.querySelectorAll('.perf-range').forEach(b => b.classList.remove('active'));
-                    this.classList.add('active');
-                    activeRange = this.dataset.range; // 24h,7d,28d,3m
-                    moreRange = null; // clear “more”
-                    loadPerformance();
-                });
-            });
-
-            // KPI toggles
-            document.querySelectorAll('.kpi-toggle').forEach(chk => {
-                chk.addEventListener('change', function() {
-                    const id = this.dataset.kpi;
-                    if (id === 'clicks') chart.setDatasetVisibility(0, this.checked);
-                    if (id === 'impressions') chart.setDatasetVisibility(1, this.checked);
-                    if (id === 'ctr') chart.setDatasetVisibility(2, this.checked);
-                    chart.update();
+            try {
+                const params = buildQuery(domain);
+                const res = await $.ajax({
+                    url: METRICS_URL,
+                    data: params,
+                    method: 'GET',
+                    cache: false,
+                    timeout: 20000
                 });
 
-                const id = chk.dataset.kpi;
-                if (id === 'clicks') chart.setDatasetVisibility(0, chk.checked);
-                if (id === 'impressions') chart.setDatasetVisibility(1, chk.checked);
-                if (id === 'ctr') chart.setDatasetVisibility(2, chk.checked);
-            });
+                const {
+                    kpis = {}, series = {}, tables = {}, meta = {}
+                } = res || {};
+                setKpis({
+                    clicks: kpis.clicks,
+                    impressions: kpis.impressions,
+                    ctr: kpis.ctr
+                });
+                updateChart(series.labels || [], series.clicks || [], series.impressions || []);
+                paintTables(tables.pages);
 
-            // More modal apply
-            $('#applyMoreRange').on('click', function() {
-                const val = $('input[name="moreRange"]:checked').val();
-                if (!val) return;
+                const rel = timeAgoFrom(meta.cached_at);
+                const base = prettyRangeLabel();
+                $rangeLb.textContent = base ? `${base} • ${rel}` : rel;
+            } catch (e) {
+                console.error('Analytics fetch failed:', e);
+                setKpis({
+                    clicks: 0,
+                    impressions: 0,
+                    ctr: 0
+                });
+                updateChart([], [], []);
+                paintTables([]);
+            } finally {
+                showLoaders(false);
+            }
+        }, 250);
 
-                if (val === 'custom') {
-                    const start = $('#customStart').val();
-                    const end = $('#customEnd').val();
-                    moreRange = {
-                        type: 'custom',
-                        start,
-                        end
-                    };
-                } else {
-                    moreRange = {
-                        type: val
-                    }; // 6m / 12m / 18m / 24m
-                }
+        // ---------- Events ----------
+        // On domain change, save cookies and load
+        $('#domain-select').on('change', function() {
+            const val = $(this).val();
+            const data = $('#domain-select').select2('data');
+            if (val) {
+                const label = data && data[0] ? (data[0].text || '') : '';
+                setCookie(COOKIE_DOMAIN_ID, String(val));
+                setCookie(COOKIE_DOMAIN_TEXT, label);
+            } else {
+                deleteCookie(COOKIE_DOMAIN_ID);
+                deleteCookie(COOKIE_DOMAIN_TEXT);
+            }
+            loadPerformance();
+        });
 
-                activeRange = 'more';
-                $('#moreRangeModal').modal('hide');
+        // Range buttons
+        document.querySelectorAll('.perf-range').forEach(btn => {
+            btn.addEventListener('click', function() {
                 document.querySelectorAll('.perf-range').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                activeRange = this.dataset.range; // 24h,7d,28d,3m
+                moreRange = null; // clear "more"
                 loadPerformance();
             });
+        });
 
-            // ---------- Restore last selected domain on page load ----------
-            (function restoreLastDomain() {
-                const savedId = getCookie(COOKIE_DOMAIN_ID);
-                const savedText = getCookie(COOKIE_DOMAIN_TEXT);
-                if (!savedId) return;
+        // ---------- Synchronized Checkbox Handlers ----------
+        
+        // Handle KPI card checkbox changes
+        document.querySelectorAll('.kpi-toggle').forEach(chk => {
+            chk.addEventListener('change', function() {
+                const kpiType = this.dataset.kpi; // 'clicks', 'impressions', 'ctr'
+                const isChecked = this.checked;
+                
+                // Update chart visibility
+                if (kpiType === 'clicks') {
+                    chart.setDatasetVisibility(0, isChecked);
+                } else if (kpiType === 'impressions') {
+                    chart.setDatasetVisibility(1, isChecked);
+                } else if (kpiType === 'ctr') {
+                    chart.setDatasetVisibility(2, isChecked);
+                }
+                chart.update();
+                
+                // Sync with corresponding chart checkbox
+                const datasetIndex = kpiType === 'clicks' ? 0 : kpiType === 'impressions' ? 1 : 2;
+                const chartCheckbox = document.querySelector(`.chart-toggle[data-dataset="${datasetIndex}"]`);
+                if (chartCheckbox) {
+                    chartCheckbox.checked = isChecked;
+                }
+            });
+            
+            // Initialize chart visibility based on initial checkbox state
+            const kpiType = chk.dataset.kpi;
+            if (kpiType === 'clicks') {
+                chart.setDatasetVisibility(0, chk.checked);
+            } else if (kpiType === 'impressions') {
+                chart.setDatasetVisibility(1, chk.checked);
+            } else if (kpiType === 'ctr') {
+                chart.setDatasetVisibility(2, chk.checked);
+            }
+        });
 
-                // Insert a preselected option so Select2 shows it without needing an AJAX search
-                const option = new Option(savedText || savedId, savedId, true, true);
-                $('#domain-select').append(option).trigger('change'); // triggers loadPerformance via change handler
+        // Handle chart legend checkbox changes
+        document.querySelectorAll('.chart-toggle').forEach(checkbox => {
+            checkbox.addEventListener('change', function() {
+                const datasetIndex = parseInt(this.dataset.dataset);
+                const isChecked = this.checked;
+                
+                // Update chart visibility
+                chart.setDatasetVisibility(datasetIndex, isChecked);
+                chart.update();
+                
+                // Sync with corresponding KPI checkbox
+                const kpiType = datasetIndex === 0 ? 'clicks' : datasetIndex === 1 ? 'impressions' : 'ctr';
+                const kpiCheckbox = document.querySelector(`.kpi-toggle[data-kpi="${kpiType}"]`);
+                if (kpiCheckbox) {
+                    kpiCheckbox.checked = isChecked;
+                }
+            });
+        });
 
-                // Ensure range is 24h on load as requested (buttons UI)
-                document.querySelectorAll('.perf-range').forEach(b => b.classList.remove('active'));
-                document.querySelector('.perf-range[data-range="24h"]').classList.add('active');
-                activeRange = '24h';
-            })();
+        // More modal apply
+        $('#applyMoreRange').on('click', function() {
+            const val = $('input[name="moreRange"]:checked').val();
+            if (!val) return;
+
+            if (val === 'custom') {
+                const start = $('#customStart').val();
+                const end = $('#customEnd').val();
+                moreRange = {
+                    type: 'custom',
+                    start,
+                    end
+                };
+            } else {
+                moreRange = {
+                    type: val
+                }; // 6m / 12m / 18m / 24m
+            }
+
+            activeRange = 'more';
+            $('#moreRangeModal').modal('hide');
+            document.querySelectorAll('.perf-range').forEach(b => b.classList.remove('active'));
+            loadPerformance();
+        });
+
+        // ---------- Restore last selected domain on page load ----------
+        (function restoreLastDomain() {
+            const savedId = getCookie(COOKIE_DOMAIN_ID);
+            const savedText = getCookie(COOKIE_DOMAIN_TEXT);
+            if (!savedId) return;
+
+            // Insert a preselected option so Select2 shows it without needing an AJAX search
+            const option = new Option(savedText || savedId, savedId, true, true);
+            $('#domain-select').append(option).trigger('change'); // triggers loadPerformance via change handler
+
+            // Ensure range is 24h on load as requested (buttons UI)
+            document.querySelectorAll('.perf-range').forEach(b => b.classList.remove('active'));
+            document.querySelector('.perf-range[data-range="24h"]').classList.add('active');
+            activeRange = '24h';
         })();
-    </script>
+    })();
+</script>
 @endpush
 
 {{-- @push('scripts')

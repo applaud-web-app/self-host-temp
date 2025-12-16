@@ -87,9 +87,9 @@
                 <div class="d-flex flex-wrap align-items-center gap-2">
                     <div class="btn-group" role="group" aria-label="Date ranges">
                         <button type="button" class="btn btn-outline-primary perf-range active py-2 px-3" data-range="24h">last 24 hours</button>
-                        <button type="button" class="btn btn-outline-primary perf-range py-2 px-3" data-range="7d">seven days</button>
+                        <button type="button" class="btn btn-outline-primary perf-range py-2 px-3" data-range="7d">7 days</button>
                         <button type="button" class="btn btn-outline-primary perf-range py-2 px-3" data-range="28d">28 days</button>
-                        <button type="button" class="btn btn-outline-primary perf-range py-2 px-3" data-range="3m">three months</button>
+                        <button type="button" class="btn btn-outline-primary perf-range py-2 px-3" data-range="3m">3 months</button>
                     </div>
                     <button type="button" class="btn btn-outline-secondary py-2 px-3" data-bs-toggle="modal" data-bs-target="#moreRangeModal">More +</button>
                 </div>
