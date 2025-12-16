@@ -635,11 +635,6 @@
                     });
 
                     if (duplicateFound) {
-                        // iziToast.error({
-                        //     title: "Warning!",
-                        //     message: "You have duplicate schedule slots. Please ensure each slot is unique.",
-                        //     position: "topRight",
-                        // });
                         e.preventDefault();
                         return false;
                     }

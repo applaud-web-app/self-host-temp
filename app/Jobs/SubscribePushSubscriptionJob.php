@@ -281,11 +281,11 @@ class SubscribePushSubscriptionJob implements ShouldQueue
             }
         });
 
-        Log::info('Push subscription saved to database (3-table structure)', [
-            'hash'   => $hash,
-            'domain' => $this->data['domain'] ?? null,
-            'token'  => isset($this->data['token']) ? (substr($this->data['token'], 0, 20) . '...') : null,
-        ]);
+        // Log::info('Push subscription saved to database (3-table structure)', [
+        //     'hash'   => $hash,
+        //     'domain' => $this->data['domain'] ?? null,
+        //     'token'  => isset($this->data['token']) ? (substr($this->data['token'], 0, 20) . '...') : null,
+        // ]);
 
         // Redis bookkeeping after DB commit (best-effort)
         try {
@@ -293,7 +293,7 @@ class SubscribePushSubscriptionJob implements ShouldQueue
             Redis::expire('processed:push_subscriptions', 86400);
             Redis::srem('queued:push_subscriptions', $hash);
 
-            Log::info('Subscription fully processed (DB + Redis)', ['hash' => $hash]);
+            // Log::info('Subscription fully processed (DB + Redis)', ['hash' => $hash]);
 
         } catch (\Throwable $e) {
             Log::warning('Redis bookkeeping failed after DB save (non-critical)', [
