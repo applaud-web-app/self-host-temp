@@ -3,7 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use Modules\URLShortener\Http\Controllers\URLShortenerController;
 
-Route::prefix('shortener')->middleware(['auth'])->name('url_shortener.')->controller(URLShortenerController::class)->group(function () {
+Route::prefix('shortener')->middleware(['auth','verify_url_shortener'])->name('url_shortener.')->controller(URLShortenerController::class)->group(function () {
 
     // YOUTUBE SHORTENER
     Route::get('/youtube', 'youtube')->name('youtube');

@@ -21,7 +21,7 @@ class WelcomeMessageServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        app('router')->aliasMiddleware('verify_license',  \Modules\WelcomeMessage\Http\Middleware\CheckLicenseKey::class);
+        app('router')->aliasMiddleware('verify_welcome_message',  \Modules\WelcomeMessage\Http\Middleware\CheckLicenseKey::class);
 
         $this->registerCommands();
         $this->registerCommandSchedules();
@@ -75,47 +75,14 @@ class WelcomeMessageServiceProvider extends ServiceProvider
         }
     }
 
-    /**
-     * Register config.
-     */
-    // protected function registerConfig(): void
-    // {
-    //     $configPath = module_path($this->name, config('modules.paths.generator.config.path'));
-
-    //     if (is_dir($configPath)) {
-    //         $iterator = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($configPath));
-
-    //         foreach ($iterator as $file) {
-    //             if ($file->isFile() && $file->getExtension() === 'php') {
-    //                 $config = str_replace($configPath.DIRECTORY_SEPARATOR, '', $file->getPathname());
-    //                 $config_key = str_replace([DIRECTORY_SEPARATOR, '.php'], ['.', ''], $config);
-    //                 $segments = explode('.', $this->nameLower.'.'.$config_key);
-
-    //                 // Remove duplicated adjacent segments
-    //                 $normalized = [];
-    //                 foreach ($segments as $segment) {
-    //                     if (end($normalized) !== $segment) {
-    //                         $normalized[] = $segment;
-    //                     }
-    //                 }
-
-    //                 $key = ($config === 'config.php') ? $this->nameLower : implode('.', $normalized);
-
-    //                 $this->publishes([$file->getPathname() => config_path($config)], 'config');
-    //                 $this->merge_config_from($file->getPathname(), $key);
-    //             }
-    //         }
-    //     }
-    // }
-
     protected function registerConfig(): void
     {
         $this->publishes([
-            module_path('AdvanceSegmentation', 'config/config.php') => config_path('license.php'),
+            module_path('WelcomeMessage', 'config/config.php') => config_path('license.php'),
         ], 'config');
 
         $this->mergeConfigFrom(
-            module_path('AdvanceSegmentation', 'config/config.php'), 'license'
+            module_path('WelcomeMessage', 'config/config.php'), 'license'
         );
     }
 

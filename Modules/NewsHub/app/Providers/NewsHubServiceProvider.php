@@ -22,7 +22,7 @@ class NewsHubServiceProvider extends ServiceProvider
     public function boot(): void
     {
         // Register middleware if required
-        app('router')->aliasMiddleware('verify_license', \Modules\NewsHub\Http\Middleware\CheckLicenseKey::class);
+        app('router')->aliasMiddleware('verify_news_hub', \Modules\NewsHub\Http\Middleware\CheckLicenseKey::class);
 
         $this->registerCommands();
         $this->registerCommandSchedules();

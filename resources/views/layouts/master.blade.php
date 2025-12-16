@@ -26,6 +26,7 @@
     <meta property="og:image:height" content="675" />
     <meta property="og:image:alt" content="Aplu Login Page" />
     <meta property="og:image:type" content="image/jpeg" />
+    <meta name="robots" content="noindex, nofollow">
 
     <!-- FAVICONS ICON -->
     <link rel="apple-touch-icon" sizes="180x180" href="{{ asset('images/favicon_io/apple-touch-icon.png') }}">

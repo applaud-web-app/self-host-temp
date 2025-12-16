@@ -13,6 +13,7 @@
     <link rel="stylesheet" href="{{ asset('css/main.css') }}">
     <link rel="stylesheet" href="{{ asset('css/responsive.css') }}">
     <link rel="stylesheet" href="{{ asset('css/iziToast.css') }}">
+    <meta name="robots" content="noindex, nofollow">
     <style>
         /* Layout Structure */
          html {

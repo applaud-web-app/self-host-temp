@@ -11,7 +11,7 @@ class PushSubscriptionHead extends Model
 
     /**
      * Owning domain.
-     */
+    */
     public function domain()
     {
         return $this->belongsTo(Domain::class, 'domain_id');
@@ -19,7 +19,7 @@ class PushSubscriptionHead extends Model
 
     /**
      * Payload record.
-     */
+    */
     public function payload()
     {
         return $this->hasOne(PushSubscriptionPayload::class, 'head_id');
@@ -27,7 +27,7 @@ class PushSubscriptionHead extends Model
 
     /**
      * Meta record.
-     */
+    */
     public function meta()
     {
         return $this->hasOne(PushSubscriptionMeta::class, 'head_id');

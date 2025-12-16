@@ -1,5 +1,4 @@
 <?php
-// IS ACTIVE JOB
 
 namespace App\Jobs;
 
@@ -10,29 +9,33 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Support\Facades\DB;
-use App\Models\PushSubscriptionHead;
 use Illuminate\Foundation\Bus\Dispatchable;
-use App\Models\Setting;
-use Illuminate\Support\Facades\Cache;
+use Illuminate\Http\Client\Pool;
 
 class SendNotificationByNode implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable;
 
-    public int $tries = 1;
-    public int $timeout = 7200;
-    public int $backoff = 60;
-
-    private const MAX_FCM_BATCH = 500;
+    public int $tries = 2;
+    public int $timeout = 600;
+    
+    // Maximum tokens per HTTP request to avoid payload limits
+    private const MAX_TOKENS_PER_REQUEST = 10000;
+    private const NODE_SERVICE_TIMEOUT = 120;
+    private const MAX_CONCURRENT_REQUESTS = 5; // Process 5 requests in parallel
     
     protected array $tokens;
     protected array $message;
     protected string $domainName;
     protected ?int $notificationId;
 
-    public function __construct(array $tokens, array $message, string $domainName, ?int $notificationId = null)
-    {
-        $this->tokens = $tokens;
+    public function __construct(
+        array $tokens, 
+        array $message, 
+        string $domainName, 
+        ?int $notificationId = null
+    ) {
+        $this->tokens = array_values(array_unique(array_filter($tokens)));
         $this->message = $message;
         $this->domainName = $domainName;
         $this->notificationId = $notificationId;
@@ -40,164 +43,208 @@ class SendNotificationByNode implements ShouldQueue
 
     public function handle(): void
     {
+        $startTime = microtime(true);
+        
         try {
             if (empty($this->tokens)) {
-                Log::warning("No tokens provided for domain: {$this->domainName}");
-                $this->updateNotificationStatus(0, 0, 0);
+                Log::warning("No valid tokens for domain: {$this->domainName}");
+                $this->finalizeNotification(0, 0, 0);
                 return;
             }
 
-            // Get settings from cache or database
-            $settings = Cache::remember('settings_batch_size', 3600, function () {
-                return Setting::firstOrCreate(['id' => 1], [
-                    'gap_size' => self::MAX_FCM_BATCH,
-                    'time_gap' => 1000,
-                    'daily_cleanup' => false,
-                    'sending_speed' => 'fast',
-                ]);
-            });
-
-            $batchSize = max(1, (int)($settings->gap_size ?? self::MAX_FCM_BATCH));
-            $timeGapMs = max(0, (int)($settings->time_gap ?? 1000));
-
-            // Process tokens in batches
-            $batches = array_chunk($this->tokens, $batchSize);
-
-            $totalSuccess = 0;
-            $totalFailure = 0;
-            $allFailedTokens = [];
-
-            // Log::info("Processing ".count($this->tokens)." tokens in ".count($batches)." batches for domain: {$this->domainName}", [
-            //     'batch_size' => $batchSize,
-            //     'time_gap_ms' => $timeGapMs,
-            //     'sending_speed' => $settings->sending_speed,
-            // ]);
-
-            $hasConnectionError = false;
-
-            foreach ($batches as $batchIndex => $batch) {
-                // Log::info("Processing batch " . ($batchIndex + 1) . " of " . count($batches) . " with " . count($batch) . " tokens");
-
-                $response = $this->sendBatchToNodeService($batch);
-
-                if ($response !== null) {
-                    // Successful API call - process the response
-                    $successCount = $response['successCount'] ?? 0;
-                    $failureCount = $response['failureCount'] ?? 0;
-                    $batchFailedTokens = $response['failedTokens'] ?? [];
-
-                    $totalSuccess += $successCount;
-                    $totalFailure += $failureCount;
-                    
-                    // Only add tokens that actually failed from Firebase, not connection errors
-                    $allFailedTokens = array_merge($allFailedTokens, $batchFailedTokens);
-
-                    Log::info("Batch " . ($batchIndex + 1) . " completed - Success: {$successCount}, Failed: {$failureCount}, Invalid tokens: " . count($batchFailedTokens));
-                } else {
-                    // Connection/API error - don't mark tokens as inactive
-                    $hasConnectionError = true;
-                    $totalFailure += count($batch);
-                    Log::error("Batch " . ($batchIndex + 1) . " failed due to connection/API error - tokens will not be marked inactive");
-                }
-
-                if ($timeGapMs > 0) {
-                    usleep($timeGapMs * 1000);
-                }
-            }
-
-            // Determine the final notification status
-            $finalStatus = 'sent';
-            if ($hasConnectionError && $totalSuccess === 0) {
-                // If there were connection errors and no success, mark as failed for retry
-                $finalStatus = 'failed';
-                Log::warning("Notification marked as failed due to connection errors - will be retried");
-            } elseif ($hasConnectionError && $totalSuccess > 0) {
-                // Partial success with connection errors - mark as sent but log warning
-                Log::warning("Notification partially sent - some batches failed due to connection errors");
-            }
-
-            // Update notification status in database
-            $this->updateNotificationStatus($totalSuccess, $totalFailure, count($this->tokens), $finalStatus);
-
-            // Mark failed tokens as inactive ONLY if they came from Firebase response
-            if (!empty($allFailedTokens)) {
-                $this->deactivateFailedTokens($allFailedTokens);
-                Log::info("Marked " . count($allFailedTokens) . " tokens as inactive (Firebase failures only)");
-            }
-
-            Log::info("SendNotificationByNode completed for domain: {$this->domainName} - Success: {$totalSuccess}, Failed: {$totalFailure}, Inactive: " . count($allFailedTokens) . ", Status: {$finalStatus}");
-
-        } catch (Throwable $e) {
-            Log::error("SendNotificationByNode failed for domain: {$this->domainName}: {$e->getMessage()}", [
-                'domain' => $this->domainName,
+            $totalTokens = count($this->tokens);
+            Log::info("Starting SendNotificationByNode", [
                 'notification_id' => $this->notificationId,
-                'exception' => $e->getTraceAsString()
+                'domain' => $this->domainName,
+                'total_tokens' => $totalTokens,
             ]);
 
-            // Mark notification as failed only for exceptions, not connection errors
-            $this->updateNotificationStatus(0, count($this->tokens), count($this->tokens), 'failed');
-           
-            return; // ⬅️ do NOT: throw $e;
-            // throw $e; // Re-throw to trigger retry mechanism
-        }
-    }
+            // Update status to processing
+            $this->updateNotificationStatus('processing', $totalTokens);
 
-    /**
-     * Send a batch of tokens to the Node.js service
-     */
-    private function sendBatchToNodeService(array $batch): ?array
-    {
-        try {
-            $payload = [
-                'tokens' => $batch,
-                'message' => $this->message,
-            ];
+            // Split tokens into chunks to avoid payload size limits
+            $tokenChunks = array_chunk($this->tokens, self::MAX_TOKENS_PER_REQUEST);
+            $totalChunks = count($tokenChunks);
+            
+            Log::info("Split into chunks", [
+                'notification_id' => $this->notificationId,
+                'total_tokens' => $totalTokens,
+                'chunks' => $totalChunks,
+                'tokens_per_chunk' => self::MAX_TOKENS_PER_REQUEST,
+            ]);
 
-            // $nodeServiceUrl = env('SERVER_URL').'/send-notification';
-            $nodeServiceUrl = "https://demo.awmtab.in/push/send-notification";
+            // Process chunks with controlled parallelism using HTTP Pool
+            $aggregatedResults = $this->processChunksInParallel($tokenChunks);
 
-            $response = Http::timeout(300) // 5 minutes timeout
-                ->retry(3, 1000) // Retry 3 times with 1 second delay
-                ->post($nodeServiceUrl, $payload);
+            $successCount = $aggregatedResults['successCount'];
+            $failureCount = $aggregatedResults['failureCount'];
+            $failedTokens = $aggregatedResults['failedTokens'];
 
-            if ($response->successful()) {
-                $data = $response->json();
-                // Log::debug("Node service response", [
-                //     'success_count' => $data['successCount'] ?? 0,
-                //     'failure_count' => $data['failureCount'] ?? 0,
-                //     'failed_tokens_count' => count($data['failedTokens'] ?? [])
-                // ]);
-                return $data;
-            } else {
-                Log::error("Node service returned error", [
-                    'status' => $response->status(),
-                    'response' => $response->body()
-                ]);
-                return null;
+            // Async cleanup of failed tokens
+            if (!empty($failedTokens)) {
+                dispatch(new DeactivateFailedTokensJob($failedTokens, $this->domainName))
+                    ->onQueue('cleanup')
+                    ->delay(now()->addSeconds(5));
             }
+
+            // Finalize notification
+            $this->finalizeNotification($successCount, $failureCount, $totalTokens);
+
+            $duration = round((microtime(true) - $startTime) * 1000);
+            $throughput = $totalTokens > 0 ? round($totalTokens / ($duration / 1000)) : 0;
+            
+            Log::info("SendNotificationByNode completed", [
+                'notification_id' => $this->notificationId,
+                'domain' => $this->domainName,
+                'success' => $successCount,
+                'failed' => $failureCount,
+                'invalid_tokens' => count($failedTokens),
+                'chunks_processed' => $totalChunks,
+                'duration_ms' => $duration,
+                'throughput_per_sec' => $throughput,
+            ]);
+
         } catch (Throwable $e) {
-            Log::error("Error communicating with Node service: {$e->getMessage()}");
-            return null;
+            Log::error("SendNotificationByNode exception", [
+                'notification_id' => $this->notificationId,
+                'domain' => $this->domainName,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            $this->finalizeNotification(0, count($this->tokens), count($this->tokens), 'failed');
         }
     }
 
     /**
-     * Update notification status in database
+     * Process chunks in parallel using Laravel HTTP Pool
      */
-    private function updateNotificationStatus(int $successCount, int $failureCount, int $totalCount, string $status = 'sent'): void
+    private function processChunksInParallel(array $tokenChunks): array
     {
-        if (!$this->notificationId) {
-            // Fallback to message_id if notification_id is not provided
-            DB::table('notifications')
-                ->where('message_id', $this->message['data']['message_id'] ?? '')
-                ->update([
-                    'active_count' => $totalCount,
-                    'success_count' => $successCount,
-                    'failed_count' => $failureCount,
-                    'status' => $status,
-                    'sent_at' => now(),
+        $results = [
+            'successCount' => 0,
+            'failureCount' => 0,
+            'failedTokens' => [],
+        ];
+
+        $nodeServiceUrl = config('services.node_service.url') . '/send-notification';
+
+        // Process chunks in batches for controlled concurrency
+        $chunkBatches = array_chunk($tokenChunks, self::MAX_CONCURRENT_REQUESTS);
+
+        foreach ($chunkBatches as $batchIndex => $batch) {
+            try {
+                // Create parallel HTTP requests using Pool
+                $responses = Http::pool(function (Pool $pool) use ($batch, $nodeServiceUrl) {
+                    $requests = [];
+                    
+                    foreach ($batch as $tokens) {
+                        $requests[] = $pool->withOptions([
+                                'connect_timeout' => 10,
+                                'timeout' => self::NODE_SERVICE_TIMEOUT,
+                                'verify' => false,
+                            ])
+                            ->post($nodeServiceUrl, [
+                                'tokens' => $tokens,
+                                'message' => $this->message,
+                                'domain' => $this->domainName,
+                                'notification_id' => $this->notificationId,
+                            ]);
+                    }
+                    
+                    return $requests;
+                });
+
+                // Process responses
+                foreach ($responses as $index => $response) {
+                    $tokens = $batch[$index];
+                    
+                    if ($response->successful()) {
+                        $data = $response->json();
+                        
+                        if (isset($data['successCount']) && isset($data['failureCount'])) {
+                            $results['successCount'] += $data['successCount'];
+                            $results['failureCount'] += $data['failureCount'];
+                            
+                            if (!empty($data['failedTokens'])) {
+                                $results['failedTokens'] = array_merge(
+                                    $results['failedTokens'],
+                                    $data['failedTokens']
+                                );
+                            }
+                        } else {
+                            // Invalid response structure
+                            Log::error("Invalid Node service response", [
+                                'response' => $data,
+                                'tokens_count' => count($tokens),
+                            ]);
+                            $results['failureCount'] += count($tokens);
+                        }
+                    } else {
+                        // HTTP error
+                        Log::error("Node service HTTP error", [
+                            'status' => $response->status(),
+                            'body' => substr($response->body(), 0, 500),
+                            'tokens_count' => count($tokens),
+                        ]);
+                        $results['failureCount'] += count($tokens);
+                    }
+                }
+
+                // Small delay between batches to avoid overwhelming server
+                if ($batchIndex < count($chunkBatches) - 1) {
+                    usleep(100000); // 100ms
+                }
+
+            } catch (Throwable $e) {
+                Log::error("Chunk batch processing error", [
+                    'batch_index' => $batchIndex,
+                    'error' => $e->getMessage(),
                 ]);
-        } else {
+                
+                // Count all tokens in this batch as failures
+                foreach ($batch as $tokens) {
+                    $results['failureCount'] += count($tokens);
+                }
+            }
+        }
+
+        // Remove duplicate failed tokens
+        $results['failedTokens'] = array_unique($results['failedTokens']);
+
+        return $results;
+    }
+
+    /**
+     * Update notification status
+     */
+    private function updateNotificationStatus(string $status, ?int $activeCount = null): void
+    {
+        if (!$this->notificationId) return;
+
+        $updateData = ['status' => $status];
+        
+        if ($activeCount !== null) {
+            $updateData['active_count'] = $activeCount;
+        }
+
+        DB::table('notifications')
+            ->where('id', $this->notificationId)
+            ->update($updateData);
+    }
+
+    /**
+     * Finalize notification with stats
+     */
+    private function finalizeNotification(
+        int $successCount, 
+        int $failureCount, 
+        int $totalCount,
+        string $status = 'sent'
+    ): void {
+        if (!$this->notificationId) return;
+
+        try {
             DB::table('notifications')
                 ->where('id', $this->notificationId)
                 ->update([
@@ -206,44 +253,28 @@ class SendNotificationByNode implements ShouldQueue
                     'failed_count' => $failureCount,
                     'status' => $status,
                     'sent_at' => now(),
+                    'updated_at' => now(),
                 ]);
-        }
-    }
-
-    /**
-     * Deactivate failed tokens to prevent future sending
-     */
-    private function deactivateFailedTokens(array $failedTokens): void
-    {
-        try {
-            $uniqueFailedTokens = array_unique($failedTokens);
-            
-            $updatedCount = PushSubscriptionHead::whereIn('token', $uniqueFailedTokens)
-                ->where('parent_origin', $this->domainName)
-                ->update([
-                    'status' => 0,
-                    'updated_at' => now()
-                ]);
-
-            Log::info("Marked {$updatedCount} tokens as inactive for domain: {$this->domainName}");
         } catch (Throwable $e) {
-            Log::error("Failed to deactivate tokens: {$e->getMessage()}");
+            Log::error("Failed to finalize notification", [
+                'notification_id' => $this->notificationId,
+                'error' => $e->getMessage(),
+            ]);
         }
     }
 
     /**
-     * Handle job failure
+     * Handle permanent job failure
      */
     public function failed(Throwable $exception): void
     {
         Log::error("SendNotificationByNode job failed permanently", [
-            'domain' => $this->domainName,
             'notification_id' => $this->notificationId,
+            'domain' => $this->domainName,
+            'tokens_count' => count($this->tokens),
             'exception' => $exception->getMessage(),
-            'tokens_count' => count($this->tokens)
         ]);
 
-        // Mark notification as failed
-        $this->updateNotificationStatus(0, count($this->tokens), count($this->tokens), 'failed');
+        $this->finalizeNotification(0, count($this->tokens), count($this->tokens), 'failed');
     }
 }

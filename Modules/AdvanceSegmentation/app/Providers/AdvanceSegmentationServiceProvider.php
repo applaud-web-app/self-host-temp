@@ -21,7 +21,7 @@ class AdvanceSegmentationServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        app('router')->aliasMiddleware('verify_license',  \Modules\AdvanceSegmentation\Http\Middleware\CheckLicenseKey::class);
+        app('router')->aliasMiddleware('verify_advance_segmentation',  \Modules\AdvanceSegmentation\Http\Middleware\CheckLicenseKey::class);
 
         $this->registerCommands();
         $this->registerCommandSchedules();

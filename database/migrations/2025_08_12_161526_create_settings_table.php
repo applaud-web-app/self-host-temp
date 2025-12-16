@@ -13,6 +13,7 @@ return new class extends Migration
     {
         Schema::create('settings', function (Blueprint $table) {
             $table->id();
+            $table->string('sending_speed',50)->default('slow');
             $table->unsignedSmallInteger('gap_size')->default(500);
             $table->unsignedSmallInteger('time_gap')->default(1000);
             $table->boolean('daily_cleanup')->default(0);

@@ -236,7 +236,7 @@ if (! function_exists('loadToken')) {
 if (! function_exists('host')) {
     function host(): string
     {
-        $baseUrl = env('APP_URL');
+        $baseUrl = config('app.url');
         $parsedUrl = parse_url($baseUrl);
         return $parsedUrl['host'];
     }

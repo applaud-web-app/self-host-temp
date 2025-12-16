@@ -32,7 +32,7 @@ return new class extends Migration
             $table->unsignedBigInteger('failed_count')->default(0);
             $table->foreignId('segment_id')->nullable()->constrained('segments')->nullOnDelete();
             $table->enum('segment_type', ['all', 'particular', 'api', 'rss', 'migrate'])->default('all');
-            $table->enum('status', ['pending', 'queued', 'sent', 'failed','cancelled'])->default('pending')->index();
+            $table->enum('status', ['pending', 'queued', 'sent', 'failed','cancelled', 'processing'])->default('pending')->index();
             $table->timestamp('sent_at')->nullable();
             $table->timestamps();
             $table->foreign('domain_id')->references('id')->on('domains')->onDelete('cascade');

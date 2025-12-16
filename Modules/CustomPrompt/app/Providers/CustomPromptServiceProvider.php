@@ -21,7 +21,7 @@ class CustomPromptServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        app('router')->aliasMiddleware('custom_prompt_license', \Modules\CustomPrompt\Http\Middleware\CheckLicenseKey::class);
+        app('router')->aliasMiddleware('verify_custom_prompt', \Modules\CustomPrompt\Http\Middleware\CheckLicenseKey::class);
 
         $this->registerCommands();
         $this->registerCommandSchedules();

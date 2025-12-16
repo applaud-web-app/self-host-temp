@@ -1,5 +1,6 @@
 <?php
 
 return [
-    'name' => 'Migrate',
+    'migrate_name' => 'Migrate',
+    'migrate_key' => env('MIGRATE_KEY', ''),
 ];

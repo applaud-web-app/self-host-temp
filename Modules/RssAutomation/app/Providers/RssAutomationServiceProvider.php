@@ -26,7 +26,7 @@ class RssAutomationServiceProvider extends ServiceProvider
         ]);
         
         // Register middleware if required
-        app('router')->aliasMiddleware('rss_license', \Modules\RssAutomation\Http\Middleware\CheckLicenseKey::class);
+        app('router')->aliasMiddleware('verify_rss_automation', \Modules\RssAutomation\Http\Middleware\CheckLicenseKey::class);
 
         // Register configurations, views, and translations
         $this->registerConfig();

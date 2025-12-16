@@ -59,7 +59,7 @@ class FlushPushSubscriptions extends Command
 
                     SubscribePushSubscriptionJob::dispatch($data);
                     Redis::sadd($processedKey, $hash);
-                    Redis::expire($processedKey, 3600);
+                    Redis::expire($processedKey, 86400);
                 }
 
                 $this->info("Dispatched batch of " . count($batch) . " subscriptions.");

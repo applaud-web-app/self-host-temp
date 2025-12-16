@@ -111,7 +111,28 @@ messaging.onBackgroundMessage((payload) => {
   // Only enqueue "received" analytics if notification will be shown
   const p1 = sendAnalytics('received', messageId);
 
+
+  // Enqueue "received"
+  const p1 = sendAnalytics('received', messageId);
+
+  let actions = [];
+  try { actions = JSON.parse(d.actions || '[]'); }
+  catch (e) { /* ignore invalid JSON */ }
+
+  const title = d.title || 'Notification';
+  const options = {
+    body:  d.body  || '',
+    icon:  d.icon  || DEFAULT_ICON,
+    image: d.image || undefined,
+    data: {
+      click_action: d.click_action || payload.fcmOptions?.link || '/',
+      message_id: messageId,
+      actions: actions
+    },
+    actions: actions.map(a => ({ action: a.action, title: a.title }))
+  };
   return Promise.all([p1]).then(() => self.registration.showNotification(title || 'Notification', options));
+  return Promise.all([p1]).then(() => self.registration.showNotification(title, options));
 });
 
 /* ---------------- Notification click/close ---------------- */

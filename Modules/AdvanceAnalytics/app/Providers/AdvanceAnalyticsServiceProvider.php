@@ -21,7 +21,7 @@ class AdvanceAnalyticsServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        app('router')->aliasMiddleware('verify_license',  \Modules\AdvanceAnalytics\Http\Middleware\CheckLicenseKey::class);
+        app('router')->aliasMiddleware('verify_advance_analytics',  \Modules\AdvanceAnalytics\Http\Middleware\CheckLicenseKey::class);
 
         $this->registerCommands();
         $this->registerCommandSchedules();
@@ -111,11 +111,11 @@ class AdvanceAnalyticsServiceProvider extends ServiceProvider
     protected function registerConfig(): void
     {
         $this->publishes([
-            module_path('AdvanceSegmentation', 'config/config.php') => config_path('license.php'),
+            module_path('AdvanceAnalytics', 'config/config.php') => config_path('license.php'),
         ], 'config');
 
         $this->mergeConfigFrom(
-            module_path('AdvanceSegmentation', 'config/config.php'), 'license'
+            module_path('AdvanceAnalytics', 'config/config.php'), 'license'
         );
     }
 

@@ -3,10 +3,10 @@
 use Illuminate\Support\Facades\Route;
 use Modules\CustomPrompt\Http\Controllers\CustomPromptController;
 
-Route::prefix('custom-prompt')->middleware(['auth'])->name('customprompt.')->controller(CustomPromptController::class)->group(function () {
+Route::prefix('custom-prompt')->middleware(['auth','verify_custom_prompt'])->name('customprompt.')->controller(CustomPromptController::class)->group(function () {
     Route::get('/', 'index')->name('index');
     Route::get('create/{domain}', 'create')->name('create');
-    Route::get('update/{domain}', 'update')->name('update'); 
+    Route::get('update/{domain}', 'update')->name('edit'); 
     Route::post('update/{domain}', 'store')->name('update');
     Route::post('store/{domain}', 'store')->name('store');
     Route::post('update-status/{id}', 'updateStatus')->name('updateStatus');

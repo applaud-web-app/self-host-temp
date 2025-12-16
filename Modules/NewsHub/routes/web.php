@@ -3,7 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use Modules\NewsHub\Http\Controllers\NewsHubController;
 
-Route::prefix('news-hub')->middleware(['auth'])->name('news-hub.')->controller(NewsHubController::class)->group(function () {
+Route::prefix('news-hub')->middleware(['auth','verify_news_hub'])->name('news-hub.')->controller(NewsHubController::class)->group(function () {
     Route::get('/', 'index')->name('index');
     Route::get('/roll', 'roll')->name('roll');
     Route::post('/roll-save', 'rollSave')->name('roll.save');
