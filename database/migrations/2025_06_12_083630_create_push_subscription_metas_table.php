@@ -25,6 +25,8 @@ return new class extends Migration
             $table->primary('head_id');
             $table->foreign('head_id')->references('id')->on('push_subscriptions_head')->onDelete('cascade');
 
+            $table->index(['head_id', 'device'], 'idx_psm_head_device');
+            $table->index(['head_id', 'country', 'state'], 'idx_psm_head_geo');
             $table->index(['country','state'], 'idx_psm_country_state');
         });
     }

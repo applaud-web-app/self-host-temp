@@ -18,6 +18,7 @@ return new class extends Migration
             $table->timestamp('start_at')->useCurrent();
             $table->timestamp('end_at')->useCurrent();
             $table->index(['start_at', 'end_at'], 'idx_str_window');
+            $table->index(['segment_id', 'start_at', 'end_at'], 'idx_str_segment');
         });
     }
 

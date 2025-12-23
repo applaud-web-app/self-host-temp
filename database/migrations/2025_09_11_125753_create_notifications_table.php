@@ -27,9 +27,11 @@ return new class extends Migration
             $table->string('btn_title_2')->nullable();
             $table->string('btn_url_2')->nullable();
             $table->string('message_id')->index();
-            $table->unsignedBigInteger('active_count')->default(0);
-            $table->unsignedBigInteger('success_count')->default(0);
-            $table->unsignedBigInteger('failed_count')->default(0);
+            $table->unsignedInteger('active_count')->default(0);
+            $table->unsignedInteger('success_count')->default(0);
+            $table->unsignedInteger('failed_count')->default(0);
+            $table->unsignedInteger('chunks_total')->default(0);
+            $table->unsignedInteger('chunks_done')->default(0);
             $table->foreignId('segment_id')->nullable()->constrained('segments')->nullOnDelete();
             $table->enum('segment_type', ['all', 'particular', 'api', 'rss', 'migrate'])->default('all');
             $table->enum('status', ['pending', 'queued', 'sent', 'failed','cancelled', 'processing'])->default('pending')->index();

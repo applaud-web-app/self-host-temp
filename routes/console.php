@@ -34,4 +34,9 @@ Schedule::command('app:deactive-token')
 ->timezone('Asia/Kolkata')
 ->when(fn () => Setting::dailyCleanupEnabled())
 ->onOneServer()
-->withoutOverlapping();          
+->withoutOverlapping();     
+
+// Schedule::command('notifications:fix-stuck')
+// ->everyMinute()
+// ->timezone('Asia/Kolkata')
+// ->withoutOverlapping();

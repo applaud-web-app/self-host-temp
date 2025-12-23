@@ -16,6 +16,7 @@ return new class extends Migration
             $table->unsignedBigInteger('segment_id')->index();
             $table->foreign('segment_id', 'fk_sdr_segment')->references('id')->on('segments')->onDelete('cascade');
             $table->enum('device_type', ['desktop', 'tablet', 'mobile', 'other']);
+            $table->index(['segment_id', 'device_type'], 'idx_sdr_segment');
         });
     }
 

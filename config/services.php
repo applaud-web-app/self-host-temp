@@ -35,8 +35,23 @@ return [
         ],
     ],
 
+    // 'node_service' => [
+    //     'url' => env('NODE_SERVICE_URL','http://127.0.0.1:3000'),
+    // ],
+
     'node_service' => [
-        'url' => env('SERVER_URL'),
+        'url' => env('NODE_SERVICE_URL', 'http://127.0.0.1:4000'),
+
+        'options' => [
+            'timeout' => 120,
+            'connect_timeout' => 10,
+            'verify' => false,
+            'force_ip_resolve' => 'v4',
+            'curl' => [
+                CURLOPT_FRESH_CONNECT => true,
+                CURLOPT_FORBID_REUSE => true,
+            ],
+        ],
     ],
 
 ];

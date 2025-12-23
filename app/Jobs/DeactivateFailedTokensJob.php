@@ -38,15 +38,13 @@ class DeactivateFailedTokensJob implements ShouldQueue
             $startTime = microtime(true);
 
             // Batch update for better performance
-            $updatedCount = DB::table('push_subscription_head')
+            $updatedCount = DB::table('push_subscriptions_head')
                 ->whereIn('token', $this->failedTokens)
                 ->where('parent_origin', $this->domainName)
                 ->where('status', 1) // Only update active tokens
                 ->update([
                     'status' => 0,
                     'updated_at' => now(),
-                    // 'deactivated_at' => now(),
-                    // 'deactivation_reason' => 'firebase_invalid_token',
                 ]);
 
             $duration = round((microtime(true) - $startTime) * 1000);

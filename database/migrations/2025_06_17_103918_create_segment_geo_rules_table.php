@@ -19,6 +19,7 @@ return new class extends Migration
             $table->string('country');
             $table->string('state')->nullable();
             $table->index(['country', 'state']);
+            $table->index(['segment_id', 'country', 'state'], 'idx_sgr_segment');
         });
     }
 

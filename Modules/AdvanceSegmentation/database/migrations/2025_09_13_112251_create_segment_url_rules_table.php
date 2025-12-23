@@ -16,7 +16,6 @@ return new class extends Migration
             $table->unsignedBigInteger('segment_id')->index();
             $table->foreign('segment_id', 'fk_sur_segment')->references('id')->on('segments')->onDelete('cascade');
             $table->string('url', 2048);
-            // $table->binary('url_hash', 32)->index('idx_sur_url_hash');
         });
     }
 

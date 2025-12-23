@@ -41,8 +41,6 @@ class DeactiveToken extends Command
                     if (empty($ids)) {
                         return;
                     }
-
-                    // Per-chunk safety net
                     try {
                         // Delete heads only; payload/meta will cascade
                         $deleted = DB::table('push_subscriptions_head')
