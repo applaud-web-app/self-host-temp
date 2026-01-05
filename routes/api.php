@@ -11,9 +11,12 @@ Route::post('/push/subscribe', [PushApiController::class,'subscribe'])->name('ap
 Route::post('/push/unsubscribe', [PushApiController::class,'unSubscribe'])->name('api.unsubscribe')->withoutMiddleware('throttle:api');
 // Route::post('/push/analytics', [PushApiController::class,'analytics'])->name('api.analytics')->withoutMiddleware('throttle:api');
 
-Route::middleware(['cors'])
-    ->post('/push/analytics', [PushApiController::class,'analytics'])
-    ->name('api.analytics')->withoutMiddleware('throttle:api');
+// Route::middleware(['cors'])
+//     ->post('/push/analytics', [PushApiController::class,'analytics'])
+//     ->name('api.analytics')->withoutMiddleware('throttle:api');
+
+// Route::post('/push/analytics', [PushApiController::class, 'analytics'])->middleware('cors')->name('api.analytics');
+Route::post('/push/analytics', [PushApiController::class, 'analytics'])->name('api.analytics');
 
 Route::middleware('global')->controller(GlobalController::class)->group(function () {
     Route::get('permission.html','subsStore')->name('api.permission.ask');

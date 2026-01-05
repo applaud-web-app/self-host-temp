@@ -183,6 +183,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Redis;
 use Jenssegers\Agent\Agent;
+use App\Services\FirebaseTopicService;
 
 class SubscribePushSubscriptionJob implements ShouldQueue
 {
@@ -271,21 +272,20 @@ class SubscribePushSubscriptionJob implements ShouldQueue
 
                 if ($oldHeadId && $oldHeadId !== $headId) {
                     DB::table('push_subscriptions_head')->where('id', $oldHeadId)->delete();
-
-                    // Log::info('Old token subscription deleted via cascade', [
-                    //     'old_token'   => substr($this->data['old_token'], 0, 20) . '...',
-                    //     'old_head_id' => $oldHeadId,
-                    //     'new_head_id' => $headId
-                    // ]);
                 }
             }
         });
 
-        // Log::info('Push subscription saved to database (3-table structure)', [
-        //     'hash'   => $hash,
-        //     'domain' => $this->data['domain'] ?? null,
-        //     'token'  => isset($this->data['token']) ? (substr($this->data['token'], 0, 20) . '...') : null,
-        // ]);
+        // LINK TOKEN -> TOPIC
+        try {
+            app(FirebaseTopicService::class)->subscribe($this->data['token'], $this->data['domain']);
+            // Log::info('Token Link to topic successfully');
+        } catch (\Throwable $th) {
+            Log::warning('Error In Linking Firebase Topic Service', [
+                'message'  => 'Linking Firebase Topic Service',
+                'error' => $th->getMessage(),
+            ]);
+        }
 
         // Redis bookkeeping after DB commit (best-effort)
         try {

@@ -14,6 +14,7 @@ use Carbon\Carbon;
 use Yajra\DataTables\Facades\DataTables;
 use Illuminate\Support\Facades\Http;
 use App\Jobs\DispatchNotificationChunksJob;
+use App\Jobs\SendNotificationToTopicJob;
 
 class NotificationController extends Controller
 {
@@ -344,13 +345,18 @@ class NotificationController extends Controller
     protected function createNotificationCampaign(array $data, array $domainIds): void
     {
         $campaignUuid = (string) Str::uuid();
-        $messageId = (string) Str::uuid();
+        // $messageId = (string) Str::uuid();
         $scheduleType = strtolower($data['schedule_type']);
         $isInstant = $scheduleType === 'instant';
 
         // Bulk insert notifications
         $notifications = [];
+        $messageIds = [];
         foreach ($domainIds as $domainId) {
+
+            $messageId = (string) Str::uuid(); // 🔥 Generate unique message_id for each row
+            $messageIds[] = $messageId;
+            
             $notifications[] = [
                 'target_url' => $data['target_url'],
                 'domain_id' => $domainId,
@@ -378,18 +384,39 @@ class NotificationController extends Controller
         DB::table('notifications')->insert($notifications);
 
         // Dispatch chunk jobs for instant notifications
+        // if ($isInstant) {
+        //     $notificationIds = DB::table('notifications')
+        //         ->whereIn('domain_id', $domainIds)
+        //         ->where('message_id', $messageId)
+        //         ->where('status', 'pending')
+        //         ->pluck('id')
+        //         ->all();
+
+        //     foreach ($notificationIds as $notificationId) {
+        //         DispatchNotificationChunksJob::dispatch($notificationId)
+        //             ->onQueue('notifications');
+        //     }
+        // }
+
         if ($isInstant) {
             $notificationIds = DB::table('notifications')
-                ->whereIn('domain_id', $domainIds)
-                ->where('message_id', $messageId)
-                ->where('status', 'pending')
-                ->pluck('id')
-                ->all();
+            ->whereIn('domain_id', $domainIds)
+            // ->where('message_id', $messageId)
+            ->whereIn('message_id', $messageIds)
+            ->where('status', 'pending')
+            ->pluck('id')
+            ->all();
 
             foreach ($notificationIds as $notificationId) {
-                DispatchNotificationChunksJob::dispatch($notificationId)
-                    ->onQueue('notifications');
+                if ($data['segment_type'] === 'all') {
+                    // 🔥 BROADCAST → TOPIC
+                    SendNotificationToTopicJob::dispatch($notificationId)->onQueue('notifications');
+                } else {
+                    // 🎯 SEGMENTED → CHUNK / TOKEN
+                    DispatchNotificationChunksJob::dispatch($notificationId)->onQueue('notifications');
+                }
             }
         }
+
     }
 }

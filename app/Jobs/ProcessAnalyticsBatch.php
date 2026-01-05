@@ -64,11 +64,6 @@ class ProcessAnalyticsBatch implements ShouldQueue
         }
 
         Redis::del($redisKey);
-        // Log::info('Analytics batch processed', [
-        //     'batch_id'     => $this->batchId,
-        //     'unique_pairs' => count($agg),
-        //     'raw_events'   => count($events),
-        // ]);
     }
 
     protected function upsertIncrementCounts(array $rows): void

@@ -1,23 +1,19 @@
 const SW_IDENTIFIER = 'aplu-selfhost-sw-v1';
 
-/* ---------------- Immediate SW activation ---------------- */
 self.addEventListener('install', (event) => self.skipWaiting());
 self.addEventListener('activate', (event) => {
   event.waitUntil((async () => {
     await storeSWIdentifier(SW_IDENTIFIER);
     await self.clients.claim();
-    // On activate, try to flush anything left in the durable queue
     await flushAnalyticsQueue({ reason: 'activate' });
   })());
 });
 
-/* ---------------- Firebase compat libs ---------------- */
 importScripts(
   'https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js',
   'https://www.gstatic.com/firebasejs/9.22.0/firebase-messaging-compat.js'
 );
 
-/* ---------------- Firebase init ---------------- */
 firebase.initializeApp({
   apiKey:            "{{ $config['apiKey'] }}",
   authDomain:        "{{ $config['authDomain'] }}",
@@ -30,44 +26,45 @@ firebase.initializeApp({
 
 const messaging = firebase.messaging();
 
-/* ---------------- Endpoints & constants ---------------- */
-const ANALYTICS_ENDPOINT = "{{ route('api.analytics') }}"; // expects { analytics: [...] }
+const ANALYTICS_ENDPOINT = "{{ route('api.analytics') }}";
 const SUBSCRIBE_ENDPOINT = "{{ route('api.subscribe') }}";
 const DEFAULT_ICON       = '/favicon.ico';
 
-/* ---------------- Batching config ---------------- */
-const BATCH_INTERVAL_MS       = 2000; // 2s window
-const BATCH_MAX_SIZE          = 10;   // flush immediately at/over this
-const BATCH_MAX_TAKE          = 500;  // send at most this many per POST (safety cap)
-const RETRY_ATTEMPTS          = 3;    // per POST
-const RETRY_BASE_DELAY_MS     = 1000; // 1s -> 2s -> 4s
+const BATCH_INTERVAL_MS       = 2000;
+const BATCH_MAX_SIZE          = 10;
+const BATCH_MAX_TAKE          = 50;
+const RETRY_ATTEMPTS          = 3;
+const RETRY_BASE_DELAY_MS     = 1000;
+const ANALYTICS_DELAY_MS      = 3000;
+const USE_RANDOM_JITTER       = true;
 
-/* ---------------- Runtime state ---------------- */
 let flushTimerId = null;
 let isFlushing   = false;
 
-/* ---------------- Ensure we're the right SW ---------------- */
+function delay(ms) { return new Promise(res => setTimeout(res, ms)); }
+
+function getAnalyticsDelay() {
+  if (!USE_RANDOM_JITTER) return ANALYTICS_DELAY_MS;
+  return ANALYTICS_DELAY_MS + Math.floor(Math.random() * 4500 + 500);
+}
+
 function isCorrectServiceWorkerActive() {
   return getSWIdentifierFromDB().then(activeSW => activeSW === SW_IDENTIFIER);
 }
 
-/* ====================================================================== */
-/* =========================== Analytics API ============================ */
-/* ====================================================================== */
-
-/** Enqueue analytics event (durable) and schedule flush */
 async function sendAnalytics(eventType, messageId) {
   const correct = await isCorrectServiceWorkerActive();
   if (!correct) return;
 
-  // Persist event immediately (no domain)
+  const delayMs = getAnalyticsDelay();
+  await delay(delayMs);
+
   await enqueueAnalyticsEvent({
     message_id: messageId || '',
     event: eventType,
     ts: Date.now()
   });
 
-  // Trigger flush policy
   const qLen = await getAnalyticsQueueLength();
   if (qLen >= BATCH_MAX_SIZE) {
     scheduleImmediateFlush('threshold');
@@ -75,25 +72,22 @@ async function sendAnalytics(eventType, messageId) {
     scheduleTimedFlush();
   }
 
-  // Optional resilience
   if (self.registration && self.registration.sync && 'sync' in self.registration) {
     try { await self.registration.sync.register('analytics-sync'); } catch (_) {}
   }
 }
 
-/* ---------------- Firebase background messages ---------------- */
 messaging.onBackgroundMessage((payload) => {
   const d = payload.data || {};
   const messageId = d.message_id || '';
 
   let actions = [];
   try { actions = JSON.parse(d.actions || '[]'); }
-  catch (e) { /* ignore invalid JSON */ }
+  catch (e) {}
 
   const title = d.title?.trim();
   const body  = d.body?.trim();
 
-  // Only show notification if title or body is non-empty
   if (!title && !body) return Promise.resolve();
 
   const options = {
@@ -108,13 +102,11 @@ messaging.onBackgroundMessage((payload) => {
     actions: actions.map(a => ({ action: a.action, title: a.title }))
   };
 
-  // Only enqueue "received" analytics if notification will be shown
   const p1 = sendAnalytics('received', messageId);
 
   return Promise.all([p1]).then(() => self.registration.showNotification(title || 'Notification', options));
 });
 
-/* ---------------- Notification click/close ---------------- */
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
   const data = event.notification.data || {};
@@ -133,7 +125,6 @@ self.addEventListener('notificationclick', (event) => {
   ]));
 });
 
-/* ---------------- Subscription change ---------------- */
 self.addEventListener('pushsubscriptionchange', (event) => {
   event.waitUntil(
     (async () => {
@@ -150,23 +141,17 @@ self.addEventListener('pushsubscriptionchange', (event) => {
   );
 });
 
-/* ---------------- Background Sync ---------------- */
 self.addEventListener('sync', (event) => {
   if (event.tag === 'analytics-sync') {
     event.waitUntil(flushAnalyticsQueue({ reason: 'background-sync' }));
   }
 });
 
-/* ---------------- Optional: flush when page hides ---------------- */
 self.addEventListener('message', (event) => {
   if (event.data && event.data.type === 'PAGE_HIDDEN') {
     event.waitUntil(flushAnalyticsQueue({ reason: 'page-hidden' }));
   }
 });
-
-/* ====================================================================== */
-/* ===================== Durable queue (IndexedDB) ====================== */
-/* ====================================================================== */
 
 function openDB() {
   return new Promise((resolve, reject) => {
@@ -186,7 +171,6 @@ function openDB() {
   });
 }
 
-/* ---- swData helpers ---- */
 function storeSWIdentifier(identifier) {
   return openDB().then(db => new Promise((resolve, reject) => {
     const tx = db.transaction('swData', 'readwrite');
@@ -205,7 +189,6 @@ function getSWIdentifierFromDB() {
   }));
 }
 
-/* ---- analyticsQueue helpers ---- */
 function enqueueAnalyticsEvent(evt) {
   return openDB().then(db => new Promise((resolve, reject) => {
     const tx = db.transaction('analyticsQueue', 'readwrite');
@@ -250,10 +233,6 @@ function deleteAnalyticsItems(ids) {
   }));
 }
 
-/* ====================================================================== */
-/* ======================= Flush & retry logic ========================== */
-/* ====================================================================== */
-
 function scheduleTimedFlush() {
   if (flushTimerId) return;
   flushTimerId = setTimeout(() => {
@@ -291,21 +270,17 @@ async function flushAnalyticsQueue({ reason = 'manual' } = {}) {
       if (ok) {
         await deleteAnalyticsItems(batch.map(b => b.id));
       } else {
-        // give up for now; keep items in queue for next attempt
         break;
       }
 
       if (batch.length < BATCH_MAX_TAKE) break;
     }
   } catch (err) {
-    // keep items; they remain in the queue
     console.error('flushAnalyticsQueue error:', err);
   } finally {
     isFlushing = false;
   }
 }
-
-function delay(ms) { return new Promise(res => setTimeout(res, ms)); }
 
 async function postBatchedAnalyticsWithRetry(payload, reportedSize) {
   for (let attempt = 0; attempt < RETRY_ATTEMPTS; attempt++) {
@@ -320,10 +295,10 @@ async function postBatchedAnalyticsWithRetry(payload, reportedSize) {
         body: JSON.stringify(payload)
       });
       if (res.ok) return true;
-    } catch (_) { /* network error */ }
+    } catch (_) {}
 
     if (attempt < RETRY_ATTEMPTS - 1) {
-      await delay(RETRY_BASE_DELAY_MS * Math.pow(2, attempt)); // 1s, 2s, 4s
+      await delay(RETRY_BASE_DELAY_MS * Math.pow(2, attempt));
     }
   }
   return false;

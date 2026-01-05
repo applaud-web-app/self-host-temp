@@ -20,7 +20,7 @@ class DispatchNotificationChunksJob implements ShouldQueue
     public int $tries = 1;
     public int $timeout = 120;
 
-    public const CHUNK_SIZE = 100;
+    public const CHUNK_SIZE = 500;
 
     public function __construct(public int $notificationId) {}
 

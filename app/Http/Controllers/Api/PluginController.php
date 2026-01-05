@@ -16,6 +16,7 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
 use App\Models\Notification;
 use App\Jobs\CreateAndDispatchNotifications;
+use App\Jobs\SendNotificationToTopicJob;
 
 class PluginController extends Controller
 {
@@ -283,8 +284,66 @@ class PluginController extends Controller
             $data['segment_type'] = 'api';
             $data['banner_icon'] = $iconUrl;
 
-            $ids = Domain::whereIn('name', $data['domains'])->where('status', 1)->pluck('id')->all();
-            dispatch(new CreateAndDispatchNotifications($data, $ids, $data['segment_type']))->onQueue('create-notifications');
+            // $ids = Domain::whereIn('name', $data['domains'])->where('status', 1)->pluck('id')->all();
+            // dispatch(new CreateAndDispatchNotifications($data, $ids, $data['segment_type']))->onQueue('create-notifications');
+
+            $domainIds = Domain::whereIn('name', $data['domains'])
+                ->where('status', 1)
+                ->pluck('id')
+                ->all();
+
+            if (empty($domainIds)) {
+                return response()->json([
+                    'status'  => false,
+                    'message' => 'No valid domains found.'
+                ], 404);
+            }
+
+            // Create notifications in bulk
+            $notifications = [];
+            $messageIds = [];
+
+            foreach ($domainIds as $domainId) {
+                $messageId = (string) Str::uuid(); // Unique message_id for each domain
+                $messageIds[] = $messageId;
+                
+                $notifications[] = [
+                    'target_url' => $data['target_url'],
+                    'domain_id' => $domainId,
+                    'campaign_name' => 'API#' . random_int(1000, 9999),
+                    'title' => $data['title'],
+                    'description' => $data['description'],
+                    'banner_image' => $data['banner_image'] ?? null,
+                    'banner_icon' => $data['banner_icon'],
+                    'schedule_type' => 'instant',
+                    'one_time_datetime' => null,
+                    'message_id' => $messageId,
+                    'btn_1_title' => null,
+                    'btn_1_url' => null,
+                    'btn_title_2' => null,
+                    'btn_url_2' => null,
+                    'segment_type' => 'api',
+                    'segment_id' => null,
+                    'status' => 'pending',
+                    'sent_at' => null,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ];
+            }
+
+            DB::table('notifications')->insert($notifications);
+
+            // Dispatch SendNotificationToTopicJob for each notification
+            $notificationIds = DB::table('notifications')
+                ->whereIn('domain_id', $domainIds)
+                ->whereIn('message_id', $messageIds)
+                ->where('status', 'pending')
+                ->pluck('id')
+                ->all();
+
+            foreach ($notificationIds as $notificationId) {
+                SendNotificationToTopicJob::dispatch($notificationId)->onQueue('notifications');
+            }
 
             return response()->json([
                 'status' => true,

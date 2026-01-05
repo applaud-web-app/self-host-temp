@@ -408,5 +408,20 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   });
 </script>
+<script src="http://localhost:8000/blogger.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  let apluPush = new ApluPush(
+    "We want to notify you about the latest updates.",
+    "You can unsubscribe anytime later.",
+    "Yes",
+    "Later",
+    "http://localhost:8000/images/push/icons/alarm-1.png",
+    "Please click 'Allow' when asked about notifications to subscribe to updates.",
+    "#f93a0b",
+  );
+  apluPush.init();
+});
+</script>
 @endpush
 

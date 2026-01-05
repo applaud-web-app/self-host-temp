@@ -236,6 +236,135 @@ class SendNotificationChunkJob implements ShouldQueue
     /**
      * Call Node.js service with retry and timeout.
      */
+    // private function callNodeService(array $tokens, array $payload): array
+    // {
+    //     $base = (string) config('services.node_service.url');
+    //     if ($base === '') {
+    //         throw new RuntimeException("services.node_service.url is not configured");
+    //     }
+
+    //     $url = rtrim($base, '/') . '/send-notification';
+
+    //     // ✅ REMOVE the withHeaders() - let it use default headers
+    //     $response = Http::timeout(120)  // Increased from 20
+    //         ->connectTimeout(10)  // Increased from 5
+    //         ->retry(2, 1000, function ($exception) {
+    //             return $exception instanceof ConnectionException;
+    //         })
+    //         ->post($url, [
+    //             'tokens' => $tokens,
+    //             'message' => $payload,
+    //             'domain' => $this->domainName,
+    //             'notification_id' => $this->notificationId,
+    //             'chunk_index' => $this->chunkIndex,
+    //         ]);
+
+    //     if ($response->successful()) {
+    //         $data = $response->json() ?: [];
+    //         return [
+    //             'successCount' => (int) ($data['successCount'] ?? 0),
+    //             'failureCount' => (int) ($data['failureCount'] ?? 0),
+    //             'failedTokens' => is_array($data['failedTokens'] ?? null) ? $data['failedTokens'] : [],
+    //         ];
+    //     }
+
+    //     // 5xx => throw so queue retry happens
+    //     if ($response->status() >= 500) {
+    //         throw new RuntimeException("Node.js 5xx error: {$response->status()}");
+    //     }
+
+    //     // 4xx => don't retry, count as failure but DO NOT deactivate
+    //     Log::error("Node.js 4xx error", [
+    //         'status' => $response->status(),
+    //         'body' => substr($response->body(), 0, 800),
+    //     ]);
+
+    //     return [
+    //         'successCount' => 0,
+    //         'failureCount' => count($tokens),
+    //         'failedTokens' => [],
+    //     ];
+    // }
+    // private function callNodeService(array $tokens, array $payload): array
+    // {
+    //     $base = (string) config('services.node_service.url');
+    //     if ($base === '') {
+    //         throw new RuntimeException("services.node_service.url is not configured");
+    //     }
+
+    //     $url = rtrim($base, '/') . '/send-notification';
+
+    //     // ✅ Log before calling
+    //     Log::info("Calling Node.js service", [
+    //         'notification_id' => $this->notificationId,
+    //         'chunk_index' => $this->chunkIndex,
+    //         'token_count' => count($tokens),
+    //         'url' => $url,
+    //     ]);
+
+    //     try {
+    //         // ✅ Removed custom headers, increased timeouts
+    //         $response = Http::timeout(120)
+    //             ->connectTimeout(10)
+    //             ->retry(2, 1000, function ($exception) {
+    //                 return $exception instanceof ConnectionException;
+    //             })
+    //             ->post($url, [
+    //                 'tokens' => $tokens,
+    //                 'message' => $payload,
+    //                 'domain' => $this->domainName,
+    //                 'notification_id' => $this->notificationId,
+    //                 'chunk_index' => $this->chunkIndex,
+    //             ]);
+
+    //         // ✅ Log response
+    //         Log::info("Node.js response received", [
+    //             'notification_id' => $this->notificationId,
+    //             'chunk_index' => $this->chunkIndex,
+    //             'status' => $response->status(),
+    //         ]);
+
+    //         if ($response->successful()) {
+    //             $data = $response->json() ?: [];
+    //             return [
+    //                 'successCount' => (int) ($data['successCount'] ?? 0),
+    //                 'failureCount' => (int) ($data['failureCount'] ?? 0),
+    //                 'failedTokens' => is_array($data['failedTokens'] ?? null) ? $data['failedTokens'] : [],
+    //             ];
+    //         }
+
+    //         // 5xx => throw for retry
+    //         if ($response->status() >= 500) {
+    //             Log::error("Node.js 5xx error", [
+    //                 'notification_id' => $this->notificationId,
+    //                 'status' => $response->status(),
+    //                 'body' => substr($response->body(), 0, 500),
+    //             ]);
+    //             throw new RuntimeException("Node.js 5xx error: {$response->status()}");
+    //         }
+
+    //         // 4xx => don't retry
+    //         Log::error("Node.js 4xx error", [
+    //             'notification_id' => $this->notificationId,
+    //             'status' => $response->status(),
+    //             'body' => substr($response->body(), 0, 500),
+    //         ]);
+
+    //         return [
+    //             'successCount' => 0,
+    //             'failureCount' => count($tokens),
+    //             'failedTokens' => [],
+    //         ];
+
+    //     } catch (ConnectionException $e) {
+    //         Log::error("Node.js connection failed", [
+    //             'notification_id' => $this->notificationId,
+    //             'error' => $e->getMessage(),
+    //             'url' => $url,
+    //         ]);
+    //         throw $e;
+    //     }
+    // }
     private function callNodeService(array $tokens, array $payload): array
     {
         $base = (string) config('services.node_service.url');
@@ -245,56 +374,85 @@ class SendNotificationChunkJob implements ShouldQueue
 
         $url = rtrim($base, '/') . '/send-notification';
 
-        // $response = Http::timeout(20)
-        //     ->connectTimeout(5)
-        //     ->retry(0)           
-        //     ->post($url, [
-        //         'tokens' => $tokens,
-        //         'message' => $payload,
-        //         'domain' => $this->domainName,
-        //         'notification_id' => $this->notificationId,
-        //         'chunk_index' => $this->chunkIndex,
-        //     ]);
-
-        $response = Http::withHeaders([
-            'Host' => 'push.awmtab.in',
-        ])
-        ->timeout(20)
-        ->connectTimeout(5)
-        ->retry(0)
-        ->post($url, [
-            'tokens' => $tokens,
-            'message' => $payload,
-            'domain' => $this->domainName,
+        Log::info("=== Calling Node.js ===", [
             'notification_id' => $this->notificationId,
             'chunk_index' => $this->chunkIndex,
+            'token_count' => count($tokens),
+            'base_url' => $base,
+            'full_url' => $url,
+            'attempt' => $this->attempts(),
         ]);
 
-        if ($response->successful()) {
-            $data = $response->json() ?: [];
+        try {
+            $response = Http::timeout(180)
+                ->connectTimeout(10)
+                ->retry(2, 1000, function ($exception) {
+                    return $exception instanceof ConnectionException;
+                })
+                ->post($url, [
+                    'tokens' => $tokens,
+                    'message' => $payload,
+                    'domain' => $this->domainName,
+                    'notification_id' => $this->notificationId,
+                    'chunk_index' => $this->chunkIndex,
+                ]);
+
+            Log::info("=== Node.js Response ===", [
+                'notification_id' => $this->notificationId,
+                'chunk_index' => $this->chunkIndex,
+                'status' => $response->status(),
+            ]);
+
+            // ✅ ADD THIS MISSING CODE!
+            if ($response->successful()) {
+                $data = $response->json() ?: [];
+                return [
+                    'successCount' => (int) ($data['successCount'] ?? 0),
+                    'failureCount' => (int) ($data['failureCount'] ?? 0),
+                    'failedTokens' => is_array($data['failedTokens'] ?? null) ? $data['failedTokens'] : [],
+                ];
+            }
+
+            // 5xx => throw for retry
+            if ($response->status() >= 500) {
+                Log::error("Node.js 5xx error", [
+                    'notification_id' => $this->notificationId,
+                    'status' => $response->status(),
+                    'body' => substr($response->body(), 0, 500),
+                ]);
+                throw new RuntimeException("Node.js 5xx error: {$response->status()}");
+            }
+
+            // 4xx => don't retry
+            Log::error("Node.js 4xx error", [
+                'notification_id' => $this->notificationId,
+                'status' => $response->status(),
+                'body' => substr($response->body(), 0, 500),
+            ]);
+
             return [
-                'successCount' => (int) ($data['successCount'] ?? 0),
-                'failureCount' => (int) ($data['failureCount'] ?? 0),
-                'failedTokens' => is_array($data['failedTokens'] ?? null) ? $data['failedTokens'] : [],
+                'successCount' => 0,
+                'failureCount' => count($tokens),
+                'failedTokens' => [],
             ];
+
+        } catch (ConnectionException $e) {
+            Log::error("Node.js connection failed", [
+                'notification_id' => $this->notificationId,
+                'chunk_index' => $this->chunkIndex,
+                'error' => $e->getMessage(),
+                'url' => $url,
+            ]);
+            throw $e;
+        } catch (\Exception $e) {
+            Log::error("=== Node.js Exception ===", [
+                'notification_id' => $this->notificationId,
+                'chunk_index' => $this->chunkIndex,
+                'error' => $e->getMessage(),
+                'error_class' => get_class($e),
+            ]);
+            throw $e;
         }
-
-        // 5xx => throw so queue retry happens
-        if ($response->status() >= 500) {
-            throw new RuntimeException("Node.js 5xx error: {$response->status()}");
-        }
-
-        // 4xx => don't retry, count as failure but DO NOT deactivate
-        Log::error("Node.js 4xx error", [
-            'status' => $response->status(),
-            'body' => substr($response->body(), 0, 800),
-        ]);
-
-        return [
-            'successCount' => 0,
-            'failureCount' => count($tokens),
-            'failedTokens' => [],
-        ];
     }
 
     /**

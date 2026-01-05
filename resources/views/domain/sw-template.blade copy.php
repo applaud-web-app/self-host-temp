@@ -86,17 +86,19 @@ messaging.onBackgroundMessage((payload) => {
   const d = payload.data || {};
   const messageId = d.message_id || '';
 
-  // Enqueue "received"
-  const p1 = sendAnalytics('received', messageId);
-
   let actions = [];
   try { actions = JSON.parse(d.actions || '[]'); }
   catch (e) { /* ignore invalid JSON */ }
 
-  const title = d.title || 'Notification';
+  const title = d.title?.trim();
+  const body  = d.body?.trim();
+
+  // Only show notification if title or body is non-empty
+  if (!title && !body) return Promise.resolve();
+
   const options = {
-    body:  d.body  || '',
-    icon:  d.icon  || DEFAULT_ICON,
+    body:  body || '',
+    icon:  d.icon || DEFAULT_ICON,
     image: d.image || undefined,
     data: {
       click_action: d.click_action || payload.fcmOptions?.link || '/',
@@ -106,7 +108,10 @@ messaging.onBackgroundMessage((payload) => {
     actions: actions.map(a => ({ action: a.action, title: a.title }))
   };
 
-  return Promise.all([p1]).then(() => self.registration.showNotification(title, options));
+  // Only enqueue "received" analytics if notification will be shown
+  const p1 = sendAnalytics('received', messageId);
+
+  return Promise.all([p1]).then(() => self.registration.showNotification(title || 'Notification', options));
 });
 
 /* ---------------- Notification click/close ---------------- */
@@ -125,15 +130,6 @@ self.addEventListener('notificationclick', (event) => {
     sendAnalytics('click', messageId),
     flushAnalyticsQueue({ reason: 'notificationclick' }),
     clients.openWindow(url)
-  ]));
-});
-
-self.addEventListener('notificationclose', (event) => {
-  const data = event.notification.data || {};
-  const messageId = data.message_id || '';
-  event.waitUntil(Promise.all([
-    sendAnalytics('close', messageId),
-    flushAnalyticsQueue({ reason: 'notificationclose' })
   ]));
 });
 

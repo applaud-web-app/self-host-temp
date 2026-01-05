@@ -127,9 +127,10 @@
                 <!-- Campaign Type Radio Buttons -->
                 <div class="col-lg-12">
                     <div class="custom-radio justify-content-start">
-                        @foreach(config('campaign.types') as $value => $label)
+                        @foreach (config('campaign.types') as $value => $label)
                             <label class="mb-2 mb-lg-3 w-auto d-inline-block" for="campaign_type_{{ $value }}">
-                                <input type="radio" name="campaign_type" id="campaign_type_{{ $value }}" value="{{ $value }}" {{ $value == 'all' ? 'checked' : '' }}>
+                                <input type="radio" name="campaign_type" id="campaign_type_{{ $value }}"
+                                    value="{{ $value }}" {{ $value == 'all' ? 'checked' : '' }}>
                                 <span>{{ $label }}</span>
                             </label>
                         @endforeach
@@ -142,7 +143,6 @@
                         <div class="card-body p-3" id="tableData">
                             <div class="table-responsive">
                                 <table class="table display" id="datatable">
-
                                     <thead>
                                         <tr>
                                             <th>S.No</th>
@@ -163,7 +163,7 @@
                 </div>
             </div>
         </div>
-        
+
         <!-- Campaign Modal -->
         <div class="modal fade" id="reportModal" tabindex="-1" aria-hidden="true">
             <div class="modal-dialog modal-dialog-centered modal-lg">
@@ -200,8 +200,9 @@
                                 <div class="col-lg-6">
                                     <div class="d-flex justify-content-between align-items-center mb-1">
                                         <h6 class="mb-0"><i class="fas fa-bell text-primary me-2"></i>Push Preview</h6>
-                                         <div class="d-flex align-items-center mb-3">
-                                            <img src="{{ asset('images/chrome.png') }}" class="me-1" alt="Browser Icon">
+                                        <div class="d-flex align-items-center mb-3">
+                                            <img src="{{ asset('images/chrome.png') }}" class="me-1"
+                                                alt="Browser Icon">
                                             <span class="text-muted small">Chrome</span>
                                         </div>
                                     </div>
@@ -253,7 +254,6 @@
                 </div>
             </div>
         </div>
-
     </section>
 @endsection
 
@@ -265,131 +265,135 @@
     <script>
         $(function() {
             /* ------------------------------------------------- Select2 (domains) */
-             const $domain = $('#filter_domain').select2({
-            placeholder: 'Search for Domain…',
-            allowClear: true,
-            minimumInputLength: 0, // show list even when empty
-            ajax: {
-                url: "{{ route('domain.domain-list') }}",
-                dataType: 'json',
-                delay: 250,
-                cache: true,
-                data: params => ({ q: params.term || '' }),
-                processResults: res => ({
-                    results: (res.status ? res.data : []).map(item => ({
-                        id:   item.text,       // matches your controller
-                        text: item.text
-                    }))
-                })
-            },
-            templateResult: domain => {
-                if (domain.loading) return domain.text;
-                return $(
-                    `<span><i class="fal fa-globe me-2"></i>${domain.text}</span>`
-                );
-            },
-            escapeMarkup: markup => markup
-        });
-
-        // On open, if no term typed, trigger an empty search to load all domains
-        $domain.on('select2:open', () => {
-            const search = $domain.data('select2').dropdown.$search;
-            if (!search.val()) {
-                $domain.select2('trigger', 'query', { term: '' });
-            }
-        });
-
-        /* ------------------------------------------------- DataTable */
-        const table = $('#datatable').DataTable({
-            searching: false,
-            paging: true,
-            select: false,
-            language: {
-                paginate: {
-                    previous: '<i class="fas fa-angle-double-left"></i>',
-                    next: '<i class="fas fa-angle-double-right"></i>'
-                }
-            },
-            lengthChange: false,
-            processing: true,
-            serverSide: true,
-            ajax: {
-                url: '{{ route("notification.view") }}',
-                data: d => {
-                    d.search_term = $('#filter_campaign_name').val();
-                    d.status = $('#filter_status').val();
-                    d.site_web = $('#filter_domain').val();
-                    d.last_send = $('#daterange').val();
-                    d.campaign_type = $('input[name="campaign_type"]:checked').val();
-                }
-            },
-            columns: [{
-                    data: 'DT_RowIndex',
-                    name: 'DT_RowIndex',
-                    orderable: false,
-                    searchable: false
+            const $domain = $('#filter_domain').select2({
+                placeholder: 'Search for Domain…',
+                allowClear: true,
+                minimumInputLength: 0, // show list even when empty
+                ajax: {
+                    url: "{{ route('domain.domain-list') }}",
+                    dataType: 'json',
+                    delay: 250,
+                    cache: true,
+                    data: params => ({
+                        q: params.term || ''
+                    }),
+                    processResults: res => ({
+                        results: (res.status ? res.data : []).map(item => ({
+                            id: item.text, // matches your controller
+                            text: item.text
+                        }))
+                    })
                 },
-                {
-                    data: 'campaign_name',
-                    name: 'campaign_name'
+                templateResult: domain => {
+                    if (domain.loading) return domain.text;
+                    return $(
+                        `<span><i class="fal fa-globe me-2"></i>${domain.text}</span>`
+                    );
                 },
-                {
-                    data: 'domain',
-                    name: 'domain',
-                    orderable: false,
-                    searchable: false
-                },
-                {
-                    data: 'status',
-                    name: 'status'
-                },
-                {
-                    data: 'sent_time',
-                    name: 'sent_time'
-                },
-                {
-                    data: 'clicks',
-                    name: 'clicks'
-                },
-                {
-                    data: 'action',
-                    name: 'action',
-                    orderable: false,
-                    searchable: false
-                },
-            ],
-            order: [
-                [1, 'desc']
-            ],
-            lengthMenu: [10, 25, 50]
-        });
-
-        // redraw when any filter changes
-        $('#filterForm').on('change', 'input, select', () => table.draw())
-            .on('keyup', 'input[name="campaign_name"]', () => table.draw());
-
-        $('input[name="campaign_type"]').on('change', () => table.draw());
-
-        /* ------------------------------------------------- Date-range picker */
-        $('#daterange').daterangepicker({
-                autoUpdateInput: false, // show "all dates" until user picks
-                locale: {
-                    format: 'MM/DD/YYYY',
-                    cancelLabel: 'Clear'
-                },
-                maxDate: new Date(),
-                opens: 'left'
-            })
-            .on('apply.daterangepicker', function(ev, picker) {
-                $(this).val(picker.startDate.format('MM/DD/YYYY') +
-                    ' - ' +
-                    picker.endDate.format('MM/DD/YYYY'));
-                table.draw();
-            })
-            .on('cancel.daterangepicker', function() {
-                $(this).val('');
-                table.draw();
+                escapeMarkup: markup => markup
             });
+
+            // On open, if no term typed, trigger an empty search to load all domains
+            $domain.on('select2:open', () => {
+                const search = $domain.data('select2').dropdown.$search;
+                if (!search.val()) {
+                    $domain.select2('trigger', 'query', {
+                        term: ''
+                    });
+                }
+            });
+
+            /* ------------------------------------------------- DataTable */
+            const table = $('#datatable').DataTable({
+                searching: false,
+                paging: true,
+                select: false,
+                language: {
+                    paginate: {
+                        previous: '<i class="fas fa-angle-double-left"></i>',
+                        next: '<i class="fas fa-angle-double-right"></i>'
+                    }
+                },
+                lengthChange: false,
+                processing: true,
+                serverSide: true,
+                ajax: {
+                    url: '{{ route('notification.view') }}',
+                    data: d => {
+                        d.search_term = $('#filter_campaign_name').val();
+                        d.status = $('#filter_status').val();
+                        d.site_web = $('#filter_domain').val();
+                        d.last_send = $('#daterange').val();
+                        d.campaign_type = $('input[name="campaign_type"]:checked').val();
+                    }
+                },
+                columns: [{
+                        data: 'DT_RowIndex',
+                        name: 'DT_RowIndex',
+                        orderable: false,
+                        searchable: false
+                    },
+                    {
+                        data: 'campaign_name',
+                        name: 'campaign_name'
+                    },
+                    {
+                        data: 'domain',
+                        name: 'domain',
+                        orderable: false,
+                        searchable: false
+                    },
+                    {
+                        data: 'status',
+                        name: 'status'
+                    },
+                    {
+                        data: 'sent_time',
+                        name: 'sent_time'
+                    },
+                    {
+                        data: 'clicks',
+                        name: 'clicks'
+                    },
+                    {
+                        data: 'action',
+                        name: 'action',
+                        orderable: false,
+                        searchable: false
+                    },
+                ],
+                order: [
+                    [1, 'desc']
+                ],
+                lengthMenu: [10, 25, 50]
+            });
+
+            // redraw when any filter changes
+            $('#filterForm').on('change', 'input, select', () => table.draw())
+                .on('keyup', 'input[name="campaign_name"]', () => table.draw());
+
+            $('input[name="campaign_type"]').on('change', () => table.draw());
+
+            /* ------------------------------------------------- Date-range picker */
+            $('#daterange').daterangepicker({
+                    autoUpdateInput: false, // show "all dates" until user picks
+                    locale: {
+                        format: 'MM/DD/YYYY',
+                        cancelLabel: 'Clear'
+                    },
+                    maxDate: new Date(),
+                    opens: 'left'
+                })
+                .on('apply.daterangepicker', function(ev, picker) {
+                    $(this).val(picker.startDate.format('MM/DD/YYYY') +
+                        ' - ' +
+                        picker.endDate.format('MM/DD/YYYY'));
+                    table.draw();
+                })
+                .on('cancel.daterangepicker', function() {
+                    $(this).val('');
+                    table.draw();
+                });
         });
     </script>
     <script>
@@ -405,7 +409,7 @@
                 if (engagementChart) engagementChart.destroy();
 
                 const analyticsSection = $('#analyticsSection');
-                
+
                 // if (sent === 0) {
                 //     analyticsSection.hide();
                 //     $('#modalContent .col-lg-6').removeClass('col-lg-6').addClass('col-12');
@@ -450,7 +454,7 @@
 
                 // Render Delivery Chart
                 renderDeliveryChart(sent, received);
-                
+
                 // Render Engagement Chart
                 renderEngagementChart(received, clicked);
 
@@ -473,12 +477,12 @@
             function renderDeliveryChart(sent, received) {
                 const receivedPercentage = (received / sent) * 100;
                 const notReceivedPercentage = 100 - receivedPercentage;
-                
+
                 if (deliveryChart) deliveryChart.destroy();
-                
+
                 deliveryChart = new ApexCharts(document.querySelector('#delivery-chart'), {
-                    chart: { 
-                        type: 'pie', 
+                    chart: {
+                        type: 'pie',
                         height: 250,
                         animations: {
                             enabled: true,
@@ -488,12 +492,14 @@
                     },
                     series: [receivedPercentage, notReceivedPercentage],
                     labels: [
-                        `Delivered (${received.toLocaleString()})`, 
+                        `Delivered (${received.toLocaleString()})`,
                         `Offline Users (${(sent - received).toLocaleString()})`
                     ],
-                    legend: { 
+                    legend: {
                         position: 'bottom',
-                        markers: { radius: 3 }
+                        markers: {
+                            radius: 3
+                        }
                     },
                     colors: ['#1cc88a', '#e74a3b'],
                     dataLabels: {
@@ -504,7 +510,9 @@
                     },
                     tooltip: {
                         y: {
-                            formatter: function(value, { seriesIndex }) {
+                            formatter: function(value, {
+                                seriesIndex
+                            }) {
                                 const counts = [received, sent - received];
                                 return `${counts[seriesIndex].toLocaleString()} users (${Math.round(value)}%)`;
                             }
@@ -514,50 +522,6 @@
                 deliveryChart.render();
             }
 
-            // function renderEngagementChart(received, clicked) {
-            //     const clickedPercentage = totalSent ? (clicked / totalSent) * 100 : 0;
-            //     const notClickedPercentage = 100 - clickedPercentage;
-                
-            //     if (engagementChart) engagementChart.destroy();
-                
-            //     engagementChart = new ApexCharts(document.querySelector('#engagement-chart'), {
-            //         chart: { 
-            //             type: 'pie', 
-            //             height: 250,
-            //             animations: {
-            //                 enabled: true,
-            //                 easing: 'easeinout',
-            //                 speed: 800
-            //             }
-            //         },
-            //         series: [clickedPercentage, notClickedPercentage],
-            //         labels: [
-            //             `Clicked (${clicked.toLocaleString()})`, 
-            //             `Not Clicked (${(received - clicked).toLocaleString()})`
-            //         ],
-            //         legend: { 
-            //             position: 'bottom',
-            //             markers: { radius: 3 }
-            //         },
-            //         colors: ['#36b9cc', '#f6c23e'],
-            //         dataLabels: {
-            //             enabled: true,
-            //             formatter: function(val) {
-            //                 return Math.round(val) + '%';
-            //             }
-            //         },
-            //         tooltip: {
-            //             y: {
-            //                 formatter: function(value, { seriesIndex }) {
-            //                     const counts = [clicked, received - clicked];
-            //                     return `${counts[seriesIndex].toLocaleString()} users (${Math.round(value)}%)`;
-            //                 }
-            //             }
-            //         }
-            //     });
-            //     engagementChart.render();
-            // }
-
             function renderEngagementChart(received, clicked) {
                 if (!received) received = totalSent; // fallback if received missing
                 const clickedPercentage = (clicked / received) * 100;
@@ -566,7 +530,7 @@
                 if (engagementChart) engagementChart.destroy();
 
                 engagementChart = new ApexCharts(document.querySelector('#engagement-chart'), {
-                    chart: { 
+                    chart: {
                         type: 'pie',
                         height: 250,
                         animations: {
@@ -580,17 +544,26 @@
                         `Clicked (${clicked.toLocaleString()})`,
                         `Not Clicked (${(received - clicked).toLocaleString()})`
                     ],
-                    legend: { 
+                    legend: {
                         position: 'bottom',
-                        markers: { radius: 3 }
+                        markers: {
+                            radius: 3
+                        }
                     },
                     colors: ['#36b9cc', '#f6c23e'],
-                    dataLabels: { enabled: true, formatter: val => Math.round(val) + '%' },
+                    dataLabels: {
+                        enabled: true,
+                        formatter: val => Math.round(val) + '%'
+                    },
                     tooltip: {
-                        y: { formatter: function(value, { seriesIndex }) {
-                            const counts = [clicked, received - clicked];
-                            return `${counts[seriesIndex].toLocaleString()} users (${Math.round(value)}%)`;
-                        }}
+                        y: {
+                            formatter: function(value, {
+                                seriesIndex
+                            }) {
+                                const counts = [clicked, received - clicked];
+                                return `${counts[seriesIndex].toLocaleString()} users (${Math.round(value)}%)`;
+                            }
+                        }
                     }
                 });
                 engagementChart.render();
@@ -650,63 +623,65 @@
             });
         });
     </script>
-   <script>
+    <script>
         $(function() {
             // assume your DataTable instance is in a `table` variable
             const table = $('#datatable').DataTable(); // or however you initialize
 
             $('body').on('click', '.cancel-btn', function(e) {
-            e.preventDefault();
+                e.preventDefault();
 
-            const $btn = $(this);
-            const url  = $btn.data('url');
+                const $btn = $(this);
+                const url = $btn.data('url');
 
-            // disable to prevent double-clicks
-            $btn.prop('disabled', true);
+                // disable to prevent double-clicks
+                $btn.prop('disabled', true);
 
-            Swal.fire({
-                title: 'Cancel this scheduled notification?',
-                text: 'Once cancelled, it will no longer be sent.',
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonText: 'Yes, cancel it',
-                cancelButtonText: 'No, keep it',
-            }).then((result) => {
-                if (result.isConfirmed) {
-                // perform AJAX GET
-                $.ajax({
-                    url: url,
-                    type: 'GET',
-                })
-                .done((res) => {
-                    if (res.status) {
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'Cancelled',
-                        text: res.message,
-                        timer: 1500,
-                        showConfirmButton: false
-                    });
-                    table.draw(false); // redraw, staying on current page
+                Swal.fire({
+                    title: 'Cancel this scheduled notification?',
+                    text: 'Once cancelled, it will no longer be sent.',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonText: 'Yes, cancel it',
+                    cancelButtonText: 'No, keep it',
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        // perform AJAX GET
+                        $.ajax({
+                                url: url,
+                                type: 'GET',
+                            })
+                            .done((res) => {
+                                if (res.status) {
+                                    Swal.fire({
+                                        icon: 'success',
+                                        title: 'Cancelled',
+                                        text: res.message,
+                                        timer: 1500,
+                                        showConfirmButton: false
+                                    });
+                                    table.draw(false); // redraw, staying on current page
+                                } else {
+                                    Swal.fire('Error', res.message || 'Could not cancel',
+                                        'error');
+                                }
+                            })
+                            .fail((xhr) => {
+                                const msg = xhr.responseJSON?.message ||
+                                    Object.values(xhr.responseJSON?.errors || {}).flat().join(
+                                        '\n') ||
+                                    'Request failed';
+                                Swal.fire('Error', msg, 'error');
+                            })
+                            .always(() => {
+                                // re-enable regardless
+                                $btn.prop('disabled', false);
+                            });
                     } else {
-                    Swal.fire('Error', res.message || 'Could not cancel', 'error');
+                        // user canceled the confirmation
+                        $btn.prop('disabled', false);
                     }
-                })
-                .fail((xhr) => {
-                    const msg = xhr.responseJSON?.message 
-                            || Object.values(xhr.responseJSON?.errors || {}).flat().join('\n')
-                            || 'Request failed';
-                    Swal.fire('Error', msg, 'error');
-                })
-                .always(() => {
-                    // re-enable regardless
-                    $btn.prop('disabled', false);
                 });
-                } else {
-                // user canceled the confirmation
-                $btn.prop('disabled', false);
-                }
-            });
             });
         });
     </script>
