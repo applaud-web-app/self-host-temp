@@ -5,12 +5,7 @@ self.addEventListener('activate', (event) => {
   event.waitUntil((async () => {
     await storeSWIdentifier(SW_IDENTIFIER);
     await self.clients.claim();
-
-    // Do NOT flush on activate. Just schedule.
-    scheduleTimedFlush();
-    if (self.registration?.sync) {
-      try { await self.registration.sync.register('analytics-sync'); } catch (_) {}
-    }
+    await flushAnalyticsQueue({ reason: 'activate' });
   })());
 });
 
@@ -34,7 +29,6 @@ const messaging = firebase.messaging();
 const ANALYTICS_ENDPOINT = "{{ route('api.analytics') }}";
 const SUBSCRIBE_ENDPOINT = "{{ route('api.subscribe') }}";
 const DEFAULT_ICON       = '/favicon.ico';
-const MAX_BATCHES_PER_FLUSH = 2;
 
 const BATCH_INTERVAL_MS       = 2000;
 const BATCH_MAX_SIZE          = 10;
@@ -126,6 +120,7 @@ self.addEventListener('notificationclick', (event) => {
 
   event.waitUntil(Promise.all([
     sendAnalytics('click', messageId),
+    flushAnalyticsQueue({ reason: 'notificationclick' }),
     clients.openWindow(url)
   ]));
 });
@@ -259,9 +254,7 @@ async function flushAnalyticsQueue({ reason = 'manual' } = {}) {
   isFlushing = true;
 
   try {
-    let batches = 0;
-
-    while (batches < MAX_BATCHES_PER_FLUSH) {
+    while (true) {
       const batch = await readNextAnalyticsBatch(BATCH_MAX_TAKE);
       if (!batch.length) break;
 
@@ -280,14 +273,8 @@ async function flushAnalyticsQueue({ reason = 'manual' } = {}) {
         break;
       }
 
-      batches++;
       if (batch.length < BATCH_MAX_TAKE) break;
     }
-
-    // If still has items, schedule next flush later
-    const qLen = await getAnalyticsQueueLength();
-    if (qLen > 0) scheduleTimedFlush();
-
   } catch (err) {
     console.error('flushAnalyticsQueue error:', err);
   } finally {
@@ -300,7 +287,7 @@ async function postBatchedAnalyticsWithRetry(payload, reportedSize) {
     try {
       const res = await fetch(ANALYTICS_ENDPOINT, {
         method: 'POST',
-        credentials: 'omit',
+        credentials: 'same-origin',
         headers: {
           'Content-Type': 'application/json',
           'X-Batch-Size': String(reportedSize)

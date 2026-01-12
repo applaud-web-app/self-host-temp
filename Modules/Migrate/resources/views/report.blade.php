@@ -142,8 +142,9 @@
                                             <th>Domain</th>
                                             <th>Status</th>
                                             <th>Sent Time</th>
-                                            <th>Clicks</th>
-                                            <th>Action</th>
+                                            {{-- <th>Clicks</th>
+                                            <th>Action</th> --}}
+                                            <th>Total Send</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -338,17 +339,13 @@
                 {
                     data: 'sent_time',
                     name: 'sent_time'
-                },
+                },  
                 {
-                    data: 'clicks',
-                    name: 'clicks'
-                },
-                {
-                    data: 'action',
-                    name: 'action',
-                    orderable: false,
+                    data: 'total_send',
+                    name: 'total_send',
+                    orderable: true,
                     searchable: false
-                },
+                }
             ],
             order: [
                 [1, 'desc']

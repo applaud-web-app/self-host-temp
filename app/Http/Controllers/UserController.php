@@ -89,7 +89,4 @@ class UserController extends Controller
         return view('user.subscription', compact('sub'));
     }
 
-
-
-
 }

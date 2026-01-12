@@ -27,6 +27,10 @@
   // 3) init Firebase
   firebase.initializeApp(@json($cfg));
   const messaging = firebase.messaging();
+  let analytics = null;
+  if (firebase.analytics) {
+      analytics = firebase.analytics();
+  }
 
   // 4) register your SW once
   let swReg = null;
@@ -149,6 +153,17 @@
     // 6e) store locally so next time we update instead of insert
     localStorage.setItem(TOKEN_LS_KEY, newToken);
     removePoweredByRibbon();
+
+    // ✅ ANALYTICS
+    if (analytics) {
+      analytics.setUserProperties({
+        subscriber_id: localStorage.getItem('aplu_subscriber_id') || newToken
+      });
+
+      analytics.logEvent('push_subscribed', {
+        domain: location.hostname
+      });
+    }
 
     console.log('[Push] Subscribed/Updated token', newToken);
     return newToken;

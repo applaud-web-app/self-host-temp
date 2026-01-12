@@ -32,6 +32,11 @@ Schedule::command('app:deactive-token')
 ->when(fn () => Setting::dailyCleanupEnabled())
 ->withoutOverlapping();     
 
+Schedule::command('subscriptions:geo-enrich')
+->everyFiveMinutes()
+->withoutOverlapping()
+->onOneServer();
+
 // Schedule::command('notifications:fix-stuck')
 // ->everyMinute()
 // ->timezone('Asia/Kolkata')

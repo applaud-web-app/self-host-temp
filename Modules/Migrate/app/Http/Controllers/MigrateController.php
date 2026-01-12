@@ -102,6 +102,137 @@ class MigrateController extends Controller
         }
     }
 
+    // public function report(Request $request)
+    // {
+    //     // regular page load
+    //     if (! $request->ajax()) {
+    //         return view('migrate::report');
+    //     }
+
+    //     /* --------------------------------------------------------------------
+    //      |  Base query
+    //     * ------------------------------------------------------------------ */
+    //     $query = DB::table('notifications as n')
+    //         ->leftJoin('domains as d', 'd.id', '=', 'n.domain_id')
+    //         ->leftJoin('push_event_counts as pec', function ($join) {
+    //             $join->on('pec.message_id', '=', 'n.message_id')->where('pec.event', 'click');
+    //         })
+    //         ->whereIn('n.segment_type', ['migrate'])
+    //         ->select([
+    //             'n.id',
+    //             'n.campaign_name',
+    //             'n.schedule_type',
+    //             'n.segment_type',
+    //             'n.title',
+    //             'd.name as domain',
+    //             'n.sent_at as sent_time',
+    //             'n.status',
+    //             DB::raw('COALESCE(SUM(pec.count),0) as clicks'),
+    //         ])
+    //         ->groupBy(
+    //             'n.id',
+    //             'n.campaign_name',
+    //             'n.schedule_type',
+    //             'n.segment_type',
+    //             'n.title',
+    //             'd.name',
+    //             'n.sent_at',
+    //             'n.status',
+    //         );
+
+    //     /* --------------------------------------------------------------------
+    //      |  Dynamic filters
+    //      * ------------------------------------------------------------------ */
+    //     $query->when($request->filled('status'),
+    //             fn ($q) => $q->where('n.status', $request->status))
+    //            ->when($request->filled('search_term'), function ($q) use ($request) {
+    //                 $term = "%{$request->search_term}%";
+    //                 $q->where(function ($sub) use ($term) {
+    //                     $sub->where('n.campaign_name', 'like', $term)
+    //                         ->orWhere('n.title',        'like', $term);
+    //                 });
+    //             })
+    //             ->when($request->filled('campaign_type') && $request->campaign_type !== 'all',
+    //             fn ($q) => $q->where('n.schedule_type', $request->campaign_type)->orwhere('n.segment_type', $request->campaign_type))
+    //             ->when($request->filled('site_web'),
+    //             fn ($q) => $q->where('d.name', $request->site_web))
+    //             ->when($request->filled('last_send'), function ($q) use ($request) {
+    //                 [$start, $end] = explode(' - ', $request->last_send);
+    //                 $q->whereBetween('n.one_time_datetime', [
+    //                     Carbon::createFromFormat('m/d/Y', $start)->startOfDay(),
+    //                     Carbon::createFromFormat('m/d/Y', $end)->endOfDay(),
+    //                 ]);
+    //           });
+
+    //     $query = $query->orderBy('n.id','DESC');
+
+    //     /* --------------------------------------------------------------------
+    //      |  Return DataTables JSON
+    //      * ------------------------------------------------------------------ */
+    //     return DataTables::of($query)
+    //         ->addIndexColumn()
+    //         ->addColumn('campaign_name', function ($row) {
+    //             $truncated = Str::limit($row->title, 50, '…');
+
+    //             $segment = '';
+    //             $segmentTypes = config('campaign.types'); 
+    //             if (isset($segmentTypes[$row->segment_type])) {
+    //                 if ($row->segment_type !== 'all') {
+    //                     $segment = '<small class="ms-1 text-secondary text-capitalize">[' . $segmentTypes[$row->segment_type] . ']</small>';
+    //                 }
+    //             }
+    //             return '<div>'.e($row->campaign_name).' <small class="ms-1 text-primary text-capitalize">['.e($row->schedule_type).']</small>'.$segment.'<br><small> '.e($truncated).'</small></div>';
+    //         })
+    //         ->addColumn('status', function ($row) {
+    //             $map = [
+    //                 'pending'   => ['badge-warning',   'Pending'],
+    //                 'queued'    => ['badge-info',      'Processing'],
+    //                 'sent'      => ['badge-success',   'Sent'],
+    //                 'failed'    => ['badge-danger',    'Failed'],
+    //                 'cancelled' => ['badge-secondary', 'Cancelled'],
+    //             ];
+    //             [$class, $label] = $map[$row->status] ?? ['badge-secondary', ucfirst($row->status)];
+    //             return "<span class=\"badge {$class}\">{$label}</span>";
+    //         })
+    //         ->addColumn('sent_time', function($row) {
+    //             if ($row->sent_time) {
+    //                 $dt   = Carbon::parse($row->sent_time);
+    //                 $date = $dt->format('d M, Y');
+    //                 $time = $dt->format('H:i A');
+    //                 return "{$date}<br><small>{$time}</small>";
+    //             }
+
+    //             return '—';
+    //         })
+    //         ->addColumn('clicks',    fn ($row) => $row->clicks)
+    //         ->addColumn('action', function ($row) {
+
+    //             $param = ['notification' => $row->id,'domain' => $row->domain];
+    //             $detailsUrl = encryptUrl(route('notification.details'), $param);
+    //             $cancelUrl  = encryptUrl(route('notification.cancel'),  $param);
+    //             // $cloneUrl   = encryptUrl(route('notification.clone'),  $param);
+    //             $html = '<button type="button" class="btn btn-primary light btn-sm report-btn rounded-pill"
+    //                     data-bs-toggle="modal" data-bs-target="#reportModal" data-url="'.$detailsUrl.'">
+    //                 <i class="fas fa-analytics"></i>
+    //             </button>';
+
+    //             //  $html .= '<a href="'.$cloneUrl.'" class="btn btn-secondary light btn-sm mx-1 rounded-pill">
+    //             //         <i class="fas fa-clone"></i>
+    //             //     </a>';
+    //             if ($row->schedule_type === 'schedule' && $row->status === 'pending') {
+    //                 $html .= ' <button type="button" class="btn btn-danger btn-sm cancel-btn rounded-pill"
+    //                                 data-url="'.e($cancelUrl).'"
+    //                                 title="Cancel Notification">
+    //                             <i class="fas fa-times"></i>
+    //                         </button>';
+    //             }
+    //             return $html;
+    //         }
+    //     )
+    //     ->rawColumns(['campaign_name', 'status', 'sent_time', 'action'])
+    //     ->make(true);
+    // }
+    
     public function report(Request $request)
     {
         // regular page load
@@ -110,13 +241,10 @@ class MigrateController extends Controller
         }
 
         /* --------------------------------------------------------------------
-         |  Base query
+        |  Base query
         * ------------------------------------------------------------------ */
         $query = DB::table('notifications as n')
             ->leftJoin('domains as d', 'd.id', '=', 'n.domain_id')
-            ->leftJoin('push_event_counts as pec', function ($join) {
-                $join->on('pec.message_id', '=', 'n.message_id')->where('pec.event', 'click');
-            })
             ->whereIn('n.segment_type', ['migrate'])
             ->select([
                 'n.id',
@@ -127,7 +255,7 @@ class MigrateController extends Controller
                 'd.name as domain',
                 'n.sent_at as sent_time',
                 'n.status',
-                DB::raw('COALESCE(SUM(pec.count),0) as clicks'),
+                'n.success_count as total_send',
             ])
             ->groupBy(
                 'n.id',
@@ -138,14 +266,15 @@ class MigrateController extends Controller
                 'd.name',
                 'n.sent_at',
                 'n.status',
+                'n.success_count'  // Added this line
             );
 
         /* --------------------------------------------------------------------
-         |  Dynamic filters
-         * ------------------------------------------------------------------ */
+        |  Dynamic filters
+        * ------------------------------------------------------------------ */
         $query->when($request->filled('status'),
                 fn ($q) => $q->where('n.status', $request->status))
-               ->when($request->filled('search_term'), function ($q) use ($request) {
+            ->when($request->filled('search_term'), function ($q) use ($request) {
                     $term = "%{$request->search_term}%";
                     $q->where(function ($sub) use ($term) {
                         $sub->where('n.campaign_name', 'like', $term)
@@ -162,13 +291,13 @@ class MigrateController extends Controller
                         Carbon::createFromFormat('m/d/Y', $start)->startOfDay(),
                         Carbon::createFromFormat('m/d/Y', $end)->endOfDay(),
                     ]);
-              });
+            });
 
         $query = $query->orderBy('n.id','DESC');
 
         /* --------------------------------------------------------------------
-         |  Return DataTables JSON
-         * ------------------------------------------------------------------ */
+        |  Return DataTables JSON
+        * ------------------------------------------------------------------ */
         return DataTables::of($query)
             ->addIndexColumn()
             ->addColumn('campaign_name', function ($row) {
@@ -204,33 +333,12 @@ class MigrateController extends Controller
 
                 return '—';
             })
-            ->addColumn('clicks',    fn ($row) => $row->clicks)
-            ->addColumn('action', function ($row) {
-
-                $param = ['notification' => $row->id,'domain' => $row->domain];
-                $detailsUrl = encryptUrl(route('notification.details'), $param);
-                $cancelUrl  = encryptUrl(route('notification.cancel'),  $param);
-                // $cloneUrl   = encryptUrl(route('notification.clone'),  $param);
-                $html = '<button type="button" class="btn btn-primary light btn-sm report-btn rounded-pill"
-                        data-bs-toggle="modal" data-bs-target="#reportModal" data-url="'.$detailsUrl.'">
-                    <i class="fas fa-analytics"></i>
-                </button>';
-
-                //  $html .= '<a href="'.$cloneUrl.'" class="btn btn-secondary light btn-sm mx-1 rounded-pill">
-                //         <i class="fas fa-clone"></i>
-                //     </a>';
-                if ($row->schedule_type === 'schedule' && $row->status === 'pending') {
-                    $html .= ' <button type="button" class="btn btn-danger btn-sm cancel-btn rounded-pill"
-                                    data-url="'.e($cancelUrl).'"
-                                    title="Cancel Notification">
-                                <i class="fas fa-times"></i>
-                            </button>';
-                }
-                return $html;
-            }
-        )
-        ->rawColumns(['campaign_name', 'status', 'sent_time', 'action'])
-        ->make(true);
+            ->addColumn('total_send', function ($row) {
+                $count = $row->total_send ?? 0;
+                return '<span class="badge badge-primary">' . number_format($count) . '</span>';
+            })
+            ->rawColumns(['campaign_name', 'status', 'sent_time', 'total_send'])
+            ->make(true);
     }
 
     public function sendNotification()
@@ -289,7 +397,7 @@ class MigrateController extends Controller
         $ids = Domain::whereIn('name', $data['domain_name'])->where('status', 1)->pluck('id')->all();
 
         try {
-            dispatch(new DispatchNotifications($data, $ids))->onQueue('migrate-create-notifications');
+            dispatch(new DispatchNotifications($data, $ids))->onQueue('notifications');
             return redirect()->route('mig.report')->with('success', "Notification campaign queued.");
         } catch (\Throwable $e) {
             Log::error("Failed to create notification: {$e->getMessage()}", [

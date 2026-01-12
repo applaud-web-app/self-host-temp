@@ -200,26 +200,26 @@ class PushApiController extends Controller
         }
     }
 
-  public function unsubscribe(Request $request): JsonResponse
-  {
-      try {
-        $request->validate([
-          'token' => 'required|string',
-        ]);
+    public function unsubscribe(Request $request): JsonResponse
+    {
+        try {
+            $request->validate([
+            'token' => 'required|string',
+            ]);
 
-        $deleted = PushSubscriptionHead::where('token', $request->token)->delete();
+            $deleted = PushSubscriptionHead::where('token', $request->token)->delete();
 
-        return response()->json([
-          'status'       => 'success',
-          'unsub_count'  => $deleted,
-        ]);
-      } catch (\Throwable $th) {
-        return response()->json([
-            'status'  => 'error',
-            'message' => 'Server error while queuing subscription.',
-        ], 500);
-      }
-  }
+            return response()->json([
+            'status'       => 'success',
+            'unsub_count'  => $deleted,
+            ]);
+        } catch (\Throwable $th) {
+            return response()->json([
+                'status'  => 'error',
+                'message' => 'Server error while queuing subscription.',
+            ], 500);
+        }
+    }
 
 //   public function analytics(Request $request): JsonResponse
 //   {

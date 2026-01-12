@@ -39,7 +39,7 @@ class SendMigrateNotificationByNode implements ShouldQueue
                 'domainName'      => $this->domainName,
             ];
 
-            $resp = Http::timeout(90)->retry(1, 1000)->post($endpoint, $body);
+            $resp = Http::timeout(90)->retry(1, 1000)->post($nodeServiceUrl, $body);
 
             if (!$resp->successful()) {
                 $this->bumpCounts(0, count($this->subscribers));

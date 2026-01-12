@@ -241,40 +241,108 @@ class SendNotificationMigrateJob implements ShouldQueue
     }
 
     // APLU
+    // protected function buildWebPushApluPush(object $row): array
+    // {
+    //     // Notification data for the browser to display
+    //     $notification = [
+    //         'title'  => $row->title,
+    //         'body'   => $row->description,
+    //         'icon'   => $row->banner_icon ?? '',
+    //         'image'  => $row->banner_image ?? '',
+    //     ];
+
+    //     // Define actions for buttons as a plain array
+    //     $actions = [];
+    //     if ($row->btn_1_title && $row->btn_1_url) {
+    //         $actions[] = ['action' => 'btn1', 'title' => $row->btn_1_title, 'url' => $row->btn_1_url];
+    //     }
+    //     if ($row->btn_title_2 && $row->btn_url_2) {
+    //         $actions[] = ['action' => 'btn2', 'title' => $row->btn_title_2, 'url' => $row->btn_url_2];
+    //     }
+    //     if (count($actions) < 2) {
+    //         $actions[] = ['action' => 'close', 'title' => 'Close'];
+    //     }
+    //     $notification['actions'] = $actions;
+
+    //     // Custom data for the service worker to process
+    //     $data = [
+    //         'click_action' => $row->target_url,
+    //         'message_id'   => (string)$row->message_id,
+    //         'source' => 'webpush',
+    //     ];
+
+    //     return [
+    //         'notification' => $notification,
+    //         'data'         => $data,
+    //         'headers'      => ['Urgency' => 'high'], 
+    //     ];
+    // }
+
+    // APLU
     protected function buildWebPushApluPush(object $row): array
     {
-        // Notification data for the browser to display
+        // Prepare URLs array
+        $urls = [$row->target_url ?? ''];
+        
+        // Define actions for buttons
+        $actions = [];
+        
+        if ($row->btn_1_title && $row->btn_1_url) {
+            $actions[] = [
+                'action' => 'open_url',
+                'title'  => $row->btn_1_title,
+            ];
+            // Use button 1 URL as primary
+            $urls[0] = $row->btn_1_url;
+        }
+        
+        if ($row->btn_title_2 && $row->btn_url_2) {
+            $actions[] = [
+                'action' => 'open_url_2',
+                'title'  => $row->btn_title_2,
+            ];
+            // Add second URL
+            $urls[1] = $row->btn_url_2;
+        }
+        
+        // Add close button if less than 2 actions
+        if (count($actions) < 2) {
+            $actions[] = [
+                'action' => 'close',
+                'title'  => 'Close'
+            ];
+        }
+
+        // Notification data matching your SW's expected structure
         $notification = [
-            'title'  => $row->title,
-            'body'   => $row->description,
+            'title'  => $row->title ?? '',
+            'body'   => $row->description ?? '',
             'icon'   => $row->banner_icon ?? '',
             'image'  => $row->banner_image ?? '',
+            'actions' => $actions,
         ];
 
-        // Define actions for buttons as a plain array
-        $actions = [];
-        if ($row->btn_1_title && $row->btn_1_url) {
-            $actions[] = ['action' => 'btn1', 'title' => $row->btn_1_title, 'url' => $row->btn_1_url];
-        }
-        if ($row->btn_title_2 && $row->btn_url_2) {
-            $actions[] = ['action' => 'btn2', 'title' => $row->btn_title_2, 'url' => $row->btn_url_2];
-        }
-        if (count($actions) < 2) {
-            $actions[] = ['action' => 'close', 'title' => 'Close'];
-        }
-        $notification['actions'] = $actions;
-
-        // Custom data for the service worker to process
+        // Build the FCM_MSG structure that your SW expects
+        // Your SW accesses: event.notification.data.FCM_MSG.notification.data.url
         $data = [
-            'click_action' => $row->target_url,
-            'message_id'   => (string)$row->message_id,
-            'source' => 'webpush',
+            'FCM_MSG' => json_encode([
+                'notification' => [
+                    'title' => $row->title ?? '',
+                    'body'  => $row->description ?? '',
+                    'icon'  => $row->banner_icon ?? '',
+                    'image' => $row->banner_image ?? '',
+                    'data'  => [
+                        'url' => count($urls) === 1 ? $urls[0] : $urls,
+                        'notification_id' => (string)$row->message_id,
+                    ]
+                ]
+            ], JSON_UNESCAPED_SLASHES),
         ];
 
         return [
             'notification' => $notification,
             'data'         => $data,
-            'headers'      => ['Urgency' => 'high'], 
+            'headers'      => ['Urgency' => 'high'],
         ];
     }
 
